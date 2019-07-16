@@ -31,7 +31,8 @@ from project.models import (Affiliation, Author, AuthorInvitation, License,
                             ActiveProject, PublishedProject, StorageRequest, Reference, DataAccess,
                             ArchivedProject, ProgrammingLanguage, Topic, Contact, Publication,
                             PublishedAuthor, EditLog, CopyeditLog, DUASignature, CoreProject, GCP,
-                            AnonymousAccess, DataAccessRequest, DataAccessRequestReviewer)
+                            AnonymousAccess, DataAccessRequest, DataAccessRequestReviewer,
+                            SectionContent, ProjectSection)
 from project import utility
 from project.validators import validate_filename
 from project.projectfiles import ProjectFiles
@@ -660,15 +661,36 @@ def project_content(request, project_slug, **kwargs):
     reference_formset = ReferenceFormSet(instance=project)
     saved = False
 
+    section_forms = []
+    sections = ProjectSection.objects.filter(resource_type=project.resource_type)
+    for s in sections:
+        content = SectionContent.objects.get(project_id=project.core_project, project_section=s)
+        if content:
+            section_forms.append(forms.SectionContentForm(instance=content))
+        else:
+            section_forms.append(forms.SectionContentForm())
+
     if request.method == 'POST':
         description_form = forms.ContentForm(
             resource_type=project.resource_type.id, data=request.POST,
             instance=project, editable=editable)
         reference_formset = ReferenceFormSet(request.POST, instance=project)
-        if description_form.is_valid() and reference_formset.is_valid():
+
+        valid = True
+        section_forms = []
+        for s in sections:
+            content = SectionContent.objects.get(project_id=project.core_project, project_section=s)
+            sf = forms.SectionContentForm(data=request.POST, instance=content)
+            section_forms.append(sf)
+            valid = valid and sf.is_valid()
+
+        if description_form.is_valid() and reference_formset.is_valid() and valid:
             saved = True
             description_form.save()
             reference_formset.save()
+            for sf in section_forms:
+                sf.save()
+
             messages.success(request, 'Your project content has been updated.')
             reference_formset = ReferenceFormSet(instance=project)
         else:
@@ -680,7 +702,8 @@ def project_content(request, project_slug, **kwargs):
         'description_form':description_form, 'reference_formset':reference_formset,
         'messages':messages.get_messages(request),
         'is_submitting':is_submitting,
-        'add_item_url':edit_url, 'remove_item_url':edit_url})
+        'add_item_url':edit_url, 'remove_item_url':edit_url,
+        'section_forms':section_forms})
     if saved:
         set_saved_fields_cookie(description_form, request.path, response)
     return response
@@ -1594,6 +1617,8 @@ def published_project(request, project_slug, version, subdir=''):
     url_prefix = notification.get_url_prefix(request)
     all_project_versions = PublishedProject.objects.filter(
         slug=project_slug).order_by('version_order')
+    content = SectionContent.objects.filter(project_id=project.core_project)
+
     context = {'project': project, 'authors': authors,
                'references': references, 'publication': publication,
                'topics': topics, 'languages': languages, 'contact': contact,
@@ -1603,7 +1628,8 @@ def published_project(request, project_slug, version, subdir=''):
                'parent_projects':parent_projects, 'data_access':data_access,
                'messages':messages.get_messages(request), 
                'platform_citations': platform_citations,
-               'is_lightwave_supported': ProjectFiles().is_lightwave_supported()}
+               'is_lightwave_supported': ProjectFiles().is_lightwave_supported(),
+               'content':content}
     # The file and directory contents
     if has_access:
         (display_files, display_dirs, dir_breadcrumbs, parent_dir,
