@@ -44,6 +44,8 @@ from user.forms import ProfileForm, AssociatedEmailChoiceForm
 from user.models import User, CloudInformation, CredentialApplication, LegacyCredential
 
 from dal import autocomplete
+from html import unescape
+from django.utils.html import strip_tags
 
 from ast import literal_eval
 
@@ -662,13 +664,13 @@ def project_content(request, project_slug, **kwargs):
     saved = False
 
     section_forms = []
-    sections = ProjectSection.objects.filter(resource_type=project.resource_type)
+    sections = ProjectSection.objects.filter(resource_type=project.resource_type).order_by('default_order')
     for s in sections:
-        content = SectionContent.objects.get(project_id=project.core_project, project_section=s)
-        if content:
+        try:
+            content = SectionContent.objects.get(project_id=project.core_project, project_section=s)
             section_forms.append(forms.SectionContentForm(instance=content))
-        else:
-            section_forms.append(forms.SectionContentForm())
+        except:
+            section_forms.append(forms.SectionContentForm(project_id=project.core_project, project_section=s))
 
     if request.method == 'POST':
         description_form = forms.ContentForm(
@@ -679,8 +681,12 @@ def project_content(request, project_slug, **kwargs):
         valid = True
         section_forms = []
         for s in sections:
-            content = SectionContent.objects.get(project_id=project.core_project, project_section=s)
-            sf = forms.SectionContentForm(data=request.POST, instance=content)
+            try:
+                content = SectionContent.objects.get(project_id=project.core_project, project_section=s)
+                sf = forms.SectionContentForm(data=request.POST, instance=content)
+            except:
+                sf = forms.SectionContentForm(project_id=project.core_project, project_section=s, data=request.POST)
+
             section_forms.append(sf)
             valid = valid and sf.is_valid()
 
@@ -690,6 +696,9 @@ def project_content(request, project_slug, **kwargs):
             reference_formset.save()
             for sf in section_forms:
                 sf.save()
+                text = unescape(strip_tags(sf.instance.content))
+                if not text or text.isspace():
+                    sf.instance.delete()
 
             messages.success(request, 'Your project content has been updated.')
             reference_formset = ReferenceFormSet(instance=project)
@@ -1177,6 +1186,8 @@ def project_preview(request, project_slug, subdir='', **kwargs):
     # Flag for anonymous access
     has_passphrase = kwargs['has_passphrase']
 
+    content = SectionContent.objects.filter(project_id=project.core_project)                        
+
     return render(request, 'project/project_preview.html', {'project':project,
         'display_files':display_files, 'display_dirs':display_dirs,
         'authors':authors, 'corresponding_author':corresponding_author,
@@ -1187,7 +1198,8 @@ def project_preview(request, project_slug, subdir='', **kwargs):
         'subdir':subdir, 'parent_dir':parent_dir, 'file_error':file_error, 
         'file_warning':file_warning, 'platform_citations': platform_citations,
         'parent_projects':parent_projects, 'has_passphrase':has_passphrase,
-        'is_lightwave_supported': ProjectFiles().is_lightwave_supported()})
+        'is_lightwave_supported': ProjectFiles().is_lightwave_supported(),
+        'content':content})
 
 
 @project_auth(auth_mode=3)
