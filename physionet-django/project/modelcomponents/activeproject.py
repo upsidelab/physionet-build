@@ -11,6 +11,7 @@ from django.forms.utils import ErrorList
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
+from django.contrib.contenttypes.fields import GenericRelation
 
 from physionet.settings.base import StorageTypes
 from project.modelcomponents.archivedproject import ArchivedProject
@@ -97,6 +98,8 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
         50: 'Awaiting authors to approve publication.',
         60: 'Awaiting editor to publish.',
     }
+
+    content = GenericRelation(SectionContent)
 
     def storage_used(self):
         """
@@ -272,8 +275,7 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
             resource_type=self.resource_type, required=True)
         for attr in sections:
             try:
-                content = SectionContent.objects.get(
-                    project_id=self.core_project, project_section=attr).content
+                content = self.content.get(project_section=attr).content
                 text = unescape(strip_tags(content))
                 if not text or text.isspace():
                     raise
