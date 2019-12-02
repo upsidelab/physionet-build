@@ -33,7 +33,7 @@ from project.models import (Affiliation, Author, AuthorInvitation, License,
                             ArchivedProject, ProgrammingLanguage, Topic, Contact, Publication,
                             PublishedAuthor, EditLog, CopyeditLog, DUASignature, CoreProject, GCP,
                             AnonymousAccess, DataAccessRequest, DataAccessRequestReviewer,
-                            SectionContent, ProjectSection)
+                            ProjectSection)
 from project import utility
 from project.validators import validate_filename
 from project.projectfiles import ProjectFiles
