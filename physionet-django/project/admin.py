@@ -3,7 +3,7 @@ from ckeditor.widgets import CKEditorWidget
 from django.contrib import admin
 from django.db.models import CharField, TextField
 from django.forms import TextInput, Textarea
-from background_task.models_completed import CompletedTask
+#from background_task.models_completed import CompletedTask
 from background_task.models import Task
 
 from project import models
@@ -80,7 +80,7 @@ class CompletedTaskAdmin(admin.ModelAdmin):
 
 # Unregister the tasks to add the custom tasks to the amdin page
 admin.site.unregister(Task)
-admin.site.unregister(CompletedTask)
+#admin.site.unregister(CompletedTask)
 
 
 admin.site.register(models.ActiveProject)
@@ -110,4 +110,4 @@ admin.site.register(models.GCP)
 
 # Add the custom tasks to the admin page
 admin.site.register(Task, TaskAdmin)
-admin.site.register(CompletedTask, CompletedTaskAdmin)
+#admin.site.register(CompletedTask, CompletedTaskAdmin)

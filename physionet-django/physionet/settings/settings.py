@@ -4,8 +4,6 @@ from decouple import config
 
 from physionet.settings.base import *
 
-DEBUG = False
-
 ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(',')
 SITE_ID = config("SITE_ID")
 
@@ -21,7 +19,7 @@ DATABASES = {
 }
 
 # When ready, use the following:
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config("EMAIL_HOST")
 EMAIL_PORT = 25
 EMAIL_HOST_USER = ''

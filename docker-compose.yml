@@ -7,12 +7,25 @@ services:
     depends_on:
       - db
     environment:
+      - DJANGO_SETTINGS_MODULE=physionet.settings.settings
       - SECRET_KEY=asdf
+      - ALLOWED_HOSTS=localhost
       - DB_USER=physionet
       - DB_NAME=physionet
       - DB_PASSWORD=password
       - DB_HOST=db
-    command: bash -c "./wait-for-it.sh db:5432 && python /code/physionet-django/manage.py migrate && python /code/physionet-django/manage.py runserver 0.0.0.0:8000"
+      - DEBUG=True
+      - SITE_ID=4
+      - EMAIL_HOST=localhost
+      - DEFAULT_FROM_EMAIL=localhost@localhost
+      - CONTACT_EMAIL=PhysioNet Contact <contact@dev.physionet.org>
+      - SERVER_EMAIL='PhysioNet System <root@dev.physionet.org>'
+      - ADMINS_NAME=PhysioNet Technical
+      - ADMINS_MAIL=technical@dev.physionet.org
+      - OCRID_REDIRECT_URI=http://127.0.0.1:8000/authorcid
+    stdin_open: true
+    tty: true
+    command: bash -c "./wait-for-it.sh db:5432 && poetry run /code/physionet-django/manage.py migrate && poetry run /code/physionet-django/manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code:ro
   db:
