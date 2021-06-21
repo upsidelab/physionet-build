@@ -13,6 +13,13 @@ The new PhysioNet platform built using Django. The new site is currently hosted 
   - Run: `python manage.py resetdb` to reset the database.
   - Run: `python manage.py loaddemo` to load the demo fixtures set up example files.
   - Run: `python manage.py runserver` to run the server.
+  
+  
+## Running with docker-compose
+
+Running with docker-compose is as simple as running the following command:
+
+`docker-compose up`
 
 ## Contribution Guidelines
 
@@ -32,7 +39,7 @@ The new PhysioNet platform built using Django. The new site is currently hosted 
 ## Database Content During Development
 
 During development, the following workflow is applied for convenience:
-- The database engine is sqlite3. The db.sqlite3 file will not be tracked by git, and hence will not be uploaded and shared between developers
+- The database engine is postgresql. The db.sqlite3 file will not be tracked by git, and hence will not be uploaded and shared between developers
 - Demo model instances will be specified in json files in the `fixtures` subdirectory of each app. Example file: `<BASE_DIR>/<appname>/fixtures/demo-<appname>.json`
 
 To conveniently obtain a clean database with the latest applied migrations, run:`python manage.py resetdb`. This does not populate the database with any data.

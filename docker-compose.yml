@@ -27,7 +27,7 @@ services:
     tty: true
     command: bash -c "./wait-for-it.sh db:5432 && poetry run /code/physionet-django/manage.py migrate && poetry run /code/physionet-django/manage.py runserver 0.0.0.0:8000"
     volumes:
-      - .:/code:ro
+      - .:/code:rw
   db:
     image: postgres:13
     environment:

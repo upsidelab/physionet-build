@@ -15,6 +15,9 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config("DB_HOST"),
         'PORT': '',
+        'TEST': {
+            'MIRROR': 'default'
+        }
     }
 }
 
