@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 from decouple import config
 
@@ -40,7 +41,7 @@ GCP_BUCKET_PREFIX = ""
 
 DEMO_FILE_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir)), 'demo-files')
 
-MEDIA_ROOT = '/data/pn-media'
+MEDIA_ROOT = config("MEDIA_ROOT", default=str((pathlib.Path(BASE_DIR).parent / 'media').resolve()))
 
 DATACITE_API_URL = 'https://api.datacite.org/dois'
 DATACITE_PREFIX = config('DATACITE_PREFIX', default=False)

@@ -23,6 +23,7 @@ services:
       - ADMINS_NAME=PhysioNet Technical
       - ADMINS_MAIL=technical@dev.physionet.org
       - OCRID_REDIRECT_URI=http://127.0.0.1:8000/authorcid
+      - MEDIA_ROOT=/code/media
     stdin_open: true
     tty: true
     command: bash -c "./wait-for-it.sh db:5432 && poetry run /code/physionet-django/manage.py migrate && poetry run /code/physionet-django/manage.py runserver 0.0.0.0:8000"
