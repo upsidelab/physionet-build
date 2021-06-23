@@ -35,7 +35,8 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default='PhysioNet Automated S
 CONTACT_EMAIL = config("CONTACT_EMAIL", default='PhysioNet Contact <contact@physionet.org>')
 SERVER_EMAIL = config("SERVER_EMAIL", default='PhysioNet System <root@physionet.org>')
 
-ADMINS = [(config("ADMINS_NAME"), config("ADMINS_MAIL"))]
+ADMINS = [(config("ADMINS_NAME", default='PhysioNet Technical'), 
+           config("ADMINS_MAIL", default='technical@dev.physionet.org'))]
 
 GCP_BUCKET_PREFIX = ""
 
