@@ -568,6 +568,7 @@ class TestAccessPublished(TestMixin):
         response = self.client.get(reverse(
             'serve_published_project_file',
             args=(project.slug, project.version, 'fnord.txt')))
+        breakpoint()
         self.assertEqual(response.status_code, 404)
         response = self.client.get(reverse(
             'published_project_subdir',
