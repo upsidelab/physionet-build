@@ -35,3 +35,5 @@ services:
       - POSTGRES_DB=physionet
       - POSTGRES_USER=physionet
       - POSTGRES_PASSWORD=password
+    volumes:
+    - /var/lib/postgres/data

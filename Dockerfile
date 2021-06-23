@@ -1,8 +1,9 @@
 FROM python:3.9
 
-RUN apt-get update -y
-RUN apt-get upgrade -y
-RUN apt-get install postgresql-client -y
+RUN apt-get update -y \
+    && apt-get upgrade -y \
+    && apt-get install postgresql-client -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY . /code
 RUN chmod +x /code/wait-for-it.sh

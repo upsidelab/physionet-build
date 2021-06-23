@@ -24,16 +24,16 @@ DATABASES = {
 
 # When ready, use the following:
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config("EMAIL_HOST")
-EMAIL_PORT = 25
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
-EMAIL_USE_TLS = False
+EMAIL_HOST = config("EMAIL_HOST", default='localhost')
+EMAIL_PORT = config("EMAIL_PORT", default=25, cast=int)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default='')
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default='')
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=False, cast=bool)
 
 EMAIL_FROM_DOMAINS = ['physionet.org']
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
-CONTACT_EMAIL = config("CONTACT_EMAIL")
-SERVER_EMAIL = config("SERVER_EMAIL")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default='PhysioNet Automated System <noreply@physionet.org>')
+CONTACT_EMAIL = config("CONTACT_EMAIL", default='PhysioNet Contact <contact@physionet.org>')
+SERVER_EMAIL = config("SERVER_EMAIL", default='PhysioNet System <root@physionet.org>')
 
 ADMINS = [(config("ADMINS_NAME"), config("ADMINS_MAIL"))]
 
@@ -50,7 +50,7 @@ DATACITE_PASS = config('DATACITE_PASS', default=False)
 
 # Tags for the ORCID API
 ORCID_DOMAIN = 'https://orcid.org'
-ORCID_REDIRECT_URI = config("OCRID_REDIRECT_URI")
+ORCID_REDIRECT_URI = config("OCRID_REDIRECT_URI", default='https://physionet.org/authorcid')
 ORCID_AUTH_URL = 'https://orcid.org/oauth/authorize'
 ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
 ORCID_CLIENT_ID = config('ORCID_CLIENT_ID', default=False)
