@@ -64,7 +64,7 @@ ORCID_SCOPE = config('ORCID_SCOPE', default=False)
 # header so that nginx can serve the file directly.
 MEDIA_X_ACCEL_ALIAS = '/protected'
 
-STATIC_ROOT = config('STATIC_ROOT', default=None)
+STATIC_ROOT = config('STATIC_ROOT', default=STATICFILES_DIRS[0])
 
 if RUNNING_TEST_SUITE:
     MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'test')
