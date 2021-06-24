@@ -27,6 +27,7 @@ jobs:
           --health-retries 5
     env:
       DJANGO_SETTINGS_MODULE: physionet.settings.settings
+      ENVIRONMENT: development
       SECRET_KEY: asdf
       ALLOWED_HOSTS: localhost
       DB_USER: physionet
