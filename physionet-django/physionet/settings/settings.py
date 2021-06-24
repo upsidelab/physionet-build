@@ -35,7 +35,7 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default='PhysioNet Automated S
 CONTACT_EMAIL = config("CONTACT_EMAIL", default='PhysioNet Contact <contact@physionet.org>')
 SERVER_EMAIL = config("SERVER_EMAIL", default='PhysioNet System <root@physionet.org>')
 
-ADMINS = [(config("ADMINS_NAME", default='PhysioNet Technical'), 
+ADMINS = [(config("ADMINS_NAME", default='PhysioNet Technical'),
            config("ADMINS_MAIL", default='technical@dev.physionet.org'))]
 
 GCP_BUCKET_PREFIX = ""
@@ -64,7 +64,7 @@ ORCID_SCOPE = config('ORCID_SCOPE', default=False)
 # header so that nginx can serve the file directly.
 MEDIA_X_ACCEL_ALIAS = '/protected'
 
-STATIC_ROOT = '/data/pn-static'
+STATIC_ROOT = config('STATIC_ROOT', default=None)
 
 if RUNNING_TEST_SUITE:
     MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'test')
