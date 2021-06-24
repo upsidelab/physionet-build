@@ -13,7 +13,36 @@ jobs:
   container:
     runs-on: ubuntu-latest
     container: debian:10
+    services:
+      db:
+        image: postgres
+        env:
+          POSTGRES_DB: physionet
+          POSTGRES_USER: physionet
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
+      DJANGO_SETTINGS_MODULE: physionet.settings.settings
+      SECRET_KEY: asdf
+      ALLOWED_HOSTS: localhost
+      DB_USER: physionet
+      DB_NAME: physionet
+      DB_PASSWORD: password
+      DB_HOST: db
+      DEBUG: True
+      SITE_ID: 4
+      EMAIL_HOST: localhost
+      DEFAULT_FROM_EMAIL: localhost@localhost
+      CONTACT_EMAIL: 'PhysioNet Contact <contact@dev.physionet.org>'
+      SERVER_EMAIL: 'PhysioNet System <root@dev.physionet.org>'
+      ADMINS_NAME: PhysioNet Technical
+      ADMINS_MAIL: technical@dev.physionet.org
+      OCRID_REDIRECT_URI: http://127.0.0.1:8000/authorcid
+      MEDIA_ROOT: /code/media
       DJANGO_SETTINGS_MODULE: physionet.settings.development.pgsql
     defaults:
       run:
