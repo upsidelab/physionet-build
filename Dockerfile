@@ -1,14 +1,18 @@
-FROM python:3.9
+FROM python:3.9-slim
 
 RUN apt-get update -y \
     && apt-get upgrade -y \
-    && apt-get install postgresql-client -y --no-install-recommends \
+    && apt-get install build-essential postgresql-client zip -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
+RUN pip install poetry \
+    && rm -rf /root/.cache/pip
 
-COPY . /code
-RUN chmod +x /code/wait-for-it.sh
 WORKDIR /code
+COPY pyproject.toml poetry.lock .
 
-RUN pip install poetry
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-root
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-root \
+    && rm -rf /root/.cache/pypoetry /root/.cache/pip
+
+COPY . .
+RUN chmod +x /code/wait-for-it.sh
