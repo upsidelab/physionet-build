@@ -8,6 +8,7 @@ services:
       - db
     environment:
       - DJANGO_SETTINGS_MODULE=physionet.settings.settings
+      - ENVIRONMENT=development
       - SECRET_KEY=asdf
       - ALLOWED_HOSTS=localhost
       - DB_USER=physionet
@@ -24,6 +25,7 @@ services:
       - ADMINS_MAIL=technical@dev.physionet.org
       - OCRID_REDIRECT_URI=http://127.0.0.1:8000/authorcid
       - MEDIA_ROOT=/code/media
+      - STATIC_ROOT=/data/pn-static
     stdin_open: true
     tty: true
     command: bash -c "./wait-for-it.sh db:5432 && poetry run /code/physionet-django/manage.py migrate && poetry run /code/physionet-django/manage.py runserver 0.0.0.0:8000"
