@@ -24,6 +24,8 @@ services:
       - ADMINS_NAME=PhysioNet Technical
       - ADMINS_MAIL=technical@dev.physionet.org
       - OCRID_REDIRECT_URI=http://127.0.0.1:8000/authorcid
+      - DATACITE_API_URL=https://api.test.datacite.org/dois
+      - DATACITE_PREFIX=
       - MEDIA_ROOT=/code/media
       - STATIC_ROOT=/data/pn-static
     stdin_open: true

@@ -2,7 +2,7 @@ FROM python:3.9
 
 RUN apt-get update -y \
     && apt-get upgrade -y \
-    && apt-get install postgresql-client -y --no-install-recommends \
+    && apt-get install postgresql-client zip -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . /code
