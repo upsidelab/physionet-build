@@ -44,14 +44,14 @@ DEMO_FILE_ROOT = os.path.join(os.path.abspath(os.path.join(BASE_DIR, os.pardir))
 
 MEDIA_ROOT = config("MEDIA_ROOT", default=str((pathlib.Path(BASE_DIR).parent / 'media').resolve()))
 
-DATACITE_API_URL = 'https://api.datacite.org/dois'
-DATACITE_PREFIX = config('DATACITE_PREFIX', default=False)
-DATACITE_USER = config('DATACITE_USER', default=False)
-DATACITE_PASS = config('DATACITE_PASS', default=False)
+DATACITE_API_URL = config("DATACITE_API_URL", default="https://api.test.datacite.org/dois")
+DATACITE_PREFIX = config('DATACITE_PREFIX', default='')
+DATACITE_USER = config('DATACITE_USER', default='SECRET')
+DATACITE_PASS = config('DATACITE_PASS', default='SECRET')
 
 # Tags for the ORCID API
 ORCID_DOMAIN = 'https://orcid.org'
-ORCID_REDIRECT_URI = config("OCRID_REDIRECT_URI", default='https://physionet.org/authorcid')
+ORCID_REDIRECT_URI = config("ORCID_REDIRECT_URI", default='https://physionet.org/authorcid')
 ORCID_AUTH_URL = 'https://orcid.org/oauth/authorize'
 ORCID_TOKEN_URL = 'https://orcid.org/oauth/token'
 ORCID_CLIENT_ID = config('ORCID_CLIENT_ID', default=False)
