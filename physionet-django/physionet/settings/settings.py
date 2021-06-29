@@ -62,7 +62,7 @@ ORCID_SCOPE = config('ORCID_SCOPE', default=False)
 # corresponding to MEDIA_ROOT. If possible, when serving a file
 # located in MEDIA_ROOT, the response will use an X-Accel-Redirect
 # header so that nginx can serve the file directly.
-MEDIA_X_ACCEL_ALIAS = '/protected'
+MEDIA_X_ACCEL_ALIAS = config('MEDIA_X_ACCEL_ALIAS', default=None)
 
 STATIC_ROOT = config('STATIC_ROOT', default='')
 
