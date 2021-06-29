@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  backend:
+  dev:
     build: .
     ports:
       - "8000:8000"
@@ -12,7 +12,7 @@ services:
       - SECRET_KEY=asdf
       - ALLOWED_HOSTS=localhost
       - DB_USER=physionet
-      - DB_NAME=physionet
+      - DB_NAME=physionet_dev
       - DB_PASSWORD=password
       - DB_HOST=db
       - DEBUG=True
@@ -23,23 +23,72 @@ services:
       - SERVER_EMAIL='PhysioNet System <root@dev.physionet.org>'
       - ADMINS_NAME=PhysioNet Technical
       - ADMINS_MAIL=technical@dev.physionet.org
-      - OCRID_REDIRECT_URI=http://127.0.0.1:8000/authorcid
+      - ORCID_REDIRECT_URI=http://127.0.0.1:8000/authorcid
       - DATACITE_API_URL=https://api.test.datacite.org/dois
       - DATACITE_PREFIX=
-      - MEDIA_ROOT=/code/media
+      - MEDIA_ROOT=/data/pn-media
       - STATIC_ROOT=/data/pn-static
     stdin_open: true
     tty: true
-    command: bash -c "./wait-for-it.sh db:5432 && poetry run /code/physionet-django/manage.py migrate && poetry run /code/physionet-django/manage.py runserver 0.0.0.0:8000"
+    entrypoint: ./dev-entrypoint.sh
+    command: ["/code/physionet-django/manage.py", "runserver", "0.0.0.0:8000"]
     volumes:
-      - .:/code:rw
-  db:
-    image: postgres:13
+      - ./physionet-django:/code/physionet-django:rw
+      - dev_data:/data:rw
+    networks:
+      - dev
+  test:
+    build: .
+    ports:
+      - "8001:8000"
+    depends_on:
+      - db
     environment:
-      - POSTGRES_DB=physionet
+      - DJANGO_SETTINGS_MODULE=physionet.settings.settings
+      - ENVIRONMENT=test
+      - SECRET_KEY=asdf
+      - ALLOWED_HOSTS=localhost
+      - DB_USER=physionet
+      - DB_NAME=physionet_test
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DEBUG=True
+      - SITE_ID=4
+      - EMAIL_HOST=localhost
+      - DEFAULT_FROM_EMAIL=localhost@localhost
+      - CONTACT_EMAIL=PhysioNet Contact <contact@dev.physionet.org>
+      - SERVER_EMAIL='PhysioNet System <root@dev.physionet.org>'
+      - ADMINS_NAME=PhysioNet Technical
+      - ADMINS_MAIL=technical@dev.physionet.org
+      - ORCID_REDIRECT_URI=http://127.0.0.1:8001/authorcid
+      - DATACITE_API_URL=https://api.test.datacite.org/dois
+      - DATACITE_PREFIX=
+      - MEDIA_ROOT=/data/pn-media
+      - STATIC_ROOT=/data/pn-static
+    stdin_open: true
+    tty: true
+    entrypoint: ./dev-entrypoint.sh
+    command: ["/code/physionet-django/manage.py", "runserver", "0.0.0.0:8000"]
+    volumes:
+      - ./physionet-django:/code/physionet-django:rw
+      - test_data:/data:rw
+    networks:
+      - test
+  db:
+    image: postgres:13-alpine
+    environment:
       - POSTGRES_USER=physionet
       - POSTGRES_PASSWORD=password
     volumes:
-    - db_data:/var/lib/postgres/data:rw
+      - db_data:/var/lib/postgres/data:rw
+      - ./init.sh:/docker-entrypoint-initdb.d/init.sh
+    networks:
+      - dev
+      - test
 volumes:
   db_data:
+  dev_data:
+  test_data:
+networks:
+  dev:
+  test:

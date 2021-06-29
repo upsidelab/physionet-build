@@ -15,4 +15,4 @@ RUN poetry config virtualenvs.create false \
     && rm -rf /root/.cache/pypoetry /root/.cache/pip
 
 COPY . .
-RUN chmod +x /code/wait-for-it.sh
+RUN chmod +x /code/wait-for-it.sh /code/dev-entrypoint.sh
