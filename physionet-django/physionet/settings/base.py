@@ -21,14 +21,12 @@ import logging.config
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 ENVIRONMENT = config('ENVIRONMENT', default='production')
 DEBUG = config('DEBUG', default=False, cast=bool)
 SECRET_KEY = config('SECRET_KEY')
-
 
 # Application definition
 
@@ -77,7 +75,7 @@ ROOT_URLCONF = 'physionet.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -135,7 +133,7 @@ MAX_ATTEMPTS = 5
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR,'static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 # Google Storge service account credentials
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(BASE_DIR, 'PhysioNet-Data-credentials.json')
 
@@ -365,15 +363,12 @@ CKEDITOR_CONFIGS = {
 # True if the program is invoked as 'manage.py test'
 RUNNING_TEST_SUITE = (len(sys.argv) > 1 and sys.argv[1] == 'test')
 
-LOGGING_CONFIG = None
-LOGLEVEL = os.environ.get('LOGLEVEL', 'info').upper()
-
 if RUNNING_TEST_SUITE:
     _logfile = open(os.path.join(BASE_DIR, 'test.log'), 'w')
 else:
     _logfile = sys.stderr
 
-logging.config.dictConfig({
+LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {
@@ -382,9 +377,6 @@ logging.config.dictConfig({
         },
     },
     'formatters': {
-        'console': {
-            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-        },
         'simple': {
             'format': '%(levelname)s %(asctime)-15s %(message)s'
         },
@@ -392,7 +384,7 @@ logging.config.dictConfig({
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'console',
+            'formatter': 'simple',
             'stream': _logfile,
         },
         'Custom_Logging': {
@@ -403,7 +395,7 @@ logging.config.dictConfig({
         },
         'verbose_console': {
             'class': 'physionet.log.VerboseStreamHandler',
-            'formatter': 'console',
+            'formatter': 'simple',
             'stream': _logfile,
         },
         'mail_admins': {
@@ -427,9 +419,9 @@ logging.config.dictConfig({
             'level': 'CRITICAL',
             'propagate': False,
         },
-       'django.request': {
+        'django.request': {
             'handlers': ['verbose_console', 'mail_admins'],
-            'level': 'ERROR',
+            'level': 'WARNING',
             'propagate': False,
         },
         'physionet.error': {
@@ -437,7 +429,7 @@ logging.config.dictConfig({
             'level': 'ERROR',
         }
     },
-})
+}
 
 # If this environment variable is set, acquire a shared lock on the
 # named file.  The file descriptor is left open, but is
