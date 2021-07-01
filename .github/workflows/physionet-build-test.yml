@@ -42,7 +42,7 @@ jobs:
       SERVER_EMAIL: 'PhysioNet System <root@dev.physionet.org>'
       ADMINS_NAME: PhysioNet Technical
       ADMINS_MAIL: technical@dev.physionet.org
-      OCRID_REDIRECT_URI: http://127.0.0.1:8000/authorcid
+      ORCID_REDIRECT_URI: http://127.0.0.1:8000/authorcid
     defaults:
       run:
         shell: bash
