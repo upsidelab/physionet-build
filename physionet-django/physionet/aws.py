@@ -27,7 +27,7 @@ def s3_mv_object(bucket_name, path1, path2):
 def s3_mv_folder(bucket_name, path1, path2):
     """
     Move all objects within 'folder' path1 to 'folder' path2.
-    
+
     Aka, copy and delete all objects with prefix path1 to prefix path2.
 
     eg. s3_mv_folder('mybucket', 'a/b', 'A') applied to:
@@ -41,10 +41,10 @@ def s3_mv_folder(bucket_name, path1, path2):
     """
     if path1.endswith('/') or path2.endswith('/'):
         raise ValueError('path1 and path2 must not end with "/"')
-    # Ensure this is only moving items within 'folders'. 
+    # Ensure this is only moving items within 'folders'.
     path1 += '/'
     path2 += '/'
-    
+
     s3 = session.resource('s3')
 
     bucket = s3.Bucket(bucket_name)
