@@ -1876,11 +1876,7 @@ class PublishedProject(Metadata, SubmissionInfo):
     display_publications = models.BooleanField(default=True)
     # Where all the published project files are kept, depending on access.
     PROTECTED_FILE_ROOT = os.path.join(settings.MEDIA_ROOT, 'published-projects')
-    # Workaround for development
-    if 'development' in os.environ['DJANGO_SETTINGS_MODULE']:
-        PUBLIC_FILE_ROOT = os.path.join(settings.STATICFILES_DIRS[0], 'published-projects')
-    else:
-        PUBLIC_FILE_ROOT = os.path.join(settings.STATIC_ROOT, 'published-projects')
+    PUBLIC_FILE_ROOT = os.path.join(settings.STATIC_ROOT, 'published-projects')
 
     SPECIAL_FILES = {
         'FILES.txt':'List of all files',

@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
-
+DEBUG = config("DEBUG", default=False, cast=bool)
 SECRET_KEY = config('SECRET_KEY')
 
 
@@ -54,6 +54,9 @@ INSTALLED_APPS = [
     'lightwave',
 ]
 
+if DEBUG:
+    INSTALLED_APPS += ['debug_toolbar']
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'physionet.middleware.maintenance.SystemMaintenanceMiddleware',
@@ -64,6 +67,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if DEBUG:
+    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 
 CRON_CLASSES = [
     "physionet.cron.RemoveUnverifiedEmails",
