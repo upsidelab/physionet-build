@@ -35,7 +35,9 @@ jobs:
           virtualenv -p python3.7 $VIRTUAL_ENV
           echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
           source $VIRTUAL_ENV/bin/activate
-          pip3 install -r requirements.txt
+          pip3 install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-root
       - name: install libseccomp-dev for syscall filtering
         run: |
           apt-get install libseccomp-dev
@@ -57,9 +59,9 @@ jobs:
           wget https://github.com/bemoody/lightwave/archive/bfe908a7f53434df61fd2444bf8c235e3e6226fc.tar.gz -O lightwave.tar.gz
           tar -xf lightwave.tar.gz
           (cd lightwave-* && make CGIDIR=/usr/local/bin sandboxed-server)
-          wget https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-linux64.tar.gz
       - name: install web driver - geckodriver
         run: |
+          wget https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-linux64.tar.gz
           mkdir geckodriver
           tar -xf geckodriver-v0.23.0-linux64.tar.gz -C geckodriver
           echo "$PWD/geckodriver" >> $GITHUB_PATH
