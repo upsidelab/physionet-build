@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  test:
+    build: ..
+    depends_on:
+      - db
+    environment:
+      DJANGO_SETTINGS_MODULE: physionet.settings.settings
+      ENVIRONMENT: development
+      SECRET_KEY: asdf
+      ALLOWED_HOSTS: localhost
+      DB_USER: physionet
+      DB_PASSWORD: password
+      DB_NAME: physionet_test
+      DB_HOST: db
+      DEBUG: 'true'
+      SITE_ID: 4
+      EMAIL_HOST: localhost
+      DEFAULT_FROM_EMAIL: localhost@localhost
+      CONTACT_EMAIL: PhysioNet Contact <contact@dev.physionet.org>
+      SERVER_EMAIL: 'PhysioNet System <root@dev.physionet.org>'
+      ADMINS_NAME: PhysioNet Technical
+      ADMINS_MAIL: technical@dev.physionet.org
+      ORCID_REDIRECT_URI: http://127.0.0.1:8000/authorcid
+      DATACITE_API_URL: https://api.test.datacite.org/dois
+      DATACITE_PREFIX:
+      MEDIA_ROOT: /data/pn-media
+      STATIC_ROOT: /data/pn-static
+    entrypoint: ./docker/test-entrypoint.sh
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: physionet
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: physionet_test
