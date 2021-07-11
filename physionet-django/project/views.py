@@ -1,6 +1,4 @@
 import os
-import pdb
-import re
 import logging
 from urllib.parse import quote_plus
 
@@ -810,28 +808,6 @@ def get_file_forms(project, subdir, display_dirs):
     return (upload_files_form, create_folder_form, rename_item_form,
             move_items_form, delete_items_form)
 
-def get_project_file_info(project, subdir):
-    """
-    Get the files, directories, and breadcrumb info for a project's
-    subdirectory.
-    Helper function for generating the files panel
-    """
-    display_files = display_dirs = ()
-    try:
-        display_files, display_dirs = project.get_directory_content(
-            subdir=subdir)
-        file_error = None
-    except (FileNotFoundError, ValidationError):
-        file_error = 'Directory not found'
-    except OSError:
-        file_error = 'Unable to read directory'
-
-    # Breadcrumbs
-    dir_breadcrumbs = utility.get_dir_breadcrumbs(subdir)
-    parent_dir = os.path.split(subdir)[0]
-
-    return display_files, display_dirs, dir_breadcrumbs, parent_dir, file_error
-
 
 def get_project_file_warning(display_files, display_dirs, subdir):
     """
@@ -883,6 +859,9 @@ def project_files_panel(request, project_slug, **kwargs):
     Return the file panel for the project, along with the forms used to
     manipulate them. Called via ajax to navigate directories.
     """
+    if not request.is_ajax():
+        return redirect('project_files', project_slug=project_slug)
+
     project, is_submitting = (kwargs[k] for k in ('project', 'is_submitting'))
     is_editor = request.user == project.editor
     subdir = request.GET['subdir']
@@ -894,11 +873,8 @@ def project_files_panel(request, project_slug, **kwargs):
     else:
         files_editable = False
 
-    if not request.is_ajax():
-        return redirect('project_files', project_slug=project_slug)
-
     (display_files, display_dirs, dir_breadcrumbs, parent_dir,
-     file_error) = get_project_file_info(project=project, subdir=subdir)
+        file_error) = project.get_file_info(subdir=subdir)
     file_warning = get_project_file_warning(display_files, display_dirs,
                                               subdir)
 
@@ -1021,7 +997,7 @@ def project_files(request, project_slug, subdir='', **kwargs):
     storage_request_form = forms.StorageRequestForm(project=project) if (not storage_request and is_submitting) else None
 
     (display_files, display_dirs, dir_breadcrumbs, parent_dir,
-     file_error) = get_project_file_info(project=project, subdir=subdir)
+        file_error) = project.get_file_info(subdir=subdir)
     file_warning = get_project_file_warning(display_files, display_dirs,
                                               subdir)
 
@@ -1093,7 +1069,7 @@ def preview_files_panel(request, project_slug, **kwargs):
         return redirect('project_preview', project_slug=project_slug)
 
     (display_files, display_dirs, dir_breadcrumbs, parent_dir,
-     file_error) = get_project_file_info(project=project, subdir=subdir)
+        file_error) = project.get_file_info(subdir=subdir)
     files_panel_url = reverse('preview_files_panel', args=(project.slug,))
     file_warning = get_project_file_warning(display_files, display_dirs,
                                               subdir)
@@ -1135,7 +1111,7 @@ def project_preview(request, project_slug, subdir='', **kwargs):
             messages.error(request, e)
 
     (display_files, display_dirs, dir_breadcrumbs, parent_dir,
-     file_error) = get_project_file_info(project=project, subdir=subdir)
+        file_error) = project.get_file_info(subdir=subdir)
     files_panel_url = reverse('preview_files_panel', args=(project.slug,))
     file_warning = get_project_file_warning(display_files, display_dirs,
                                               subdir)
@@ -1150,7 +1126,7 @@ def project_preview(request, project_slug, subdir='', **kwargs):
         'publication':publication, 'topics':topics, 'languages':languages,
         'passes_checks':passes_checks, 'dir_breadcrumbs':dir_breadcrumbs,
         'files_panel_url':files_panel_url, 'citations': citations,
-        'subdir':subdir, 'parent_dir':parent_dir, 'file_error':file_error, 
+        'subdir':subdir, 'parent_dir':parent_dir, 'file_error':file_error,
         'file_warning':file_warning, 'platform_citations': platform_citations,
         'parent_projects':parent_projects, 'has_passphrase':has_passphrase})
 
@@ -1372,7 +1348,7 @@ def published_files_panel(request, project_slug, version):
 
     if project.has_access(user) or has_passphrase:
         (display_files, display_dirs, dir_breadcrumbs, parent_dir,
-         file_error) = get_project_file_info(project=project, subdir=subdir)
+            file_error) = project.get_file_info(subdir=subdir)
 
         files_panel_url = reverse('published_files_panel',
             args=(project.slug, project.version))
@@ -1586,15 +1562,15 @@ def published_project(request, project_slug, version, subdir=''):
                'references': references, 'publication': publication,
                'topics': topics, 'languages': languages, 'contact': contact,
                'has_access': has_access, 'current_site': current_site,
-               'url_prefix': url_prefix, 'citations': citations, 'news': news, 
+               'url_prefix': url_prefix, 'citations': citations, 'news': news,
                'all_project_versions': all_project_versions,
                'parent_projects':parent_projects, 'data_access':data_access,
-               'messages':messages.get_messages(request), 
+               'messages':messages.get_messages(request),
                'platform_citations': platform_citations}
     # The file and directory contents
     if has_access:
         (display_files, display_dirs, dir_breadcrumbs, parent_dir,
-         file_error) = get_project_file_info(project=project, subdir=subdir)
+            file_error) = project.get_file_info(subdir=subdir)
         if file_error:
             status = 404
         else:

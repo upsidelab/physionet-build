@@ -4,9 +4,7 @@ from html import unescape
 import os
 import shutil
 import uuid
-import pdb
 import pytz
-import stat
 import logging
 from distutils.version import StrictVersion
 
@@ -19,7 +17,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.hashers import check_password, make_password
-from django.db import models, DatabaseError, transaction
+from django.db import models, transaction
 from django.forms.utils import ErrorList
 from django.urls import reverse
 from django.utils import timezone
@@ -28,6 +26,7 @@ from django.utils.text import slugify
 from background_task import background
 from django.utils.crypto import get_random_string
 
+from project.modelfiles import ProjectWithFiles
 from project.quota import DemoQuotaManager
 from project.utility import (get_tree_size, get_file_info, get_directory_info,
                              list_items, StorageInfo, list_files,
@@ -842,32 +841,6 @@ class Metadata(models.Model):
         with open(fname, 'x') as outfile:
             outfile.write(self.license_content(fmt='text'))
 
-    def get_directory_content(self, subdir=''):
-        """
-        Return information for displaying files and directories from
-        the project's file root.
-        """
-        # Get folder to inspect if valid
-        inspect_dir = self.get_inspect_dir(subdir)
-        file_names, dir_names = list_items(inspect_dir)
-        display_files, display_dirs = [], []
-
-        # Files require desciptive info and download links
-        for file in file_names:
-            file_info = get_file_info(os.path.join(inspect_dir, file))
-            file_info.url = self.file_display_url(subdir=subdir, file=file)
-            file_info.raw_url = self.file_url(subdir=subdir, file=file)
-            file_info.download_url = file_info.raw_url + '?download'
-            display_files.append(file_info)
-
-        # Directories require links
-        for dir_name in dir_names:
-            dir_info = get_directory_info(os.path.join(inspect_dir, dir_name))
-            dir_info.full_subdir = os.path.join(subdir, dir_name)
-            display_dirs.append(dir_info)
-
-        return display_files, display_dirs
-
     def schema_org_resource_type(self):
         """
         Return a valid https://schema.org resource type.
@@ -1214,7 +1187,6 @@ class UnpublishedProject(models.Model):
         else:
             raise Exception('Not a new version')
 
-
     def remove(self):
         """
         Delete this project's file content and the object
@@ -1329,7 +1301,7 @@ class UnpublishedProject(models.Model):
             return super().save(update_fields=fields, **kwargs)
 
 
-class ArchivedProject(Metadata, UnpublishedProject, SubmissionInfo):
+class ArchivedProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionInfo):
     """
     An archived project. Created when (maps to archive_reason):
     1. A user chooses to 'delete' their ActiveProject.
@@ -1347,7 +1319,7 @@ class ArchivedProject(Metadata, UnpublishedProject, SubmissionInfo):
         return ('{0} v{1}'.format(self.title, self.version))
 
 
-class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
+class ActiveProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionInfo):
     """
     The project used for submitting
 
@@ -1848,7 +1820,7 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
             raise
 
 
-class PublishedProject(Metadata, SubmissionInfo):
+class PublishedProject(Metadata, ProjectWithFiles, SubmissionInfo):
     """
     A published project. Immutable snapshot.
 
