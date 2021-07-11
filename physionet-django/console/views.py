@@ -1,5 +1,3 @@
-import re
-import pdb
 import logging
 import os
 import csv
@@ -37,8 +35,7 @@ from project.models import (ActiveProject, ArchivedProject, StorageRequest,
     exists_project_slug, GCP, DUASignature, DataAccess)
 from project.utility import readable_size
 from project.validators import MAX_PROJECT_SLUG_LENGTH
-from project.views import (get_file_forms, get_project_file_info,
-    process_files_post)
+from project.views import get_file_forms, process_files_post
 from user.models import (User, CredentialApplication, LegacyCredential,
                          AssociatedEmail, CredentialReview)
 from console import forms, utility
@@ -414,7 +411,7 @@ def copyedit_submission(request, project_slug, *args, **kwargs):
     authors, author_emails, storage_info, edit_logs, copyedit_logs, latest_version = project.info_card()
 
     (display_files, display_dirs, dir_breadcrumbs, _,
-     file_error) = get_project_file_info(project=project, subdir=subdir)
+        file_error) = project.get_file_info(subdir=subdir)
 
     (upload_files_form, create_folder_form, rename_item_form,
      move_items_form, delete_items_form) = get_file_forms(
@@ -826,7 +823,7 @@ def manage_published_project(request, project_slug, version):
          'storage_info': storage_info, 'edit_logs': edit_logs,
          'copyedit_logs': copyedit_logs, 'latest_version': latest_version,
          'published': True, 'topic_form': topic_form,
-         'deprecate_form': deprecate_form, 'has_credentials': has_credentials, 
+         'deprecate_form': deprecate_form, 'has_credentials': has_credentials,
          'data_access_form': data_access_form, 'data_access': data_access,
          'rw_tasks': rw_tasks, 'ro_tasks': ro_tasks,
          'anonymous_url': anonymous_url, 'passphrase': passphrase,
@@ -952,7 +949,7 @@ def users_search(request, group):
     Search user list.
 
     Args:
-        group (str): group of users to filter search. Either 'all' for all users or 
+        group (str): group of users to filter search. Either 'all' for all users or
             'inactive' to filter to inactive users only.
     """
 
@@ -1121,8 +1118,8 @@ def complete_list_credentialed_people(request):
                 item.email, item.country, datetime.strptime(item.mimic_approval_date, '%m/%d/%Y'),
                 None, item.info])
     for item in new_cred_user:
-        credentialed_people.append([item.first_names, item.last_name, 
-            item.user.email, item.country, item.decision_datetime.replace(tzinfo=None), 
+        credentialed_people.append([item.first_names, item.last_name,
+            item.user.email, item.country, item.decision_datetime.replace(tzinfo=None),
             item.decision_datetime.replace(tzinfo=None), item.research_summary])
 
     credentialed_people = sorted(credentialed_people, key = lambda x: x[4])
@@ -1582,7 +1579,7 @@ def news_console(request):
     """
     news_items = News.objects.all().order_by('-publish_datetime')
     news_items = paginate(request, news_items, 50)
-    return render(request, 'console/news_console.html', 
+    return render(request, 'console/news_console.html',
         {'news_items': news_items, 'news_nav': True})
 
 
@@ -1854,8 +1851,8 @@ def download_credentialed_users(request):
     # Create the HttpResponse object with the appropriate CSV header.
     project_access = DUASignature.objects.filter(project__access_policy = 2)
     added = []
-    dua_info_csv = [['First name', 'Last name', 'E-mail', 'Institution', 'Country', 
-    'MIMIC approval date', 'eICU approval date', 
+    dua_info_csv = [['First name', 'Last name', 'E-mail', 'Institution', 'Country',
+    'MIMIC approval date', 'eICU approval date',
     'General research area for which the data will be used']]
     for person in project_access:
         application = person.user.credential_applications.last()

@@ -4,9 +4,7 @@ from html import unescape
 import os
 import shutil
 import uuid
-import pdb
 import pytz
-import stat
 import logging
 from distutils.version import StrictVersion
 
@@ -16,10 +14,10 @@ from html2text import html2text
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.hashers import check_password, make_password
-from django.db import models, DatabaseError, transaction
+from django.db import models, transaction
 from django.forms.utils import ErrorList
 from django.urls import reverse
 from django.utils import timezone
@@ -30,9 +28,9 @@ from django.utils.crypto import get_random_string
 
 from project.quota import DemoQuotaManager
 from project.utility import (get_tree_size, get_file_info, get_directory_info,
-                             list_items, StorageInfo, list_files,
+                             list_items, StorageInfo, list_files, get_dir_breadcrumbs,
                              clear_directory, LinkFilter)
-from project.validators import (validate_doi, validate_subdir,
+from project.validators import (validate_subdir,
                                 validate_version, validate_slug,
                                 MAX_PROJECT_SLUG_LENGTH,
                                 validate_title, validate_topic)
@@ -842,15 +840,51 @@ class Metadata(models.Model):
         with open(fname, 'x') as outfile:
             outfile.write(self.license_content(fmt='text'))
 
+    def get_file_info(self, subdir):
+        """
+        Get the files, directories, and breadcrumb info for a project's
+        subdirectory.
+        Helper function for generating the files panel
+        """
+        # Sanitize subdir for illegal characters
+        try:
+            validate_subdir(subdir)
+        except ValidationError:
+            return (), (), (), '', ''
+
+        display_files = display_dirs = ()
+
+        if settings.STORAGE_TYPE == 'LOCAL':
+            try:
+                display_files, display_dirs = self.get_directory_content(
+                    subdir=subdir)
+                file_error = None
+            except FileNotFoundError:
+                file_error = 'Directory not found'
+            except OSError:
+                file_error = 'Unable to read directory'
+        elif settings.STORAGE_TYPE == 'S3':
+            pass
+
+        # Breadcrumbs
+        dir_breadcrumbs = get_dir_breadcrumbs(subdir)
+        parent_dir = os.path.split(subdir)[0]
+
+        return display_files, display_dirs, dir_breadcrumbs, parent_dir, file_error
+
     def get_directory_content(self, subdir=''):
         """
         Return information for displaying files and directories from
         the project's file root.
         """
-        # Get folder to inspect if valid
-        inspect_dir = self.get_inspect_dir(subdir)
-        file_names, dir_names = list_items(inspect_dir)
         display_files, display_dirs = [], []
+
+        if settings.STORAGE_TYPE == 'LOCAL':
+            # Get folder to inspect if valid
+            inspect_dir = self.get_inspect_dir(subdir)
+            file_names, dir_names = list_items(inspect_dir)
+        elif settings.STORAGE_TYPE == 'S3':
+            pass
 
         # Files require desciptive info and download links
         for file in file_names:
@@ -1442,8 +1476,6 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
         Return the folder to inspect if valid. subdir joined onto
         the file root of this project.
         """
-        # Sanitize subdir for illegal characters
-        validate_subdir(subdir)
         # Folder must be a subfolder of the file root
         # (but not necessarily exist or be a directory)
         inspect_dir = os.path.join(self.file_root(), subdir)
@@ -1860,7 +1892,6 @@ class PublishedProject(Metadata, SubmissionInfo):
     publish_datetime = models.DateTimeField(auto_now_add=True)
     has_other_versions = models.BooleanField(default=False)
     deprecated_files = models.BooleanField(default=False)
-    # doi = models.CharField(max_length=50, unique=True, validators=[validate_doi])
     # Temporary workaround
     doi = models.CharField(max_length=50, blank=True, null=True)
     slug = models.SlugField(max_length=MAX_PROJECT_SLUG_LENGTH, db_index=True,
