@@ -1,9 +1,8 @@
 from collections import OrderedDict
 import os
-import pdb
-import re
 
 from django import forms
+from django.conf import settings
 from django.forms.utils import ErrorList
 from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.db.models.functions import Lower
@@ -339,8 +338,11 @@ class CreateProjectForm(forms.ModelForm):
             display_order=1, corresponding_email=self.user.get_primary_email(),
             is_submitting=True, is_corresponding=True)
         author.import_profile_info()
-        # Create file directory
-        os.mkdir(project.file_root())
+
+        if settings.STORAGE_TYPE == 'LOCAL':
+            # Create file directory
+            os.mkdir(project.file_root())
+
         return project
 
 

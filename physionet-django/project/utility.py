@@ -4,9 +4,7 @@ import errno
 import html.parser
 import os
 import shutil
-import pdb
 import urllib.parse
-import uuid
 import logging
 import re
 import requests
@@ -15,8 +13,8 @@ import json
 from django.contrib import auth, messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.conf import settings
-from django.core.exceptions import (PermissionDenied, ValidationError)
-from django.http import HttpResponse, Http404
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
 from django.utils.crypto import constant_time_compare
 from googleapiclient.errors import HttpError
 
