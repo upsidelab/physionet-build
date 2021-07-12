@@ -54,7 +54,7 @@ urlpatterns = [
         name='project_files'),
     path('<project_slug>/files/<path:subdir>/', views.project_files,
         name='project_files'),
-    re_path('^(?P<project_slug>\w+)/files/(?P<file_name>.+)$',
+    re_path('^(?P<project_slug>\w+)/files/(?P<file_path>.+)$',
         views.serve_active_project_file, name='serve_active_project_file'),
     path('<project_slug>/project-files-panel/', views.project_files_panel,
         name='project_files_panel'),
@@ -66,7 +66,7 @@ urlpatterns = [
         name='project_preview'),
     path('<project_slug>/preview/<path:subdir>/', views.project_preview,
         name='project_preview_subdir'),
-    path('<project_slug>/preview/<path:file_name>',
+    path('<project_slug>/preview/<path:file_path>',
         views.display_active_project_file, name='display_active_project_file'),
     path('<project_slug>/preview-files-panel/', views.preview_files_panel,
         name='preview_files_panel'),
@@ -82,7 +82,7 @@ urlpatterns = [
         views.published_project_request_access,
         name='published_project_request_access'),
 
-    re_path('^(?P<project_slug>\w+)/download/(?P<full_file_name>.*)$',
+    re_path('^(?P<project_slug>\w+)/download/(?P<file_path>.*)$',
         views.serve_active_project_file_editor,
         name='serve_active_project_file_editor'),
 ]

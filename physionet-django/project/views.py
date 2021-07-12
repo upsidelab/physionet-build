@@ -1,7 +1,7 @@
 import os
 import logging
-from urllib.parse import quote_plus
 
+from dal import autocomplete
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -13,12 +13,9 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import (ObjectDoesNotExist, PermissionDenied,
     ValidationError)
 from django.db import transaction
-from django.forms import (formset_factory, inlineformset_factory,
-    modelformset_factory)
-from django.http import HttpResponse, Http404,JsonResponse, HttpResponseRedirect
-from django.http import HttpResponseForbidden
+from django.forms import inlineformset_factory, modelformset_factory
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.template import loader
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
@@ -27,8 +24,7 @@ from project.fileviews import display_project_file
 from project import forms
 from project.models import (Affiliation, Author, AuthorInvitation, License,
                             ActiveProject, PublishedProject, StorageRequest, Reference, DataAccess,
-                            ArchivedProject, ProgrammingLanguage, Topic, Contact, Publication,
-                            PublishedAuthor, EditLog, CopyeditLog, DUASignature, CoreProject, GCP,
+                            ArchivedProject, Topic, Publication, PublishedAuthor, DUASignature,
                             AnonymousAccess, DataAccessRequest, DataAccessRequestReviewer)
 from project import utility
 from project.validators import validate_filename
@@ -36,12 +32,10 @@ import notification.utility as notification
 from physionet.forms import set_saved_fields_cookie
 from physionet.middleware.maintenance import ServiceUnavailable
 from physionet.utility import serve_file
-from user.forms import ProfileForm, AssociatedEmailChoiceForm
+from user.forms import AssociatedEmailChoiceForm
 from user.models import User, CloudInformation, CredentialApplication, LegacyCredential
 
-from dal import autocomplete
 
-from ast import literal_eval
 
 LOGGER = logging.getLogger(__name__)
 
@@ -1023,12 +1017,20 @@ def project_files(request, project_slug, subdir='', **kwargs):
 
 
 @project_auth(auth_mode=3)
-def serve_active_project_file(request, project_slug, file_name, **kwargs):
+def serve_active_project_file(request, project_slug, file_path, **kwargs):
     """
-    Serve a file in an active project. file_name is file path relative
-    to the project's file root.
+    Serve a file in an active project.
+
+    file_path is relative to the project's file root.
     """
-    file_path = os.path.join(kwargs['project'].file_root(), file_name)
+    project = kwargs['project']
+
+    try:
+        project.validate_project_path(relative_path=file_path)
+    except ValidationError:
+        raise Http404('Invalid file')
+
+    abs_path = os.path.join(kwargs['project'].file_root(), file_path)
     try:
         attach = ('download' in request.GET)
 
@@ -1037,23 +1039,23 @@ def serve_active_project_file(request, project_slug, file_name, **kwargs):
         # https://bugs.chromium.org/p/chromium/issues/detail?id=271452
         # Until this is fixed, disable CSP sandbox for PDF files when
         # viewed by the authors.
-        if file_path.endswith('.pdf') and kwargs['is_author']:
+        if abs_path.endswith('.pdf') and kwargs['is_author']:
             sandbox = False
         else:
             sandbox = True
 
-        return serve_file(file_path, attach=attach, sandbox=sandbox)
+        return serve_file(abs_path, attach=attach, sandbox=sandbox)
     except IsADirectoryError:
         return redirect(request.path + '/')
 
 
 @project_auth(auth_mode=3)
-def display_active_project_file(request, project_slug, file_name, **kwargs):
+def display_active_project_file(request, project_slug, file_path, **kwargs):
     """
     Display a file in an active project. file_name is file path relative
     to the project's file root.
     """
-    return display_project_file(request, kwargs['project'], file_name)
+    return display_project_file(request, kwargs['project'], file_path)
 
 
 @project_auth(auth_mode=3)
@@ -1361,10 +1363,9 @@ def published_files_panel(request, project_slug, version):
     else:
         raise Http404()
 
-def serve_active_project_file_editor(request, project_slug, full_file_name):
+def serve_active_project_file_editor(request, project_slug, file_path):
     """
-    Serve a file or subdirectory of a published project.
-    Works for open and protected. Not needed for open.
+    Serve a file or subdirectory of an active project. Used for editors.
 
     """
     utility.check_http_auth(request)
@@ -1373,14 +1374,19 @@ def serve_active_project_file_editor(request, project_slug, full_file_name):
     except ObjectDoesNotExist:
         raise Http404()
 
+    try:
+        project.validate_project_path(relative_path=file_path)
+    except ValidationError:
+        raise Http404('Invalid file')
+
     user = request.user
 
     if user.is_authenticated and (project.authors.filter(user=user) or
         user == project.editor or user.is_admin):
-        file_path = os.path.join(project.file_root(), full_file_name)
+        abs_path = os.path.join(project.file_root(), file_path)
         try:
             attach = ('download' in request.GET)
-            return serve_file(file_path, attach=attach, allow_directory=True)
+            return serve_file(abs_path, attach=attach, allow_directory=True)
         except IsADirectoryError:
             return redirect(request.path + '/')
         except (NotADirectoryError, FileNotFoundError):
@@ -1389,10 +1395,12 @@ def serve_active_project_file_editor(request, project_slug, full_file_name):
     return utility.require_http_auth(request)
 
 def serve_published_project_file(request, project_slug, version,
-        full_file_name):
+        file_path):
     """
     Serve a file or subdirectory of a published project.
     Works for open and protected. Not needed for open.
+
+    file_path is relative to the project's file root.
 
     """
     utility.check_http_auth(request)
@@ -1402,6 +1410,11 @@ def serve_published_project_file(request, project_slug, version,
     except ObjectDoesNotExist:
         raise Http404()
 
+    try:
+        project.validate_project_path(relative_path=file_path)
+    except ValidationError:
+        raise Http404('Invalid file')
+
     user = request.user
 
     # Anonymous access authentication
@@ -1409,7 +1422,7 @@ def serve_published_project_file(request, project_slug, version,
     has_passphrase = project.get_anonymous_url() == an_url
 
     if project.has_access(user) or has_passphrase:
-        file_path = os.path.join(project.file_root(), full_file_name)
+        abs_path = os.path.join(project.file_root(), file_path)
         try:
             attach = ('download' in request.GET)
 
@@ -1418,12 +1431,12 @@ def serve_published_project_file(request, project_slug, version,
             # https://bugs.chromium.org/p/chromium/issues/detail?id=271452
             # Until this is fixed, disable CSP sandbox for published
             # PDF files.
-            if file_path.endswith('.pdf'):
+            if abs_path.endswith('.pdf'):
                 sandbox = False
             else:
                 sandbox = True
 
-            return serve_file(file_path, attach=attach, allow_directory=True,
+            return serve_file(abs_path, attach=attach, allow_directory=True,
                               sandbox=sandbox)
         except IsADirectoryError:
             return redirect(request.path + '/')
@@ -1433,11 +1446,11 @@ def serve_published_project_file(request, project_slug, version,
     return utility.require_http_auth(request)
 
 
-def display_published_project_file(request, project_slug, version,
-                                   full_file_name):
+def display_published_project_file(request, project_slug, version, file_path):
     """
-    Display a file in a published project. full_file_name is the file
-    path relative to the project's file root.
+    Display a file in a published project.
+
+    file_path is relative to the project's file root.
     """
     try:
         project = PublishedProject.objects.get(slug=project_slug,
@@ -1452,11 +1465,11 @@ def display_published_project_file(request, project_slug, version,
     has_passphrase = project.get_anonymous_url() == an_url
 
     if project.has_access(user) or has_passphrase:
-        return display_project_file(request, project, full_file_name)
+        return display_project_file(request, project, file_path)
 
     # Display error message: "you must [be a credentialed user and]
     # sign the data use agreement"
-    breadcrumbs = utility.get_dir_breadcrumbs(full_file_name, directory=False)
+    breadcrumbs = utility.get_dir_breadcrumbs(file_path, directory=False)
     context = {
         'project': project,
         'breadcrumbs': breadcrumbs,
