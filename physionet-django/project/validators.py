@@ -71,11 +71,25 @@ def validate_doi(value):
         raise ValidationError('Invalid DOI: %(doi)s', params={'doi': value})
 
 
-def validate_subdir(value):
+def validate_relative_path(value):
     """
-    Validate a subdirectory used to explore a project's files.
+    Validate a relative path used to serve and explore a project's files.
+
     Only letters, numbers, dashes, underscores, dots, and / allowed,
     or empty. No consecutive dots or fwd slashes.
+
+    Valid examples:
+    - item1
+    - dir1/
+    - dir1/dir2
+    - dir1/dir2/
+    - dir1/item.txt
+
+    Invalid examples:
+    - /dir1
+    - ../dir1
+    - dir1/*
+
     """
     if not re.fullmatch(r'[\w\-\./]*', value) or '..' in value or value.startswith('/') or '//' in value:
         raise ValidationError('Invalid path')

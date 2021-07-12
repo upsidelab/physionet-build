@@ -62,7 +62,7 @@ class ActiveProjectFilesForm(forms.Form):
     """
     # The working subdirectory relative to the project root
     subdir = forms.CharField(widget=forms.HiddenInput(), required=False,
-                             validators=[validators.validate_subdir])
+                             validators=[validators.validate_relative_path])
 
     def __init__(self, project, *args, **kwargs):
         super(ActiveProjectFilesForm, self).__init__(*args, **kwargs)
