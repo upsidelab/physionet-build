@@ -28,11 +28,9 @@ from django.utils.crypto import get_random_string
 
 from project.modelfiles import ProjectWithFiles
 from project.quota import DemoQuotaManager
-from project.utility import (get_tree_size, get_file_info, get_directory_info,
-                             list_items, StorageInfo, list_files,
+from project.utility import (get_tree_size, StorageInfo,
                              clear_directory, LinkFilter)
-from project.validators import (validate_doi, validate_subdir,
-                                validate_version, validate_slug,
+from project.validators import (validate_version, validate_slug,
                                 MAX_PROJECT_SLUG_LENGTH,
                                 validate_title, validate_topic)
 from user.validators import validate_affiliation
@@ -1409,21 +1407,6 @@ class ActiveProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionIn
         """
         return self.core_project.storage_allowance
 
-    def get_inspect_dir(self, subdir):
-        """
-        Return the folder to inspect if valid. subdir joined onto
-        the file root of this project.
-        """
-        # Sanitize subdir for illegal characters
-        validate_subdir(subdir)
-        # Folder must be a subfolder of the file root
-        # (but not necessarily exist or be a directory)
-        inspect_dir = os.path.join(self.file_root(), subdir)
-        if inspect_dir.startswith(self.file_root()):
-            return inspect_dir
-        else:
-            raise Exception('Invalid directory request')
-
     def file_url(self, subdir, file):
         """
         Url of a file to download in this project
@@ -1987,21 +1970,6 @@ class PublishedProject(Metadata, ProjectWithFiles, SubmissionInfo):
         self.save()
         if delete_files:
             self.remove_files()
-
-    def get_inspect_dir(self, subdir):
-        """
-        Return the folder to inspect if valid. subdir joined onto the
-        main file root of this project.
-        """
-        # Sanitize subdir for illegal characters
-        validate_subdir(subdir)
-        # Folder must be a subfolder of the file root
-        # (but not necessarily exist or be a directory)
-        inspect_dir = os.path.join(self.file_root(), subdir)
-        if inspect_dir.startswith(self.file_root()):
-            return inspect_dir
-        else:
-            raise Exception('Invalid directory request')
 
     def file_url(self, subdir, file):
         """
