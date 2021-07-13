@@ -26,10 +26,9 @@ from django.utils.text import slugify
 from background_task import background
 from django.utils.crypto import get_random_string
 
-from project.modelfiles import ProjectWithFiles
+from project.modelfiles import ProjectFiles, ActiveProjectFiles, PublishedProjectFiles
 from project.quota import DemoQuotaManager
-from project.utility import (get_tree_size, StorageInfo,
-                             clear_directory, LinkFilter)
+from project.utility import get_tree_size, StorageInfo, LinkFilter
 from project.validators import (validate_version, validate_slug,
                                 MAX_PROJECT_SLUG_LENGTH,
                                 validate_title, validate_topic)
@@ -1152,12 +1151,6 @@ class UnpublishedProject(models.Model):
     def __str__(self):
         return self.title
 
-    def file_root(self):
-        """
-        Root directory containing the project's files
-        """
-        return os.path.join(self.__class__.FILE_ROOT, self.slug)
-
     def get_storage_info(self, force_calculate=True):
         """
         Return an object containing information about the project's
@@ -1299,7 +1292,7 @@ class UnpublishedProject(models.Model):
             return super().save(update_fields=fields, **kwargs)
 
 
-class ArchivedProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionInfo):
+class ArchivedProject(Metadata, UnpublishedProject, SubmissionInfo):
     """
     An archived project. Created when (maps to archive_reason):
     1. A user chooses to 'delete' their ActiveProject.
@@ -1316,8 +1309,11 @@ class ArchivedProject(Metadata, ProjectWithFiles, UnpublishedProject, Submission
     def __str__(self):
         return ('{0} v{1}'.format(self.title, self.version))
 
+    def file_root(self):
+        return os.path.join(self.__class__.FILE_ROOT, self.slug)
 
-class ActiveProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionInfo):
+
+class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo, ActiveProjectFiles, ProjectFiles):
     """
     The project used for submitting
 
@@ -1407,20 +1403,6 @@ class ActiveProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionIn
         """
         return self.core_project.storage_allowance
 
-    def file_url(self, subdir, file):
-        """
-        Url of a file to download in this project
-        """
-        return reverse('serve_active_project_file',
-            args=(self.slug, os.path.join(subdir, file)))
-
-    def file_display_url(self, subdir, file):
-        """
-        URL of a file to display in this project
-        """
-        return reverse('display_active_project_file',
-            args=(self.slug, os.path.join(subdir, file)))
-
     def under_submission(self):
         """
         Whether the project is under submission
@@ -1494,10 +1476,10 @@ class ActiveProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionIn
 
         # Voluntary delete
         if archive_reason == 1:
-            self.clear_files()
-        else:
-            # Move over files
-            os.rename(self.file_root(), archived_project.file_root())
+            self.remove_files()
+
+        # Move over files
+        os.rename(self.file_root(), archived_project.file_root())
 
         # Copy the ActiveProject timestamp to the ArchivedProject.
         # Since this is an auto_now field, save() doesn't allow
@@ -1672,12 +1654,6 @@ class ActiveProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionIn
             return True
         return False
 
-    def clear_files(self):
-        """
-        Delete the project file directory
-        """
-        shutil.rmtree(self.file_root())
-
     def publish(self, slug=None, make_zip=True, title=None):
         """
         Create a published version of this project and update the
@@ -1803,7 +1779,7 @@ class ActiveProject(Metadata, ProjectWithFiles, UnpublishedProject, SubmissionIn
             raise
 
 
-class PublishedProject(Metadata, ProjectWithFiles, SubmissionInfo):
+class PublishedProject(Metadata, SubmissionInfo, PublishedProjectFiles, ProjectFiles):
     """
     A published project. Immutable snapshot.
 
@@ -1863,11 +1839,7 @@ class PublishedProject(Metadata, ProjectWithFiles, SubmissionInfo):
         else:
             return os.path.join(PublishedProject.PUBLIC_FILE_ROOT, self.slug)
 
-    def file_root(self):
-        """
-        Root directory where the main user uploaded files are located
-        """
-        return os.path.join(self.project_file_root(), self.version)
+
 
     def storage_used(self):
         """
@@ -1952,39 +1924,6 @@ class PublishedProject(Metadata, ProjectWithFiles, SubmissionInfo):
                     outfile.write('{} {}\n'.format(h.hexdigest(), f))
 
         self.set_storage_info()
-
-    def remove_files(self):
-        """
-        Remove files of this project
-        """
-        clear_directory(self.file_root())
-        self.remove_zip()
-        self.set_storage_info()
-
-    def deprecate_files(self, delete_files):
-        """
-        Label the project's files as deprecated. Option of deleting
-        files.
-        """
-        self.deprecated_files = True
-        self.save()
-        if delete_files:
-            self.remove_files()
-
-    def file_url(self, subdir, file):
-        """
-        Url of a file to download in this project
-        """
-        full_file_name = os.path.join(subdir, file)
-        return reverse('serve_published_project_file',
-            args=(self.slug, self.version, full_file_name))
-
-    def file_display_url(self, subdir, file):
-        """
-        URL of a file to display in this project
-        """
-        return reverse('display_published_project_file',
-            args=(self.slug, self.version, os.path.join(subdir, file)))
 
     def has_access(self, user):
         """

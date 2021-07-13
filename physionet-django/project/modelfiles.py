@@ -1,22 +1,28 @@
+
+"""
+Module containing project-related file logic.
+"""
+from abc import abstractmethod
 import os
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.urls import reverse
 
+from physionet.abcmodel import ABCModel
 from project.utility import (list_items, get_dir_breadcrumbs, get_file_info,
     get_directory_info)
+from project.utility import clear_directory
 from project.validators import validate_relative_path
 
 
-class ProjectWithFiles(models.Model):
+class ProjectFiles(ABCModel):
     """
-    Abstract model to be inherited by all three project types.
-
+    Abstract class inherited by ActiveProject and PublishedProject.
     Contains logic for dealing with project files.
-    """
 
-    class Meta:
-        abstract = True
+    Note: Make sure this class is inherited after the ones below due to
+    Python inheritance MRO.
+    """
 
     def get_file_info(self, subdir):
         """
@@ -29,7 +35,7 @@ class ProjectWithFiles(models.Model):
         display_files = display_dirs = dir_breadcrumbs = ()
         parent_dir = file_error = None
 
-        # Sanitize subdir for illegal characters.
+        # Sanitize subdir for illegal subdir path.
         try:
             self.validate_project_path(relative_path=subdir)
         except ValidationError:
@@ -39,7 +45,6 @@ class ProjectWithFiles(models.Model):
         try:
             display_files, display_dirs = self.get_directory_content(
                 subdir=subdir)
-            file_error = None
         except FileNotFoundError:
             file_error = 'Directory not found'
         except OSError:
@@ -86,3 +91,80 @@ class ProjectWithFiles(models.Model):
         # Extra check just in case
         if not os.path.join(self.file_root(), relative_path).startswith(self.file_root()):
             raise ValidationError('Invalid path')
+
+    @abstractmethod
+    def file_root(self):
+        """
+        Root directory containing the project's files
+        """
+        pass
+
+    @abstractmethod
+    def file_url(self, subdir, file):
+        """
+        Url of a file to download in this project
+        """
+        pass
+
+    @abstractmethod
+    def file_display_url(self, subdir, file):
+        """
+        URL of a file to display in this project
+        """
+        pass
+
+    @abstractmethod
+    def remove_files(self):
+        """
+        Remove files of this project
+        """
+        pass
+
+class ActiveProjectFiles:
+    """
+    Class inherited by ActiveProject. Contains logic for dealing with project files.
+    """
+    def file_root(self):
+        return os.path.join(self.__class__.FILE_ROOT, self.slug)
+
+    def file_url(self, subdir, file):
+        return reverse('serve_active_project_file',
+            args=(self.slug, os.path.join(subdir, file)))
+
+    def file_display_url(self, subdir, file):
+        return reverse('display_active_project_file',
+            args=(self.slug, os.path.join(subdir, file)))
+
+    def remove_files(self):
+        clear_directory(self.file_root())
+
+class PublishedProjectFiles:
+    """
+    Class inherited by PublishedProject. Contains logic for dealing with project files.
+    """
+    def file_root(self):
+        return os.path.join(self.project_file_root(), self.version)
+
+    def file_url(self, subdir, file):
+        full_file_name = os.path.join(subdir, file)
+        return reverse('serve_published_project_file',
+            args=(self.slug, self.version, full_file_name))
+
+    def file_display_url(self, subdir, file):
+        return reverse('display_published_project_file',
+            args=(self.slug, self.version, os.path.join(subdir, file)))
+
+    def remove_files(self):
+        clear_directory(self.file_root())
+        self.remove_zip()
+        self.set_storage_info()
+
+    def deprecate_files(self, delete_files):
+        """
+        Label the project's files as deprecated. Option of deleting
+        files.
+        """
+        self.deprecated_files = True
+        self.save()
+        if delete_files:
+            self.remove_files()

@@ -1016,21 +1016,11 @@ def project_files(request, project_slug, subdir='', **kwargs):
         'maintenance_message':maintenance_message})
 
 
-@project_auth(auth_mode=3)
-def serve_active_project_file(request, project_slug, file_path, **kwargs):
+def serve_project_file(project, file_path, attach):
     """
-    Serve a file in an active project.
-
-    file_path is relative to the project's file root.
+    Helper function for views that serve an individual project file
     """
-    project = kwargs['project']
-
-    try:
-        project.validate_project_path(relative_path=file_path)
-    except ValidationError:
-        raise Http404('Invalid file')
-
-    abs_path = os.path.join(kwargs['project'].file_root(), file_path)
+    abs_path = os.path.join(project.file_root(), file_path)
     try:
         attach = ('download' in request.GET)
 
@@ -1047,6 +1037,25 @@ def serve_active_project_file(request, project_slug, file_path, **kwargs):
         return serve_file(abs_path, attach=attach, sandbox=sandbox)
     except IsADirectoryError:
         return redirect(request.path + '/')
+    except (NotADirectoryError, FileNotFoundError):
+        raise Http404()
+
+
+@project_auth(auth_mode=3)
+def serve_active_project_file(request, project_slug, file_path, **kwargs):
+    """
+    Serve a file in an active project.
+
+    file_path is relative to the project's file root.
+    """
+    project = kwargs['project']
+
+    try:
+        project.validate_project_path(relative_path=file_path)
+    except ValidationError:
+        raise Http404()
+
+    # Hmmmmm.... sandbox?
 
 
 @project_auth(auth_mode=3)
@@ -1377,7 +1386,7 @@ def serve_active_project_file_editor(request, project_slug, file_path):
     try:
         project.validate_project_path(relative_path=file_path)
     except ValidationError:
-        raise Http404('Invalid file')
+        raise Http404()
 
     user = request.user
 
@@ -1413,7 +1422,7 @@ def serve_published_project_file(request, project_slug, version,
     try:
         project.validate_project_path(relative_path=file_path)
     except ValidationError:
-        raise Http404('Invalid file')
+        raise Http404()
 
     user = request.user
 
