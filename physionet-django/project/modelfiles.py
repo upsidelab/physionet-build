@@ -7,9 +7,10 @@ import hashlib
 import os
 
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.urls import reverse
 
-from physionet.abcmodel import ABCModel
+from physionet.abcmodel import AbstractModelMeta
 from physionet.utility import sorted_tree_files, zip_dir
 from project.utility import (list_items, get_dir_breadcrumbs, get_file_info,
     get_directory_info)
@@ -17,7 +18,7 @@ from project.utility import clear_directory
 from project.validators import validate_relative_path
 
 
-class ProjectFiles(ABCModel):
+class ProjectFiles(models.Model, metaclass=AbstractModelMeta):
     """
     Abstract class inherited by ActiveProject and PublishedProject.
     Contains logic for dealing with project files.
@@ -25,6 +26,8 @@ class ProjectFiles(ABCModel):
     Note: Make sure this class is inherited after the ones below due to
     Python inheritance MRO.
     """
+    class Meta:
+        abstract = True
 
     def get_file_info(self, subdir):
         """
