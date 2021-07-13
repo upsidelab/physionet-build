@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import hashlib
 from html import unescape
 import os
 import shutil
@@ -34,7 +33,6 @@ from project.validators import (validate_version, validate_slug,
                                 validate_title, validate_topic)
 from user.validators import validate_affiliation
 
-from physionet.utility import (sorted_tree_files, zip_dir)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -1839,8 +1837,6 @@ class PublishedProject(Metadata, SubmissionInfo, PublishedProjectFiles, ProjectF
         else:
             return os.path.join(PublishedProject.PUBLIC_FILE_ROOT, self.slug)
 
-
-
     def storage_used(self):
         """
         Bytes of storage used by main files and compressed file if any
@@ -1863,67 +1859,6 @@ class PublishedProject(Metadata, SubmissionInfo, PublishedProjectFiles, ProjectF
         the project's zipped files
         """
         return '-'.join((slugify(self.title), self.version.replace(' ', '-')))
-
-    def zip_name(self, full=False):
-        """
-        Name of the zip file. Either base name or full path name.
-        """
-        name = '{}.zip'.format(self.slugged_label())
-        if full:
-            name = os.path.join(self.project_file_root(), name)
-        return name
-
-    def make_zip(self):
-        """
-        Make a (new) zip file of the main files.
-        """
-        fname = self.zip_name(full=True)
-        if os.path.isfile(fname):
-            os.remove(fname)
-
-        zip_dir(zip_name=fname, target_dir=self.file_root(),
-            enclosing_folder=self.slugged_label())
-
-        self.compressed_storage_size = os.path.getsize(fname)
-        self.save()
-
-    def remove_zip(self):
-        fname = self.zip_name(full=True)
-        if os.path.isfile(fname):
-            os.remove(fname)
-            self.compressed_storage_size = 0
-            self.save()
-
-    def zip_url(self):
-        """
-        The url to download the zip file from. Only needed for open
-        projects
-        """
-        if self.access_policy:
-            raise Exception('This should not be called by protected projects')
-        else:
-            return os.path.join('published-projects', self.slug, self.zip_name())
-
-    def make_checksum_file(self):
-        """
-        Make the checksums file for the main files
-        """
-        fname = os.path.join(self.file_root(), 'SHA256SUMS.txt')
-        if os.path.isfile(fname):
-            os.remove(fname)
-
-        with open(fname, 'w') as outfile:
-            for f in sorted_tree_files(self.file_root()):
-                if f != 'SHA256SUMS.txt':
-                    h = hashlib.sha256()
-                    with open(os.path.join(self.file_root(), f), 'rb') as fp:
-                        block = fp.read(h.block_size)
-                        while block:
-                            h.update(block)
-                            block = fp.read(h.block_size)
-                    outfile.write('{} {}\n'.format(h.hexdigest(), f))
-
-        self.set_storage_info()
 
     def has_access(self, user):
         """

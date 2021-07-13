@@ -3,12 +3,14 @@
 Module containing project-related file logic.
 """
 from abc import abstractmethod
+import hashlib
 import os
 
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from physionet.abcmodel import ABCModel
+from physionet.utility import sorted_tree_files, zip_dir
 from project.utility import (list_items, get_dir_breadcrumbs, get_file_info,
     get_directory_info)
 from project.utility import clear_directory
@@ -168,3 +170,64 @@ class PublishedProjectFiles:
         self.save()
         if delete_files:
             self.remove_files()
+
+    def zip_name(self, full=False):
+        """
+        Name of the zip file. Either base name or full path name.
+        """
+        name = '{}.zip'.format(self.slugged_label())
+        if full:
+            name = os.path.join(self.project_file_root(), name)
+        return name
+
+    def make_zip(self):
+        """
+        Make a (new) zip file of the main files.
+        """
+        fname = self.zip_name(full=True)
+        if os.path.isfile(fname):
+            os.remove(fname)
+
+        zip_dir(zip_name=fname, target_dir=self.file_root(),
+            enclosing_folder=self.slugged_label())
+
+        self.compressed_storage_size = os.path.getsize(fname)
+        self.save()
+
+    def remove_zip(self):
+        fname = self.zip_name(full=True)
+        if os.path.isfile(fname):
+            os.remove(fname)
+            self.compressed_storage_size = 0
+            self.save()
+
+    def zip_url(self):
+        """
+        The url to download the zip file from. Only needed for open
+        projects
+        """
+        if self.access_policy:
+            raise Exception('This should not be called by protected projects')
+        else:
+            return os.path.join('published-projects', self.slug, self.zip_name())
+
+    def make_checksum_file(self):
+        """
+        Make the checksums file for the main files
+        """
+        fname = os.path.join(self.file_root(), 'SHA256SUMS.txt')
+        if os.path.isfile(fname):
+            os.remove(fname)
+
+        with open(fname, 'w') as outfile:
+            for f in sorted_tree_files(self.file_root()):
+                if f != 'SHA256SUMS.txt':
+                    h = hashlib.sha256()
+                    with open(os.path.join(self.file_root(), f), 'rb') as fp:
+                        block = fp.read(h.block_size)
+                        while block:
+                            h.update(block)
+                            block = fp.read(h.block_size)
+                    outfile.write('{} {}\n'.format(h.hexdigest(), f))
+
+        self.set_storage_info()
