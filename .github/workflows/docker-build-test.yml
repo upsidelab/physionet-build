@@ -98,3 +98,19 @@ jobs:
       - name: Update ECS
         run: |
           aws ecs describe-task-definition --task-definition physionet --query taskDefinition > task-definition.json
+
+      - name: Update ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: physionet
+          image: physionet/physionet:${GITHUB_SHA}
+
+      - name: Deploy task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          service: physionet-service
+          cluster: physionet-cluster
+          wait-for-service-stability: true
