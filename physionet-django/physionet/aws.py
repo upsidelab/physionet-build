@@ -57,5 +57,30 @@ def s3_mv_folder(bucket_name, path1, path2):
             continue
 
         s3.Object(bucket_name, src_key.replace(path1, path2, 1)).copy_from(
-            CopySource={ 'Bucket':bucket_name, 'Key': src_key })
+            CopySource={'Bucket': bucket_name, 'Key': src_key})
         obj.delete()
+
+def s3_list_directory(bucket_name, path):
+    """
+    List all nested directories and files within 'folder' path.
+
+    Works similarly to 'ls -al'.
+    """
+
+    if path.endswith('/'):
+        raise ValueError('path must not end with "/"')
+    path += '/'
+
+    s3 = session.resource('s3')
+
+    result = s3.meta.client.list_objects_v2(
+        Bucket=bucket_name,
+        Prefix=path,
+        Delimiter='/')
+
+    print(result)
+
+    dirs = [d['Prefix'] for d in result.get('CommonPrefixes', [])]
+    files = [(f['Key']) for f in result.get('Contents', [])]
+
+    return dirs + files
