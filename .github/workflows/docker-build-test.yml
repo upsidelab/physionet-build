@@ -88,6 +88,13 @@ jobs:
           docker push physionet/physionet:${GITHUB_SHA}
           docker push physionet/physionet:${{ github.event.inputs.publish_tag || 'latest' }}
 
+  deploy_ecs:
+    name: Deploy ECS
+    needs: publish
+    environment: dockerhub
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dockerhub_ci_ecs'
+    steps:
       - name: Configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
