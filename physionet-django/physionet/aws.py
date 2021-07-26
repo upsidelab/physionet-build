@@ -14,7 +14,11 @@ if settings.STORAGE_TYPE == 'S3':
     )
 
 def get_s3_resource():
-    return session.resource('s3')
+    config = botocore.config.Config(signature_version='s3v4', region_name='us-east-2')
+    return session.resource('s3', config=config)
+
+def s3_signed_url(bucket_name, key):
+    return get_s3_resource().meta.client.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': key}, ExpiresIn=3600)
 
 def s3_directory_exists(bucket_name, path):
     """
@@ -33,7 +37,7 @@ def s3_file_exists(bucket_name, key):
         session.resource('s3').meta.client.head_object(Bucket=bucket_name, Key=key)
         return True
     except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == "404":
+        if e.response['Error']['Code'] == '404':
             return False
         else:
             raise e
