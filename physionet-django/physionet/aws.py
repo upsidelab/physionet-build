@@ -1,4 +1,5 @@
 import boto3
+import botocore
 import os
 from django.conf import settings
 from project.utility import FileInfo, DirectoryInfo, readable_size
@@ -14,6 +15,28 @@ if settings.STORAGE_TYPE == 'S3':
 
 def get_s3_resource():
     return session.resource('s3')
+
+def s3_directory_exists(bucket_name, path):
+    """
+    Returns true if there exists an object nested within path.
+    """
+    if not path.endswith('/'):
+        path += '/'
+
+    return session.resource('s3').meta.client.list_objects_v2(Bucket=bucket_name, Prefix=path, MaxKeys=1)['KeyCount']
+
+def s3_file_exists(bucket_name, key):
+    """
+    Returns whether an object with a given key exists in the bucket.
+    """
+    try:
+        session.resource('s3').meta.client.head_object(Bucket=bucket_name, Key=key)
+        return True
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == "404":
+            return False
+        else:
+            raise e
 
 def s3_upload_folder(bucket_name, path1, path2):
     """

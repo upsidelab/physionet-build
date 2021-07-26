@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import os
-from physionet.aws import get_s3_resource
+from physionet.aws import get_s3_resource, s3_directory_exists, s3_file_exists
 from botocore.exceptions import ClientError
 
 
@@ -139,6 +139,8 @@ class UploadFilesForm(ActiveProjectFilesForm):
                         file=file, overwrite=False,
                         write_file_path=os.path.join(self.file_dir, file.name))
                 else:
+                    if s3_directory_exists('hdn-data-platform-media', os.path.join(self.file_dir, file.name)) or s3_file_exists('hdn-data-platform-media', os.path.join(self.file_dir, file.name)):
+                        raise FileExistsError
                     s3 = get_s3_resource().meta.client
                     s3.upload_fileobj(file, 'hdn-data-platform-media', os.path.join(self.file_dir, file.name))
             except FileExistsError:
@@ -167,8 +169,10 @@ class CreateFolderForm(ActiveProjectFilesForm):
             if settings.STORAGE_TYPE == 'LOCAL':
                 os.mkdir(os.path.join(self.file_dir, name))
             else:
-                s3 = get_s3_resource().meta.client
+                if s3_directory_exists('hdn-data-platform-media', os.path.join(self.file_dir, name)) or s3_file_exists('hdn-data-platform-media', os.path.join(self.file_dir, name)):
+                    raise FileExistsError
                 print("Creating dir:", os.path.join(self.file_dir, name, ''))
+                s3 = get_s3_resource().meta.client
                 s3.put_object(Bucket='hdn-data-platform-media', Body='', Key=os.path.join(self.file_dir, name, ''))
         except FileExistsError:
             errors.append(format_html(
