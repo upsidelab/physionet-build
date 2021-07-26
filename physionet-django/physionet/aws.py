@@ -38,6 +38,22 @@ def s3_file_exists(bucket_name, key):
         else:
             raise e
 
+def s3_directory_size(bucket_name, path):
+    if not path.endswith('/'):
+        path += '/'
+
+    response = session.resource('s3').meta.client.list_objects_v2(Bucket=bucket_name, Prefix=path)
+    return sum(obj['Size'] for obj in response['Contents'])
+
+def s3_directory_exists(bucket_name, path):
+    """
+    Returns true if there exists an object nested within path.
+    """
+    if not path.endswith('/'):
+        path += '/'
+
+    return
+
 def s3_upload_folder(bucket_name, path1, path2):
     """
     Upload files at path1 on the disk to path2 in the bucket.
@@ -64,9 +80,10 @@ def s3_mv_object(bucket_name, path1, path2):
         raise ValueError('path1 and path2 must not end with "/"')
 
     s3 = session.resource('s3')
+    print('mv:', path1, '->', path2)
     # Copy object
     s3.Object(bucket_name, path2).copy_from(
-        CopySource={'Bucket':bucket_name, 'Key':path1})
+        CopySource={'Bucket': bucket_name, 'Key': path1})
     # Delete original
     s3.Object(bucket_name, path1).delete()
 
@@ -97,11 +114,33 @@ def s3_mv_folder(bucket_name, path1, path2):
 
     for obj in bucket.objects.filter(Prefix=path1):
         src_key = obj.key
-        if src_key.endswith('/'):
-            continue
 
+        print('mv:', src_key, '->', src_key.replace(path1, path2, 1))
         s3.Object(bucket_name, src_key.replace(path1, path2, 1)).copy_from(
             CopySource={'Bucket': bucket_name, 'Key': src_key})
+        obj.delete()
+
+def s3_mv_items(bucket_name, path1, path2):
+    try:
+        s3_mv_object(bucket_name, path1, path2)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != 'NoSuchKey':
+            raise e
+    s3_mv_folder(bucket_name, path1, path2)
+
+def s3_rm(bucket_name, path):
+    """
+    Delete the object specified by path and all nested objects if path is a folder.
+    """
+    s3 = session.resource('s3')
+
+    bucket = s3.Bucket(bucket_name)
+
+    if not path.endswith('/'):
+        bucket.Object(path).delete()
+        path += '/'
+
+    for obj in bucket.objects.filter(Prefix=path):
         obj.delete()
 
 def s3_list_directory(bucket_name, path):

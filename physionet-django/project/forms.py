@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import os
-from physionet.aws import get_s3_resource, s3_directory_exists, s3_file_exists
+from physionet.aws import get_s3_resource, s3_directory_exists, s3_file_exists, s3_rm, s3_mv_items
 from botocore.exceptions import ClientError
 
 
@@ -213,6 +213,7 @@ class DeleteItemsForm(EditItemsForm):
                     utility.remove_items([path], ignore_missing=False)
                 else:
                     print('Deleting:', path)
+                    s3_rm('hdn-data-platform-media', path)
             except OSError as e:
                 if not os.path.exists(path):
                     errors.append(format_html(
@@ -245,11 +246,13 @@ class RenameItemForm(EditItemsForm):
         old_name = self.cleaned_data['items'][0]
         new_name = self.cleaned_data['new_name']
         try:
+            old_path = os.path.join(self.file_dir, old_name)
+            new_path = os.path.join(self.file_dir, new_name)
             if settings.STORAGE_TYPE == 'LOCAL':
-                utility.rename_file(os.path.join(self.file_dir, old_name),
-                                    os.path.join(self.file_dir, new_name))
+                utility.rename_file(old_path, new_path)
             else:
-                print('Rename:', os.path.join(self.file_dir, old_name), '->', os.path.join(self.file_dir, new_name))
+                print('Rename:', old_path, '->', new_path)
+                s3_mv_items('hdn-data-platform-media', old_path, new_path)
         except FileExistsError:
             errors.append(format_html(
                 'Item named <i>{}</i> already exists', new_name))
@@ -305,7 +308,7 @@ class MoveItemsForm(EditItemsForm):
                 destination_folder))
 
         self.dest_dir = os.path.join(self.file_dir, destination_folder)
-        if not os.path.isdir(self.dest_dir):
+        if settings.STORAGE_TYPE == 'LOCAL' and not os.path.isdir(self.dest_dir):
             raise forms.ValidationError(format_html(
                 'Destination folder <i>{}</i> does not exist',
                 destination_folder))
@@ -325,6 +328,7 @@ class MoveItemsForm(EditItemsForm):
                     utility.move_items([path], self.dest_dir)
                 else:
                     print('Rename', path, '->', self.dest_dir)
+                    # s3_mv_folder('hdn-data-platform-media', path, self.dest_dir)
             except FileExistsError:
                 errors.append(format_html(
                     'Item named <i>{}</i> already exists in <i>{}</i>',
