@@ -222,6 +222,10 @@ class DeleteItemsForm(EditItemsForm):
                     errors.append(format_html(
                         'Unable to delete <i>{}</i>',
                         os.path.relpath(e.filename or path, self.file_dir)))
+            except ClientError as e:
+                errors.append(format_html(
+                    'Unable to delete <i>{}</i>',
+                    os.path.relpath(path, self.file_dir)))
         return 'Your items have been deleted', errors
 
 
@@ -259,7 +263,7 @@ class RenameItemForm(EditItemsForm):
         except FileNotFoundError:
             errors.append(format_html(
                 'Item named <i>{}</i> does not exist', old_name))
-        except OSError:
+        except (OSError, ClientError):
             errors.append(format_html(
                 'Unable to rename <i>{}</i> to <i>{}</i>',
                 old_name, new_name))
@@ -307,7 +311,7 @@ class MoveItemsForm(EditItemsForm):
                 'Cannot move folder <i>{}</i> into itself',
                 destination_folder))
 
-        self.dest_dir = os.path.join(self.file_dir, destination_folder)
+        self.dest_dir = os.path.normpath(os.path.join(self.file_dir, destination_folder))
         if settings.STORAGE_TYPE == 'LOCAL' and not os.path.isdir(self.dest_dir):
             raise forms.ValidationError(format_html(
                 'Destination folder <i>{}</i> does not exist',
@@ -327,13 +331,17 @@ class MoveItemsForm(EditItemsForm):
                 if settings.STORAGE_TYPE == 'LOCAL':
                     utility.move_items([path], self.dest_dir)
                 else:
-                    print('Rename', path, '->', self.dest_dir)
-                    # s3_mv_folder('hdn-data-platform-media', path, self.dest_dir)
+                    basename = os.path.basename(path)
+                    dst_path = os.path.join(self.dest_dir, basename)
+                    # common = os.path.commonpath([path, self.dest_dir])
+                    # dst_path = path.replace(common, self.dest_dir, 1)
+                    print('Move', path, '->', dst_path)
+                    s3_mv_items('hdn-data-platform-media', path, dst_path)
             except FileExistsError:
                 errors.append(format_html(
                     'Item named <i>{}</i> already exists in <i>{}</i>',
                     item, dest))
-            except OSError:
+            except (OSError, ClientError):
                 if not os.path.exists(path):
                     errors.append(format_html(
                         'Item named <i>{}</i> does not exist', item))
