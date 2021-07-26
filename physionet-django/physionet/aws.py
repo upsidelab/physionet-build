@@ -1,5 +1,7 @@
 import boto3
+import os
 from django.conf import settings
+from project.utility import FileInfo, DirectoryInfo, readable_size
 
 # One session per main django process.
 # One resource per thread. https://boto3.amazonaws.com/v1/documentation/api/latest/guide/resources.html?highlight=multithreading#multithreading-or-multiprocessing-with-resources
@@ -10,6 +12,25 @@ if settings.STORAGE_TYPE == 'S3':
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     )
 
+def get_s3_resource():
+    return session.resource('s3')
+
+def s3_upload_folder(bucket_name, path1, path2):
+    """
+    Upload files at path1 on the disk to path2 in the bucket.
+
+    path1 should be an absolute path.
+    """
+    s3 = session.resource('s3')
+
+    if path1.endswith('/') or path2.endswith('/'):
+        raise ValueError('path1 and path2 must not end with "/"')
+
+    for dirpath, subdirs, files in os.walk(path1):
+        for f in files:
+            src = os.path.join(dirpath, f)
+            dst = os.path.join(dirpath.replace(path1, path2, 1), f)
+            s3.meta.client.upload_file(src, bucket_name, dst)
 
 def s3_mv_object(bucket_name, path1, path2):
     """
@@ -67,9 +88,8 @@ def s3_list_directory(bucket_name, path):
     Works similarly to 'ls -al'.
     """
 
-    if path.endswith('/'):
-        raise ValueError('path must not end with "/"')
-    path += '/'
+    if not path.endswith('/'):
+        path += '/'
 
     s3 = session.resource('s3')
 
@@ -80,7 +100,7 @@ def s3_list_directory(bucket_name, path):
 
     print(result)
 
-    dirs = [d['Prefix'] for d in result.get('CommonPrefixes', [])]
-    files = [(f['Key']) for f in result.get('Contents', [])]
+    files = [FileInfo(f['Key'].replace(path, '', 1), readable_size(f['Size']), f['LastModified'].strftime("%Y-%m-%d")) for f in result.get('Contents', []) if f['Key'].replace(path, '', 1) != '']
+    dirs = [DirectoryInfo(d['Prefix'].replace(path, '', 1)[:-1]) for d in result.get('CommonPrefixes', [])]
 
-    return dirs + files
+    return files, dirs

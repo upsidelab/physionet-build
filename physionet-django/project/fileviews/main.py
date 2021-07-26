@@ -33,6 +33,7 @@ def display_project_file(request, project, file_path):
     """
 
     abs_path = os.path.join(project.file_root(), file_path)
+    print('Display:', abs_path)
     try:
         infile = open(abs_path, 'rb')
     except IsADirectoryError:
