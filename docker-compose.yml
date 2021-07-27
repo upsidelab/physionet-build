@@ -70,3 +70,23 @@ services:
     networks:
       - dev
       - test
+  broker:
+    image: redis:6.2
+    networks:
+      - dev
+  celery:
+    <<: *default-backend
+    build: .
+    environment:
+      <<: *default-env
+      DB_NAME: physionet_dev
+    env_file: .env
+    command: ['celery', '--workdir', 'physionet-django/', '-A', 'physionet', 'worker', '-B', '-l', 'INFO']
+    volumes:
+      - ./pyproject.toml:/code/pyproject.toml:rw
+      - ./poetry.lock:/code/poetry.lock:rw
+      - ./docker:/code/docker:rw
+      - ./physionet-django:/code/physionet-django:rw
+      - dev_data:/data:rw
+    networks:
+      - dev
