@@ -74,14 +74,14 @@ services:
     image: redis:6.2
     networks:
       - dev
-  celery:
+  process_tasks:
     <<: *default-backend
     build: .
     environment:
       <<: *default-env
       DB_NAME: physionet_dev
     env_file: .env
-    command: ['celery', '--workdir', 'physionet-django/', '-A', 'physionet', 'worker', '-B', '-l', 'INFO']
+    command: ['python', '/code/physionet-django/manage.py', 'process_tasks']
     volumes:
       - ./pyproject.toml:/code/pyproject.toml:rw
       - ./poetry.lock:/code/poetry.lock:rw
@@ -90,3 +90,17 @@ services:
       - dev_data:/data:rw
     networks:
       - dev
+  cron:
+    <<: *default-backend
+    build: .
+    environment:
+      <<: *default-env
+      DB_NAME: physionet_dev
+      FILE_NAME: job
+    env_file: .env
+    volumes:
+      - ./crontab:/etc/cron.d/job
+      - ./docker:/code/docker:rw
+    networks:
+      - dev
+    entrypoint: ./docker/cron-entrypoint.sh
