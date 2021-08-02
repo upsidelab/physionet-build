@@ -13,6 +13,70 @@ if settings.STORAGE_TYPE == 'S3':
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     )
 
+def get_s3_resource():
+    config = botocore.config.Config(signature_version='s3v4', region_name='us-east-2')
+    return session.resource('s3', config=config)
+
+def get_s3_client():
+    return get_s3_resource().meta.client
+
+
+class ObjectPath(object):
+    def __init__(self, path):
+        try:
+            normalized_path = os.path.normpath(path)
+            self._bucket, self._key = normalized_path.split('/', 1)
+        except ValueError:
+            raise ValueError('path should specify the bucket an object key/prefix')
+
+    def bucket(self):
+        return self._bucket
+
+    def key(self):
+        return self._key
+
+    def dir_key(self):
+        return os.path.join(self._key, '')
+
+    def put(self, **kwargs):
+        get_s3_resource().Object(self.bucket(), self.key()).put(**kwargs)
+
+    def put_fileobj(self, file):
+        get_s3_client().upload_fileobj(file, self.bucket(), self.key())
+
+    def mkdir(self, **kwargs):
+        get_s3_resource().Object(self.bucket(), self.dir_key()).put(**kwargs)
+
+    def file_exists(self):
+        try:
+            get_s3_client().head_object(Bucket=self.bucket(), Key=self.key())
+            return True
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return False
+            else:
+                raise e
+
+    def dir_exists(self):
+        response = get_s3_client().list_objects_v2(Bucket=self.bucket(), Prefix=self.dir_key(), MaxKeys=1)
+        return response['KeyCount'] > 0
+
+    def exists(self):
+        return self.file_exists() or self.dir_exists()
+
+    def delete(self):
+        get_s3_resource().Object(self.bucket(), self.key()).delete()
+
+    def delete_recursive(self):
+        s3 = get_s3_resource()
+
+        # Delete object
+        s3.Object(self.bucket(), self.key()).delete()
+
+        # Delete directory and it's contents
+        for obj in s3.Bucket(self.bucket()).objects.filter(Prefix=self.dir_key()):
+            obj.delete()
+
 class OpenS3Object(object):
     def __init__(self, streaming_body):
         self._streaming_body = streaming_body
@@ -25,10 +89,6 @@ class OpenS3Object(object):
 
     def read(self, *args):
         return self._streaming_body.read(*args)
-
-def get_s3_resource():
-    config = botocore.config.Config(signature_version='s3v4', region_name='us-east-2')
-    return session.resource('s3', config=config)
 
 def s3_signed_url(bucket_name, key):
     return get_s3_resource().meta.client.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': key}, ExpiresIn=3600)

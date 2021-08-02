@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import os
-from physionet.aws import get_s3_resource, s3_directory_exists, s3_file_exists, s3_rm, s3_mv_items
+from physionet.aws import ObjectPath, get_s3_resource, s3_directory_exists, s3_file_exists, s3_rm, s3_mv_items
 from botocore.exceptions import ClientError
 
 
@@ -75,10 +75,7 @@ class ActiveProjectFilesForm(forms.Form):
         Check that the subdirectory exists
         """
         data = self.cleaned_data['subdir']
-        if settings.STORAGE_TYPE == 'LOCAL':
-            file_dir = os.path.join(self.project.file_root(), data)
-        else:
-            file_dir = os.path.join('active-projects', self.project.slug, data)
+        file_dir = os.path.join(self.project.file_root(), data)
 
         # TODO: S3
         if settings.STORAGE_TYPE == 'LOCAL' and not os.path.isdir(file_dir):
@@ -134,15 +131,16 @@ class UploadFilesForm(ActiveProjectFilesForm):
         errors = ErrorList()
         for file in self.files.getlist('file_field'):
             try:
+                file_path = os.path.join(self.file_dir, file.name)
                 if settings.STORAGE_TYPE == 'LOCAL':
                     utility.write_uploaded_file(
                         file=file, overwrite=False,
-                        write_file_path=os.path.join(self.file_dir, file.name))
+                        write_file_path=file_path)
                 else:
-                    if s3_directory_exists('hdn-data-platform-media', os.path.join(self.file_dir, file.name)) or s3_file_exists('hdn-data-platform-media', os.path.join(self.file_dir, file.name)):
+                    obj = ObjectPath(file_path)
+                    if obj.exists():
                         raise FileExistsError
-                    s3 = get_s3_resource().meta.client
-                    s3.upload_fileobj(file, 'hdn-data-platform-media', os.path.join(self.file_dir, file.name))
+                    obj.put_fileobj(file)
             except FileExistsError:
                 errors.append(format_html(
                     'Item named <i>{}</i> already exists', file.name))
@@ -166,14 +164,15 @@ class CreateFolderForm(ActiveProjectFilesForm):
         errors = ErrorList()
         name = self.cleaned_data['folder_name']
         try:
+            file_path = os.path.join(self.file_dir, name)
             if settings.STORAGE_TYPE == 'LOCAL':
-                os.mkdir(os.path.join(self.file_dir, name))
+                os.mkdir(file_path)
             else:
-                if s3_directory_exists('hdn-data-platform-media', os.path.join(self.file_dir, name)) or s3_file_exists('hdn-data-platform-media', os.path.join(self.file_dir, name)):
+                obj = ObjectPath(file_path)
+                print(file_path)
+                if obj.exists():
                     raise FileExistsError
-                print("Creating dir:", os.path.join(self.file_dir, name, ''))
-                s3 = get_s3_resource().meta.client
-                s3.put_object(Bucket='hdn-data-platform-media', Body='', Key=os.path.join(self.file_dir, name, ''))
+                obj.mkdir()
         except FileExistsError:
             errors.append(format_html(
                 'Item named <i>{}</i> already exists', name))
@@ -212,8 +211,7 @@ class DeleteItemsForm(EditItemsForm):
                 if settings.STORAGE_TYPE == 'LOCAL':
                     utility.remove_items([path], ignore_missing=False)
                 else:
-                    print('Deleting:', path)
-                    s3_rm('hdn-data-platform-media', path)
+                    ObjectPath(path).delete_recursive()
             except OSError as e:
                 if not os.path.exists(path):
                     errors.append(format_html(
@@ -460,6 +458,7 @@ class NewProjectVersionForm(forms.ModelForm):
             topic = Topic.objects.create(project=project,
                 description=p_topic.description)
 
+        # TODO: S3
         # Create file directory
         os.mkdir(project.file_root())
         current_file_root = project.file_root()
