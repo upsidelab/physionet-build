@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from physionet import aws
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -96,9 +97,11 @@ class UnpublishedProject(models.Model):
         """
         Whether the project has wfdb files.
         """
+        path = os.path.join(self.file_root(), 'RECORDS')
         if settings.STORAGE_TYPE == 'LOCAL':
-            return os.path.isfile(os.path.join(self.file_root(), 'RECORDS'))
+            return os.path.isfile(path)
         else:
+            # return aws.s3_file_exists('hdn-data-platform-media', path)
             return False
 
     def content_modified(self):
