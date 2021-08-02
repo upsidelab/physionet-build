@@ -25,6 +25,7 @@ from project.validators import validate_subdir
 LOGGER = logging.getLogger(__name__)
 
 
+# TODO: S3 - This should probably be a noop
 @background()
 def move_files_as_readonly(pid, dir_from, dir_to, make_zip):
     """
@@ -81,7 +82,7 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
     MAX_SUBMITTING_PROJECTS = 10
     INDIVIDUAL_FILE_SIZE_LIMIT = 10 * 1024**3
     # Where all the active project files are kept
-    FILE_ROOT = os.path.join(settings.MEDIA_ROOT, 'active-projects')
+    FILE_ROOT = os.path.join(settings.MEDIA_ROOT, 'active-projects') if settings.STORAGE_TYPE == 'LOCAL' else 'active-projects'
 
     REQUIRED_FIELDS = (
         # 0: Database

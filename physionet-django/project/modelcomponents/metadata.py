@@ -331,6 +331,7 @@ class Metadata(models.Model):
 
         return content
 
+    # TODO: S3
     def create_license_file(self):
         """
         Create a file containing the text of the project license.
@@ -339,10 +340,14 @@ class Metadata(models.Model):
         project directory, replacing any existing file with that name.
         """
         fname = os.path.join(self.file_root(), 'LICENSE.txt')
-        if os.path.isfile(fname):
-            os.remove(fname)
-        with open(fname, 'x') as outfile:
-            outfile.write(self.license_content(fmt='text'))
+        if settings.STORAGE_TYPE == 'LOCAL':
+            if os.path.isfile(fname):
+                os.remove(fname)
+            with open(fname, 'x') as outfile:
+                outfile.write(self.license_content(fmt='text'))
+        else:
+            aws.s3_create_object('hdn-data-platform-media', fname, self.license_content(fmt='text'))
+
 
     def get_directory_content(self, subdir=''):
         """

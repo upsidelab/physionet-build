@@ -71,6 +71,13 @@ def s3_directory_exists(bucket_name, path):
 
     return
 
+def s3_create_object(bucket_name, path, content):
+    """
+    Create an object at path with a given content
+    """
+    s3 = session.resource('s3').meta.client
+    s3.put_object(Bucket=bucket_name, Body=content, Key=path)
+
 def s3_upload_folder(bucket_name, path1, path2):
     """
     Upload files at path1 on the disk to path2 in the bucket.
