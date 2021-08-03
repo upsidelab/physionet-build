@@ -169,7 +169,6 @@ class CreateFolderForm(ActiveProjectFilesForm):
                 os.mkdir(file_path)
             else:
                 obj = ObjectPath(file_path)
-                print(file_path)
                 if obj.exists():
                     raise FileExistsError
                 obj.mkdir()

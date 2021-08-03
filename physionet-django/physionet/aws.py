@@ -77,6 +77,16 @@ class ObjectPath(object):
         for obj in s3.Bucket(self.bucket()).objects.filter(Prefix=self.dir_key()):
             obj.delete()
 
+    def cp(self, other):
+        pass
+
+    def cp_file(self, other):
+        pass
+
+    def cp_directory(self, other):
+        pass
+
+
 class OpenS3Object(object):
     def __init__(self, streaming_body):
         self._streaming_body = streaming_body
