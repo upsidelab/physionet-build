@@ -3,7 +3,6 @@ import os
 
 from physionet import aws
 from django.conf import settings
-from botocore.exceptions import ClientError
 
 from django.http import Http404
 from django.shortcuts import redirect
@@ -48,7 +47,7 @@ def display_project_file(request, project, file_path):
             size = obj['ContentLength']
     except IsADirectoryError:
         return redirect(request.path + '/')
-    except (FileNotFoundError, NotADirectoryError, ClientError):
+    except (FileNotFoundError, NotADirectoryError):
         raise Http404()
     except (IOError, OSError) as err:
         raise (Http404() if err.errno == ENAMETOOLONG else err)

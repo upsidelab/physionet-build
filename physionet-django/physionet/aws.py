@@ -1,5 +1,3 @@
-import boto3
-import botocore
 import os
 from django.conf import settings
 from project.utility import FileInfo, DirectoryInfo, readable_size
@@ -48,14 +46,14 @@ class ObjectPath(object):
         get_s3_resource().Object(self.bucket(), self.dir_key()).put(**kwargs)
 
     def file_exists(self):
-        try:
-            get_s3_client().head_object(Bucket=self.bucket(), Key=self.key())
-            return True
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == '404':
-                return False
-            else:
-                raise e
+        # try:
+        get_s3_client().head_object(Bucket=self.bucket(), Key=self.key())
+        return True
+        # except botocore.exceptions.ClientError as e:
+        #     if e.response['Error']['Code'] == '404':
+        #         return False
+        #     else:
+        #         raise e
 
     def dir_exists(self):
         response = get_s3_client().list_objects_v2(Bucket=self.bucket(), Prefix=self.dir_key(), MaxKeys=1)
@@ -116,14 +114,14 @@ def s3_file_exists(bucket_name, key):
     """
     Returns whether an object with a given key exists in the bucket.
     """
-    try:
-        session.resource('s3').meta.client.head_object(Bucket=bucket_name, Key=key)
-        return True
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == '404':
-            return False
-        else:
-            raise e
+    # try:
+    session.resource('s3').meta.client.head_object(Bucket=bucket_name, Key=key)
+    return True
+    # except botocore.exceptions.ClientError as e:
+    #     if e.response['Error']['Code'] == '404':
+    #         return False
+    #     else:
+    #         raise e
 
 def s3_directory_size(bucket_name, path):
     if not path.endswith('/'):
@@ -215,11 +213,11 @@ def s3_mv_folder(bucket_name, path1, path2):
         obj.delete()
 
 def s3_mv_items(bucket_name, path1, path2):
-    try:
-        s3_mv_object(bucket_name, path1, path2)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != 'NoSuchKey':
-            raise e
+    # try:
+    s3_mv_object(bucket_name, path1, path2)
+    # except botocore.exceptions.ClientError as e:
+    #     if e.response['Error']['Code'] != 'NoSuchKey':
+    #         raise e
     s3_mv_folder(bucket_name, path1, path2)
 
 def s3_rm(bucket_name, path):

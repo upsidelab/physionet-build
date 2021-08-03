@@ -1,7 +1,6 @@
 from collections import OrderedDict
 import os
 from physionet.aws import ObjectPath, get_s3_resource, s3_directory_exists, s3_file_exists, s3_rm, s3_mv_items
-from botocore.exceptions import ClientError
 
 
 from django import forms
@@ -144,7 +143,7 @@ class UploadFilesForm(ActiveProjectFilesForm):
             except FileExistsError:
                 errors.append(format_html(
                     'Item named <i>{}</i> already exists', file.name))
-            except (OSError, ClientError):
+            except OSError:
                 errors.append(format_html(
                     'Unable to upload <i>{}</i>', file.name))
         return 'Your files have been uploaded', errors
@@ -175,7 +174,7 @@ class CreateFolderForm(ActiveProjectFilesForm):
         except FileExistsError:
             errors.append(format_html(
                 'Item named <i>{}</i> already exists', name))
-        except (OSError, ClientError):
+        except OSError:
             errors.append(format_html(
                 'Unable to create <i>{}</i>', name))
         return 'Your folder has been created', errors
@@ -219,10 +218,6 @@ class DeleteItemsForm(EditItemsForm):
                     errors.append(format_html(
                         'Unable to delete <i>{}</i>',
                         os.path.relpath(e.filename or path, self.file_dir)))
-            except ClientError as e:
-                errors.append(format_html(
-                    'Unable to delete <i>{}</i>',
-                    os.path.relpath(path, self.file_dir)))
         return 'Your items have been deleted', errors
 
 
@@ -260,7 +255,7 @@ class RenameItemForm(EditItemsForm):
         except FileNotFoundError:
             errors.append(format_html(
                 'Item named <i>{}</i> does not exist', old_name))
-        except (OSError, ClientError):
+        except OSError:
             errors.append(format_html(
                 'Unable to rename <i>{}</i> to <i>{}</i>',
                 old_name, new_name))
@@ -338,7 +333,7 @@ class MoveItemsForm(EditItemsForm):
                 errors.append(format_html(
                     'Item named <i>{}</i> already exists in <i>{}</i>',
                     item, dest))
-            except (OSError, ClientError):
+            except OSError:
                 if not os.path.exists(path):
                     errors.append(format_html(
                         'Item named <i>{}</i> does not exist', item))
