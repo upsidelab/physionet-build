@@ -1,5 +1,5 @@
 import os
-from physionet import aws
+from physionet import gcp
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -346,7 +346,8 @@ class Metadata(models.Model):
             with open(fname, 'x') as outfile:
                 outfile.write(self.license_content(fmt='text'))
         else:
-            aws.s3_create_object('hdn-data-platform-media', fname, self.license_content(fmt='text'))
+            pass
+            # aws.s3_create_object('hdn-data-platform-media', fname, self.license_content(fmt='text'))
 
 
     def get_directory_content(self, subdir=''):
@@ -354,9 +355,10 @@ class Metadata(models.Model):
         Return information for displaying files and directories from
         the project's file root.
         """
+        inspect_dir = self.get_inspect_dir(subdir)
+
         if settings.STORAGE_TYPE == 'LOCAL':
             # Get folder to inspect if valid
-            inspect_dir = self.get_inspect_dir(subdir)
             file_names, dir_names = list_items(inspect_dir)
             display_files, display_dirs = [], []
 
@@ -379,14 +381,13 @@ class Metadata(models.Model):
             return display_files, display_dirs
 
         else:
-            dir = os.path.join('active-projects', self.slug, subdir)
-            display_files, display_dirs = aws.s3_list_directory('hdn-data-platform-media', dir)
+            display_files, display_dirs = gcp.ObjectPath(inspect_dir).list_dir()
             for file in display_files:
                 file.url = self.file_display_url(subdir=subdir, file=file.name)
-                obj_path = os.path.join(dir, file.name)
-                file.raw_url = aws.s3_signed_url('hdn-data-platform-media', obj_path)
+                obj_path = os.path.join(inspect_dir, file.name)
+                file.raw_url = gcp.ObjectPath(obj_path).url()
                 file.download_url = file.raw_url
-
+                print(file.download_url)
 
             for dir in display_dirs:
                 dir.full_subdir = os.path.join(subdir, dir.name)

@@ -12,7 +12,7 @@ from django.utils.crypto import get_random_string
 from django.utils.translation import ugettext_lazy
 from django.db import transaction
 
-from physionet.aws import s3_mv_object, s3_mv_folder
+from physionet.gcp import s3_mv_object, s3_mv_folder
 from user.models import AssociatedEmail, User, Profile, CredentialApplication, CloudInformation
 from user.trainingreport import (find_training_report_url,
                                  TrainingCertificateError)

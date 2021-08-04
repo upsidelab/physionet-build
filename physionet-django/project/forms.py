@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import os
-from physionet.aws import ObjectPath, get_s3_resource, s3_directory_exists, s3_file_exists, s3_rm, s3_mv_items
+from physionet.gcp import ObjectPath, s3_mv_items
 
 
 from django import forms

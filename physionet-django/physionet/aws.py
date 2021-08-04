@@ -6,10 +6,11 @@ from project.utility import FileInfo, DirectoryInfo, readable_size
 # One resource per thread. https://boto3.amazonaws.com/v1/documentation/api/latest/guide/resources.html?highlight=multithreading#multithreading-or-multiprocessing-with-resources
 
 if settings.STORAGE_TYPE == 'S3':
-    session = boto3.Session(
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    )
+    session = None
+    # boto3.Session(
+    #     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    #     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    # )
 
 def get_s3_resource():
     config = botocore.config.Config(signature_version='s3v4', region_name='us-east-2')

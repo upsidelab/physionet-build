@@ -3,7 +3,8 @@ from html import unescape
 import logging
 import os
 import shutil
-from physionet import aws
+
+from physionet import gcp
 
 from background_task import background
 from django.conf import settings
@@ -143,13 +144,11 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
         """
         if settings.STORAGE_TYPE == 'LOCAL':
             current = self.quota_manager().bytes_used
-            published = self.core_project.total_published_size
-            return current + published
         else:
-            # TODO: S3
-            dir = os.path.join('active-projects', self.slug)
-            return aws.s3_directory_size('hdn-data-platform-media', dir)
+            current = gcp.ObjectPath(self.file_root()).dir_size()
 
+        published = self.core_project.total_published_size
+        return current + published
 
     def storage_allowance(self):
         """
