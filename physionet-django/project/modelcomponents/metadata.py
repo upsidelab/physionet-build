@@ -1,5 +1,4 @@
 import os
-from physionet import gcp
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -9,6 +8,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 from html2text import html2text
 
+from physionet.gcp import ObjectPath
 from project.modelcomponents.access import ACCESS_POLICIES, AnonymousAccess
 from project.modelcomponents.fields import SafeHTMLField
 from project.utility import LinkFilter, get_file_info, get_directory_info, list_items
@@ -331,7 +331,6 @@ class Metadata(models.Model):
 
         return content
 
-    # TODO: S3
     def create_license_file(self):
         """
         Create a file containing the text of the project license.
@@ -341,14 +340,10 @@ class Metadata(models.Model):
         """
         fname = os.path.join(self.file_root(), 'LICENSE.txt')
         if settings.STORAGE_TYPE == 'LOCAL':
-            if os.path.isfile(fname):
-                os.remove(fname)
-            with open(fname, 'x') as outfile:
+            with open(fname, 'w') as outfile:
                 outfile.write(self.license_content(fmt='text'))
-        else:
-            pass
-            # aws.s3_create_object('hdn-data-platform-media', fname, self.license_content(fmt='text'))
-
+        if settings.STORAGE_TYPE == 'GCP':
+            ObjectPath(fname).put(self.license_content(fmt='text'))
 
     def get_directory_content(self, subdir=''):
         """
@@ -381,11 +376,11 @@ class Metadata(models.Model):
             return display_files, display_dirs
 
         else:
-            display_files, display_dirs = gcp.ObjectPath(inspect_dir).list_dir()
+            display_files, display_dirs = ObjectPath(inspect_dir).list_dir()
             for file in display_files:
                 file.url = self.file_display_url(subdir=subdir, file=file.name)
                 obj_path = os.path.join(inspect_dir, file.name)
-                file.raw_url = gcp.ObjectPath(obj_path).url()
+                file.raw_url = ObjectPath(obj_path).url()
                 file.download_url = file.raw_url
                 print(file.download_url)
 
