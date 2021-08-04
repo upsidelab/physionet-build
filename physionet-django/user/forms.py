@@ -12,7 +12,7 @@ from django.utils.crypto import get_random_string
 from django.utils.translation import ugettext_lazy
 from django.db import transaction
 
-from physionet.gcp import s3_mv_object, s3_mv_folder
+# from physionet.gcp import s3_mv_object, s3_mv_folder
 from user.models import AssociatedEmail, User, Profile, CredentialApplication, CloudInformation
 from user.trainingreport import (find_training_report_url,
                                  TrainingCertificateError)
@@ -161,8 +161,8 @@ class UsernameChangeForm(forms.ModelForm):
                     profile.save()
 
                 if settings.STORAGE_TYPE == 'S3':
-                    s3_mv_folder(settings.AWS_STORAGE_BUCKET_NAME,
-                        self.old_file_root, self.instance.file_root(relative=True))
+                    # s3_mv_folder(settings.AWS_STORAGE_BUCKET_NAME,
+                    #     self.old_file_root, self.instance.file_root(relative=True))
                     return
 
                 if os.path.exists(self.old_file_root):

@@ -1,7 +1,5 @@
 from collections import OrderedDict
 import os
-from physionet.gcp import ObjectPath, s3_mv_items
-
 
 from django import forms
 from django.conf import settings
@@ -13,6 +11,7 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.html import format_html
 
+from physionet.gcp import ObjectPath
 from project.models import (Affiliation, Author, AuthorInvitation, ActiveProject,
                             CoreProject, StorageRequest, ProgrammingLanguage,
                             License, Metadata, Reference, Publication, ACCESS_POLICIES,
@@ -209,7 +208,7 @@ class DeleteItemsForm(EditItemsForm):
                 if settings.STORAGE_TYPE == 'LOCAL':
                     utility.remove_items([path], ignore_missing=False)
                 else:
-                    ObjectPath(path).delete_recursive()
+                    ObjectPath(path).rm()
             except OSError as e:
                 if not os.path.exists(path):
                     errors.append(format_html(
@@ -248,7 +247,7 @@ class RenameItemForm(EditItemsForm):
                 utility.rename_file(old_path, new_path)
             else:
                 print('Rename:', old_path, '->', new_path)
-                s3_mv_items('hdn-data-platform-media', old_path, new_path)
+                ObjectPath(old_path).mv(ObjectPath(new_path))
         except FileExistsError:
             errors.append(format_html(
                 'Item named <i>{}</i> already exists', new_name))
@@ -328,7 +327,7 @@ class MoveItemsForm(EditItemsForm):
                     # common = os.path.commonpath([path, self.dest_dir])
                     # dst_path = path.replace(common, self.dest_dir, 1)
                     print('Move', path, '->', dst_path)
-                    s3_mv_items('hdn-data-platform-media', path, dst_path)
+                    ObjectPath(path).mv(ObjectPath(dst_path))
             except FileExistsError:
                 errors.append(format_html(
                     'Item named <i>{}</i> already exists in <i>{}</i>',
