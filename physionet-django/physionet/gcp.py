@@ -1,18 +1,19 @@
 import os
 from django.conf import settings
-from google.cloud.exceptions import NotFound
+from google.cloud.exceptions import Conflict, NotFound
 from google.cloud.storage import Client
 from storages.backends.gcloud import GoogleCloudStorage
 from project.utility import FileInfo, DirectoryInfo, readable_size
 
-# One session per main django process.
-# One resource per thread. https://boto3.amazonaws.com/v1/documentation/api/latest/guide/resources.html?highlight=multithreading#multithreading-or-multiprocessing-with-resources
 
-if settings.STORAGE_TYPE == 'S3':
-    session = None
+def create_bucket(bucket_name):
+    client = GoogleCloudStorage().client
 
-def get_client():
-    return GoogleCloudStorage().client
+    bucket = client.bucket(bucket_name)
+    bucket.location = 'us-west1'
+    bucket.iam_configuration.uniform_bucket_level_access_enabled = True
+
+    client.create_bucket(bucket)
 
 
 class ObjectPath(object):
@@ -24,7 +25,7 @@ class ObjectPath(object):
             normalized_path = os.path.normpath(path)
             self._bucket_name, self._key = normalized_path.split('/', 1)
         except ValueError:
-            raise ValueError('path should specify the bucket an object key/prefix')
+            raise ValueError('path should specify the bucket and object key/prefix')
 
     def __repr__(self):
         return f"ObjectPath('{self.bucket_name()}', '{self.key()}')"
@@ -44,7 +45,7 @@ class ObjectPath(object):
 
     def client(self):
         if self._client is None:
-            self._client = get_client()
+            self._client = GoogleCloudStorage().client
         return self._client
 
     def bucket(self):
@@ -57,6 +58,18 @@ class ObjectPath(object):
 
     def dir_blob(self):
         return self.bucket().blob(self.dir_key())
+
+    def create_bucket(self):
+        bucket = self.client().bucket(self.bucket_name())
+        bucket.location = 'us-west1'
+        bucket.iam_configuration.uniform_bucket_level_access_enabled = True
+        self.client().create_bucket(bucket)
+
+    def create_bucket_if_needed(self):
+        try:
+            self.create_bucket()
+        except Conflict:
+            pass
 
     def put(self, data):
         bucket = self.bucket()
@@ -146,11 +159,12 @@ class ObjectPath(object):
     def cp_file(self, other):
         self.bucket().copy_blob(self.blob(), other.bucket(), new_name=other.key())
 
-    def cp_directory(self, other):
+    def cp_dir(self, other):
         iterator = self.client().list_blobs(self.bucket_name(), prefix=self.dir_key())
-        for blob in iterator:
-            new_name = blob.name.replace(self.dir_key(), other.dir_key(), 1)
-            self.bucket().copy_blob(blob, other.bucket(), new_name=new_name)
+        with self.client().batch():
+            for blob in iterator:
+                new_name = blob.name.replace(self.dir_key(), other.dir_key(), 1)
+                self.bucket().copy_blob(blob, other.bucket(), new_name=new_name)
 
     def mv(self, other):
         self.cp(other)
