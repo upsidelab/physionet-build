@@ -154,11 +154,15 @@ class ObjectPath(object):
     def cp_file(self, other):
         self.bucket.copy_blob(self.blob, other.bucket, new_name=other.key)
 
-    def cp_dir(self, other):
+    def cp_dir(self, other, ignored_files=[]):
+        ignored_files = [os.path.join(self.dir_key, f) for f in ignored_files]
+
         iterator = self.client.list_blobs(self.bucket_name, prefix=self.dir_key)
         try:
             with self.batch():
                 for blob in iterator:
+                    if blob.name in ignored_files:
+                        continue
                     new_name = blob.name.replace(self.dir_key, other.dir_key, 1)
                     self.bucket.copy_blob(blob, other.bucket, new_name=new_name)
         except ValueError: # thrown when there are no batch requests
