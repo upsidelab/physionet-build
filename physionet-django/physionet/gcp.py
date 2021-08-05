@@ -72,16 +72,13 @@ class ObjectPath(object):
             pass
 
     def put(self, data):
-        blob = self.bucket.blob(self.key)
-        blob.upload_from_string(data)
+        self.blob.upload_from_string(data)
 
     def put_fileobj(self, file):
-        blob = self.bucket.blob(self.key)
-        blob.upload_from_file(file)
+        self.blob.upload_from_file(file)
 
     def mkdir(self, **kwargs):
-        blob = self.bucket.blob(self.dir_key)
-        blob.upload_from_string('')
+        self.dir_blob.upload_from_string('')
 
     def exists(self):
         return self.file_exists() or self.dir_exists()
