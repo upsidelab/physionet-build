@@ -189,8 +189,11 @@ class PublishedProject(Metadata, SubmissionInfo):
         """
         Remove files of this project
         """
-        clear_directory(self.file_root())
-        self.remove_zip()
+        if settings.STORAGE_TYPE == 'LOCAL':
+            clear_directory(self.file_root())
+            self.remove_zip()
+        elif settings.STORAGE_TYPE == 'GCP':
+            ObjectPath(self.file_root()).rm_dir()
         self.set_storage_info()
 
     def deprecate_files(self, delete_files):

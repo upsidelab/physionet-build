@@ -37,9 +37,10 @@ def move_files_as_readonly(pid, dir_from, dir_to, make_zip):
 
     published_project.make_checksum_file()
 
-    quota = published_project.quota_manager()
-    published_project.incremental_storage_size = quota.bytes_used
-    published_project.save(update_fields=['incremental_storage_size'])
+    if settings.STORAGE_TYPE == 'LOCAL':
+        quota = published_project.quota_manager()
+        published_project.incremental_storage_size = quota.bytes_used
+        published_project.save(update_fields=['incremental_storage_size'])
 
     published_project.set_storage_info()
 
@@ -439,7 +440,10 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
         """
         Delete the project file directory
         """
-        shutil.rmtree(self.file_root())
+        if settings.STORAGE_TYPE == 'LOCAL':
+            shutil.rmtree(self.file_root())
+        elif settings.STORAGE_TYPE == 'GCP':
+            ObjectPath(self.file_root()).rm_dir()
 
     def publish(self, slug=None, make_zip=True, title=None):
         """
