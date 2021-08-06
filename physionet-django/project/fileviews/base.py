@@ -92,10 +92,9 @@ class FileView:
         parameter indicating that we should try to force the browser
         to save the file rather than displaying it.
         """
-        print(settings.STORAGE_TYPE)
         if settings.STORAGE_TYPE == 'LOCAL':
             return self._url + '?download'
-        else:
+        elif settings.STORAGE_TYPE == 'GCP':
             return self.raw_url()
 
     def raw_url(self):
