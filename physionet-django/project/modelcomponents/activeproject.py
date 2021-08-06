@@ -25,7 +25,6 @@ from project.validators import validate_subdir
 LOGGER = logging.getLogger(__name__)
 
 
-# TODO: S3 - This should probably be a noop
 @background()
 def move_files_as_readonly(pid, dir_from, dir_to, make_zip):
     """
@@ -35,9 +34,9 @@ def move_files_as_readonly(pid, dir_from, dir_to, make_zip):
 
     published_project = PublishedProject.objects.get(id=pid)
 
-    published_project.make_checksum_file()
-
     if settings.STORAGE_TYPE == 'LOCAL':
+        published_project.make_checksum_file()
+
         quota = published_project.quota_manager()
         published_project.incremental_storage_size = quota.bytes_used
         published_project.save(update_fields=['incremental_storage_size'])
@@ -45,20 +44,21 @@ def move_files_as_readonly(pid, dir_from, dir_to, make_zip):
     published_project.set_storage_info()
 
     # Make the files read only
-    file_root = published_project.project_file_root()
-    for root, dirs, files in os.walk(file_root):
-        for f in files:
-            fline = open(os.path.join(root, f), 'rb').read(2)
-            if fline[:2] == b'#!':
-                os.chmod(os.path.join(root, f), 0o555)
-            else:
-                os.chmod(os.path.join(root, f), 0o444)
+    if settings.STORAGE_TYPE == 'LOCAL':
+        file_root = published_project.project_file_root()
+        for root, dirs, files in os.walk(file_root):
+            for f in files:
+                fline = open(os.path.join(root, f), 'rb').read(2)
+                if fline[:2] == b'#!':
+                    os.chmod(os.path.join(root, f), 0o555)
+                else:
+                    os.chmod(os.path.join(root, f), 0o444)
 
-        for d in dirs:
-            os.chmod(os.path.join(root, d), 0o555)
+            for d in dirs:
+                os.chmod(os.path.join(root, d), 0o555)
 
-    if make_zip:
-        published_project.make_zip()
+        if make_zip:
+            published_project.make_zip()
 
 
 
@@ -83,7 +83,10 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
     MAX_SUBMITTING_PROJECTS = 10
     INDIVIDUAL_FILE_SIZE_LIMIT = 10 * 1024**3
     # Where all the active project files are kept
-    FILE_ROOT = os.path.join(settings.MEDIA_ROOT, 'active-projects') if settings.STORAGE_TYPE == 'LOCAL' else 'hdn-data-platform-media/active-projects'
+    FILE_ROOT = os.path.join(
+        (settings.MEDIA_ROOT if settings.STORAGE_TYPE == 'LOCAL' else settings.GCP_STORAGE_BUCKET_NAME),
+        'active-projects'
+    )
 
     REQUIRED_FIELDS = (
         # 0: Database
@@ -144,7 +147,7 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
         """
         if settings.STORAGE_TYPE == 'LOCAL':
             current = self.quota_manager().bytes_used
-        else:
+        elif settings.STORAGE_TYPE == 'GCP':
             current = ObjectPath(self.file_root()).dir_size()
 
         published = self.core_project.total_published_size

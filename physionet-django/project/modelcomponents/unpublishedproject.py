@@ -91,7 +91,6 @@ class UnpublishedProject(models.Model):
         shutil.rmtree(self.file_root())
         return self.delete()
 
-    # TODO: S3 - Add support for lightwave ?
     def has_wfdb(self):
         """
         Whether the project has wfdb files.
@@ -100,7 +99,6 @@ class UnpublishedProject(models.Model):
         if settings.STORAGE_TYPE == 'LOCAL':
             return os.path.isfile(path)
         else:
-            # return aws.s3_file_exists('hdn-data-platform-media', path)
             return False
 
     def content_modified(self):

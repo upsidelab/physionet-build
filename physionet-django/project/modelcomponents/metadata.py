@@ -358,13 +358,11 @@ class Metadata(models.Model):
             display_files, display_dirs = [], []
 
             # Files require desciptive info and download links
-            print(inspect_dir, file_names)
             for file in file_names:
                 file_info = get_file_info(os.path.join(inspect_dir, file))
                 file_info.url = self.file_display_url(subdir=subdir, file=file)
                 file_info.raw_url = self.file_url(subdir=subdir, file=file)
                 file_info.download_url = file_info.raw_url + '?download'
-                print(file_info.url, file_info.raw_url, file_info.download_url)
                 display_files.append(file_info)
 
             # Directories require links
@@ -382,7 +380,6 @@ class Metadata(models.Model):
                 obj_path = os.path.join(inspect_dir, file.name)
                 file.raw_url = ObjectPath(obj_path).url()
                 file.download_url = file.raw_url
-                print(file.download_url)
 
             for dir in display_dirs:
                 dir.full_subdir = os.path.join(subdir, dir.name)
