@@ -59,9 +59,9 @@ class ObjectPath(object):
     def batch(self):
         return self.client.batch()
 
-    def create_bucket(self):
+    def create_bucket(self, location=settings.GCP_BUCKET_LOCATION):
         bucket = self.client.bucket(self.bucket_name)
-        bucket.location = 'us-west1'
+        bucket.location = location
         bucket.iam_configuration.uniform_bucket_level_access_enabled = True
         self.client.create_bucket(bucket)
 
