@@ -91,6 +91,7 @@ def copy_demo_media():
         target_subdir = os.path.join(settings.MEDIA_ROOT, subdir)
 
         for item in [i for i in os.listdir(demo_subdir) if i != '.gitkeep']:
+
             shutil.copytree(os.path.join(demo_subdir, item),
                             os.path.join(target_subdir, item))
 
