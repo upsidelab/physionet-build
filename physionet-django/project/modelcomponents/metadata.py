@@ -342,7 +342,7 @@ class Metadata(models.Model):
         if settings.STORAGE_TYPE == 'LOCAL':
             with open(fname, 'w') as outfile:
                 outfile.write(self.license_content(fmt='text'))
-        if settings.STORAGE_TYPE == 'GCP':
+        elif settings.STORAGE_TYPE == 'GCP':
             ObjectPath(fname).put(self.license_content(fmt='text'))
 
     def get_directory_content(self, subdir=''):
@@ -373,7 +373,7 @@ class Metadata(models.Model):
 
             return display_files, display_dirs
 
-        else:
+        elif settings.STORAGE_TYPE == 'GCP':
             display_files, display_dirs = ObjectPath(inspect_dir).list_dir()
             for file in display_files:
                 file.url = self.file_display_url(subdir=subdir, file=file.name)

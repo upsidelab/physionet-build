@@ -34,9 +34,9 @@ def move_files_as_readonly(pid, dir_from, dir_to, make_zip):
 
     published_project = PublishedProject.objects.get(id=pid)
 
-    if settings.STORAGE_TYPE == 'LOCAL':
-        published_project.make_checksum_file()
+    published_project.make_checksum_file()
 
+    if settings.STORAGE_TYPE == 'LOCAL':
         quota = published_project.quota_manager()
         published_project.incremental_storage_size = quota.bytes_used
         published_project.save(update_fields=['incremental_storage_size'])
@@ -57,8 +57,8 @@ def move_files_as_readonly(pid, dir_from, dir_to, make_zip):
             for d in dirs:
                 os.chmod(os.path.join(root, d), 0o555)
 
-        if make_zip:
-            published_project.make_zip()
+    if make_zip:
+        published_project.make_zip()
 
 
 
