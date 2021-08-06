@@ -78,7 +78,7 @@ class ObjectPath(object):
     def put_fileobj(self, file):
         self.blob.upload_from_file(file)
 
-    def mkdir(self, **kwargs):
+    def mkdir(self):
         self.dir_blob.upload_from_string('')
 
     def exists(self):
