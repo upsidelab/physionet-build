@@ -14,6 +14,7 @@ on:
   push:
     branches:
       - dev
+      - dockerhub_ci_ecs
   pull_request:
     branches:
       - dev
@@ -48,11 +49,11 @@ jobs:
         run: docker-compose -f docker/docker-compose.test.yml down
 
       - name: Save physionet image
-        if: github.ref == 'refs/heads/dev' || github.event.inputs.publish_tag
+        if: github.ref == 'refs/heads/dev' ||  github.ref == 'refs/heads/dockerhub_ci_ecs' || github.event.inputs.publish_tag
         run: docker save physionet:latest | gzip > /tmp/physionet.tar.gz
 
       - name: Upload physionet image
-        if: github.ref == 'refs/heads/dev' || github.event.inputs.publish_tag
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/dockerhub_ci_ecs' || github.event.inputs.publish_tag
         uses: actions/upload-artifact@v2
         with:
           name: physionet
@@ -60,7 +61,7 @@ jobs:
 
   publish:
     name: Publish to DockerHub
-    if: github.ref == 'refs/heads/dev' || github.event.inputs.publish_tag
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/dockerhub_ci_ecs' || github.event.inputs.publish_tag
     environment: dockerhub
     runs-on: ubuntu-latest
     needs: build
@@ -86,3 +87,37 @@ jobs:
           docker tag physionet:latest physionet/physionet:${{ github.event.inputs.publish_tag || 'latest' }}
           docker push physionet/physionet:${GITHUB_SHA}
           docker push physionet/physionet:${{ github.event.inputs.publish_tag || 'latest' }}
+
+  deploy_ecs:
+    name: Deploy ECS
+    needs: publish
+    environment: dockerhub
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dockerhub_ci_ecs'
+    steps:
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Update ECS
+        run: |
+          aws ecs describe-task-definition --task-definition physionet --query taskDefinition > task-definition.json
+
+      - name: Update ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: physionet
+          image: physionet/physionet:${GITHUB_SHA}
+
+      - name: Deploy task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          service: physionet-service
+          cluster: physionet-cluster
+          wait-for-service-stability: true
