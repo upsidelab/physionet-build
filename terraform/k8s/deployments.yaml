@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: pn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      volumes:
+        - name: sql-sa-volume
+          secret:
+            secretName: sql-sa-secret
+      containers:
+      - name: backend
+        envFrom:
+          - secretRef:
+              name: hdn-secrets
+        image: physionet/physionet:latest
+        command: ["bash", "-c"]
+        args: ["poetry run /code/physionet-django/manage.py migrate && poetry run /code/physionet-django/manage.py collectstatic --noinput && poetry run uwsgi --ini uwsgi.ini"]
+        ports:
+        - containerPort: 8000
+        readinessProbe:
+          httpGet:
+            port: 8000
+            path: /ping/
+        livenessProbe:
+          tcpSocket:
+            port: 8000
+      - name: cloud-sql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.17
+        command:
+          - "/cloud_sql_proxy"
+          - "-instances=healthdatanexus-dev:us-central1:db=tcp:5432"
+          - "-credential_file=/secrets/service_account.json"
+        securityContext:
+          runAsNonRoot: true
+        volumeMounts:
+          - mountPath: /secrets/
+            readOnly: true
+            name: sql-sa-volume
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%

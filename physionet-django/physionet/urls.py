@@ -8,7 +8,7 @@ from django.conf.urls import handler404, handler500
 from physionet import views
 import lightwave.views as lightwave_views
 import project.views as project_views
-
+from physionet.views import ping
 
 handler403 = 'physionet.views.error_403'
 handler404 = 'physionet.views.error_404'
@@ -66,6 +66,7 @@ urlpatterns = [
     # robots.txt for crawlers
     path('robots.txt', lambda x: HttpResponse("User-Agent: *\Allow: /", 
         content_type="text/plain"), name="robots_file"),
+    path('ping/', ping),
 ]
 
 if settings.DEBUG:

@@ -3,7 +3,7 @@ from os import path
 from re import fullmatch
 
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.db.models.functions import Lower
 
@@ -12,6 +12,10 @@ import notification.utility as notification
 from physionet.middleware.maintenance import allow_post_during_maintenance
 from project.models import License, PublishedProject, ProjectType, ACCESS_POLICIES
 from user.forms import ContactForm
+
+
+def ping(request):
+    return HttpResponse(status=200)
 
 
 def home(request):
