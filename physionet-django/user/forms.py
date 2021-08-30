@@ -1,23 +1,20 @@
-import os
-import pdb
-
 from django import forms
 from django.conf import settings
 from django.contrib.auth import forms as auth_forms
 from django.contrib.auth import password_validation
 from django.core.files.uploadedfile import UploadedFile
+from django.db import transaction
 from django.forms.widgets import FileInput
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.translation import ugettext_lazy
-from django.db import transaction
 
-from physionet.gcp import ObjectPath
 from user.models import AssociatedEmail, User, Profile, CredentialApplication, CloudInformation
 from user.trainingreport import (find_training_report_url,
                                  TrainingCertificateError)
-from user.widgets import ProfilePhotoInput
+from user.userfiles import UserFiles
 from user.validators import UsernameValidator, validate_name
+from user.widgets import ProfilePhotoInput
 
 
 class AssociatedEmailChoiceForm(forms.Form):
@@ -137,7 +134,7 @@ class UsernameChangeForm(forms.ModelForm):
     def clean_username(self):
         "Record the original username in case it is needed"
         self.old_username = self.instance.username
-        self.old_file_root = self.instance.file_root(relative=(settings.STORAGE_TYPE == 'GCP'))
+        self.old_file_root = self.instance.file_root()
 
         if User.objects.filter(username__iexact=self.cleaned_data['username']):
             raise forms.ValidationError("A user with that username already exists.")
@@ -160,14 +157,7 @@ class UsernameChangeForm(forms.ModelForm):
                     profile.photo.name = '/'.join(name_components)
                     profile.save()
 
-                if settings.STORAGE_TYPE == 'LOCAL':
-                    if os.path.exists(self.old_file_root):
-                        os.rename(self.old_file_root, self.instance.file_root(relative=False))
-
-                elif settings.STORAGE_TYPE == 'GCP':
-                    src = ObjectPath(os.path.join(settings.GCP_STORAGE_BUCKET_NAME, self.old_file_root))
-                    dst = ObjectPath(os.path.join(settings.GCP_STORAGE_BUCKET_NAME, self.instance.file_root(relative=True)))
-                    src.mv(dst)
+                UserFiles().rename(self.old_file_root, self.instance)
 
 
 class SaferImageField(forms.ImageField):
@@ -267,7 +257,7 @@ class ProfileForm(forms.ModelForm):
         # Save the existing file path in case it needs to be deleted.
         # After is_valid runs, the instance photo is already updated.
         if self.instance.photo:
-            self.old_photo_path = self.instance.photo.path
+            self.old_photo_path = UserFiles().get_photo_path(self.instance)
 
         return data
 
@@ -275,7 +265,7 @@ class ProfileForm(forms.ModelForm):
         # Delete the old photo if the user is uploading a new photo, and
         # they already had one (before saving the new photo)
         if 'photo' in self.changed_data and hasattr(self, 'old_photo_path'):
-            os.remove(self.old_photo_path)
+            UserFiles().remove_photo(self.old_photo_path)
         super(ProfileForm, self).save()
 
 

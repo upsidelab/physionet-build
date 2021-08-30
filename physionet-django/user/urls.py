@@ -53,7 +53,6 @@ urlpatterns = [
         name='public_profile'),
     path('users/<username>/profile-photo/', views.profile_photo,
         name='profile_photo'),
-
     path('credential-application/', views.credential_application,
         name='credential_application'),
     path('credential-reference/<application_slug>/',

@@ -30,6 +30,7 @@ from django.core.exceptions import ValidationError
 from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 
+from physionet.settings.base import StorageTypes
 from user import forms, validators
 from user.models import AssociatedEmail, Profile, Orcid, User, CredentialApplication, LegacyCredential, CloudInformation
 from physionet import utility
@@ -40,6 +41,7 @@ from project.models import Author, License, PublishedProject, DUASignature
 from notification.utility import (process_credential_complete,
                                   credential_application_request,
                                   get_url_prefix, notify_account_registration)
+from user.userfiles import UserFiles
 
 logger = logging.getLogger(__name__)
 
@@ -444,11 +446,10 @@ def profile_photo(_request, username):
     """
     try:
         user = User.objects.get(username__iexact=username)
-        if settings.STORAGE_TYPE == 'GCP':
-            return redirect(user.profile.photo.url)
-        return utility.serve_file(user.profile.photo.path)
     except ObjectDoesNotExist:
         raise Http404()
+
+    return UserFiles().serve_photo(user)
 
 
 def register(request):
@@ -649,7 +650,7 @@ def training_report(request, application_slug, attach=True):
 
     if request.user == application.user or request.user.is_admin:
         try:
-            if settings.STORAGE_TYPE == 'GCP':
+            if settings.STORAGE_TYPE == StorageTypes.GCP:
                 return redirect(application.training_completion_report.url)
             return utility.serve_file(application.training_completion_report.path,
                                       attach=attach)
