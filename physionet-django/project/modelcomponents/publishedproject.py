@@ -8,14 +8,13 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 
-from physionet.gcp import ObjectPath
 from physionet.utility import sorted_tree_files, zip_dir
 from project.modelcomponents.access import DataAccessRequest, DataAccessRequestReviewer, DUASignature
 from project.modelcomponents.fields import SafeHTMLField
 from project.modelcomponents.metadata import Metadata, PublishedTopic
 from project.modelcomponents.submission import SubmissionInfo
 from project.projectfiles import ProjectFiles
-from project.utility import get_tree_size, StorageInfo
+from project.utility import StorageInfo
 from project.validators import MAX_PROJECT_SLUG_LENGTH, validate_slug, validate_subdir
 
 
@@ -77,7 +76,7 @@ class PublishedProject(Metadata, SubmissionInfo):
         This is the parent directory of the main and special file
         directories.
         """
-        return ProjectFiles('').get_project_file_root(self.slug, self.access_policy, PublishedProject)
+        return ProjectFiles().get_project_file_root(self.slug, self.access_policy, PublishedProject)
 
     def file_root(self):
         """
@@ -89,7 +88,7 @@ class PublishedProject(Metadata, SubmissionInfo):
         """
         Bytes of storage used by main files and compressed file if any
         """
-        return ProjectFiles('').storage_used(self.file_root(), self.zip_name(full=True))
+        return ProjectFiles().storage_used(self.file_root(), self.zip_name(full=True))
 
     def set_storage_info(self):
         """
@@ -179,7 +178,7 @@ class PublishedProject(Metadata, SubmissionInfo):
         """
         Remove files of this project
         """
-        ProjectFiles(self.file_root()).rm_dir(self.file_root(), remove_zip=self.remove_zip)
+        ProjectFiles().rm_dir(self.file_root(), remove_zip=self.remove_zip)
         self.set_storage_info()
 
     def deprecate_files(self, delete_files):
