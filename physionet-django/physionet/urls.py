@@ -36,6 +36,7 @@ urlpatterns = [
     path('cgi-bin/lightwave', lightwave_views.lightwave_server),
 
     path('', views.home, name='home'),
+    path('ping/', views.ping),
 
     # about pages
     path('about/publish/', views.about_publish,
@@ -64,7 +65,7 @@ urlpatterns = [
         name='tutorial_overview'),
 
     # robots.txt for crawlers
-    path('robots.txt', lambda x: HttpResponse("User-Agent: *\Allow: /", 
+    path('robots.txt', lambda x: HttpResponse("User-Agent: *\Allow: /",
         content_type="text/plain"), name="robots_file"),
 ]
 
