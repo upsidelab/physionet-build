@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load project_templatetags %}
+
+{% block title %}Billing Setup{% endblock %}
+
+{% block local_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'project/css/project-home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% include "message_snippet.html" %}
+  <div class="jumbotron">
+    <h1>Billing Setup</h1>
+    {% lorem 20 w %}.
+  </div>
+
+<!-- Research environments -->
+  <div class="card" >
+    <div class="card-header">
+      <h2>Billing Setup</h2>
+      <p>Email: {{ email }}</p>
+      <p>OTP: {{ otp }}</p>
+      <a href="{{ billing_url }}">
+    </div>
+    </ul>
+  </div>
+
+</div> <!-- /container -->
+{% endblock %}

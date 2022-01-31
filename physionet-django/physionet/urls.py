@@ -22,14 +22,14 @@ urlpatterns = [
     # user app
     path('', include('user.urls')),
     # project app
-path('projects/', include('project.urls')),
+    path('projects/', include('project.urls')),
     # notification app
     path('', include('notification.urls')),
     # search app
     path('', include('search.urls')),
     # export app
     path('', include('export.urls')),
-    path('environments', include('environment.urls')),
+    path('environments/', include('environment.urls')),
 
     path('', views.home, name='home'),
     path('ping/', views.ping),
