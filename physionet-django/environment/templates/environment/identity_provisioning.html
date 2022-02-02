@@ -13,22 +13,22 @@
 {% block content %}
 <div class="container">
   {% include "message_snippet.html" %}
-  <div class="jumbotron">
-    <h1>Create Identity</h1>
-    {% lorem 20 w %}.
-  </div>
+  <div>
+    <h1 class="mb-5">
+      Research Environments
+    </h1>
 
-<!-- Research environments -->
-  <div class="card" >
-    <div class="card-header">
-      <h2>Create Identity</h2>
-        <form action="{% url 'identity_provisioning' %}" method="post">
-            {% csrf_token %}
-            <button class="btn btn-lg btn-primary btn-block" type="submit">Create Identity</button>
-        </form>
-    </div>
-    </ul>
-  </div>
+    <p>
+      You don't have any research environments yet.
+    </p>
+    <p>
+      To start, click the button below to provide you Google Cloud Identity
+    </p>
 
+      <form action="{% url 'identity_provisioning' %}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-primary" type="submit">Create Identity</button>
+      </form>
+  </div>
 </div> <!-- /container -->
 {% endblock %}
