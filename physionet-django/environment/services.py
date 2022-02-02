@@ -11,7 +11,6 @@ def create_cloud_identity(user):
     body = response.json()
     identity = CloudIdentity.objects.create(user=user, userid=user.username, email=body['email-id'])
     identity.otp = body['one-time-password']
-    identity.billing_url = body['billingaccount-url']
     return identity
 
 

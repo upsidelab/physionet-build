@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
 
+from environment.forms import BillingAccountIdForm
 from environment.decorators import (
     cloud_identity_required,
     skip_if_cloud_identity_exists,
@@ -17,10 +18,7 @@ from project.models import AccessPolicy, PublishedProject
 def identity_provisioning(request):
     if request.method == 'POST':
         identity = create_cloud_identity(request.user)
-        request.session['cloud_identity_billing_data'] = {
-            'otp': identity.otp,
-            'billing_url': identity.billing_url
-        }
+        request.session['cloud_identity_otp'] = identity.otp
         return redirect('billing_setup')
     return render(request, 'environment/identity_provisioning.html')
 
@@ -30,10 +28,20 @@ def identity_provisioning(request):
 @skip_if_billing_setup_exists
 def billing_setup(request):
     if request.method == 'POST':
-        # TODO: Billing setup has to be verified
-        _billing_setup = create_billing_setup(request.user)
-        return redirect('research_environments')
-    context = request.session['cloud_identity_billing_data']
+        form = BillingAccountIdForm(request.POST)
+        if form.is_valid():
+            # TODO: Billing setup has to be verified
+            create_billing_setup(request.user, form.cleaned_data['billing_account_id'])
+            return redirect('research_environments')
+    else:
+        form = BillingAccountIdForm()
+
+    cloud_identity = request.user.cloud_identity
+    context = {
+        'email': cloud_identity.email,
+        'otp': request.session.get('cloud_identity_otp'),
+        'form': form,
+    }
     return render(request, 'environment/billing_setup.html', context)
 
 

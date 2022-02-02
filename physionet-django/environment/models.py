@@ -1,5 +1,6 @@
 from django.db import models
-from django.core.validators import EmailValidator, RegexValidator
+from django.core.validators import EmailValidator
+from environment.validators import gcp_billing_account_id_validator
 
 
 class CloudIdentity(models.Model):
@@ -13,6 +14,6 @@ class BillingSetup(models.Model):
     billing_account_id = models.CharField(
         max_length=20,
         unique=True,
-        validators=[RegexValidator('\A[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}\z')]
+        validators=[gcp_billing_account_id_validator]
     )
     # TODO: status?
