@@ -3,19 +3,17 @@ from django.db.models import Q
 from django.shortcuts import render, redirect
 
 from environment.forms import BillingAccountIdForm
-from environment.decorators import (
-    cloud_identity_required,
-    skip_if_cloud_identity_exists,
-    billing_setup_required,
-    skip_if_billing_setup_exists,
-)
+from environment.decorators import cloud_identity_required, billing_setup_required
 from environment.services import create_cloud_identity, create_billing_setup
+from environment.utilities import user_has_cloud_identity, user_has_billing_setup
 from project.models import AccessPolicy, PublishedProject
 
 
 @login_required
-@skip_if_cloud_identity_exists
 def identity_provisioning(request):
+    if user_has_cloud_identity(request.user):
+        return redirect("billing_setup")
+
     if request.method == "POST":
         identity = create_cloud_identity(request.user)
         request.session["cloud_identity_otp"] = identity.otp
@@ -25,8 +23,10 @@ def identity_provisioning(request):
 
 @login_required
 @cloud_identity_required
-@skip_if_billing_setup_exists
 def billing_setup(request):
+    if user_has_billing_setup(request.user):
+        return redirect("research_environments")
+
     if request.method == "POST":
         form = BillingAccountIdForm(request.POST)
         if form.is_valid():
