@@ -14,10 +14,10 @@ def _generate_credentials():
 def _credentials_apply_closure():
     credentials = _generate_credentials()
 
-    def refresh_if_expired_and_apply_headers(request):
+    def apply_api_credentials(request):
         credentials.before_request(None, request.method, request.url, request.headers)
 
-    return refresh_if_expired_and_apply_headers
+    return apply_api_credentials
 
 
-refresh_if_expired_and_apply_headers = _credentials_apply_closure()
+apply_api_credentials = _credentials_apply_closure()
