@@ -7,6 +7,12 @@ def _user_has_cloud_identity(user):
     return hasattr(user, 'cloud_identity')
 
 
+def _user_has_billing_setup(user):
+    if not _user_has_cloud_identity(user):
+        return False
+    return hasattr(user.cloud_identity, 'billing_setup')
+
+
 def _redirect_view_if_user(predicate, redirect_url):
     def wrapper(view):
         @wraps(view)
@@ -20,17 +26,23 @@ def _redirect_view_if_user(predicate, redirect_url):
 
 cloud_identity_required = _redirect_view_if_user(
     lambda u: not _user_has_cloud_identity(u),
-    reverse_lazy('identity_provisioning')
+    'identity_provisioning'
 )
 
 
 skip_if_cloud_identity_exists = _redirect_view_if_user(
     _user_has_cloud_identity,
-    reverse_lazy('research_environments')
+    'billing_setup'
 )
 
 
-# billing_setup_required = _redirect_view_if(
-#     lambda u: not _user_has_billing_setup(u),
-#     reverse_lazy('research_environments')
-# )
+billing_setup_required = _redirect_view_if_user(
+    lambda u: not _user_has_billing_setup(u),
+    'billing_setup'
+)
+
+
+skip_if_billing_setup_exists = _redirect_view_if_user(
+    _user_has_billing_setup,
+    'research_environments'
+)
