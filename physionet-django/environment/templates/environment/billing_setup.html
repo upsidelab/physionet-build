@@ -32,7 +32,7 @@
               E-Mail: {{ email }}
             </div>
             <div>
-              One Time Password: {{ otp }}
+              One Time Password: {{ otp|default_if_none:"--" }}
             </div>
           </div>
         </div>
