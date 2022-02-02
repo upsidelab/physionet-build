@@ -16,12 +16,34 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='CloudIdentity',
+            name="CloudIdentity",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('userid', models.CharField(max_length=50, unique=True)),
-                ('email', models.EmailField(max_length=255, unique=True, validators=[django.core.validators.EmailValidator()])),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='cloud_identity', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("userid", models.CharField(max_length=50, unique=True)),
+                (
+                    "email",
+                    models.EmailField(
+                        max_length=255,
+                        unique=True,
+                        validators=[django.core.validators.EmailValidator()],
+                    ),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="cloud_identity",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

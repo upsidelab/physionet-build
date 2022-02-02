@@ -8,16 +8,42 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('environment', '0001_initial'),
+        ("environment", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='BillingSetup',
+            name="BillingSetup",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('billing_account_id', models.CharField(max_length=20, unique=True, validators=[django.core.validators.RegexValidator('\\A[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}\\Z', message='Invalid ID format. Enter an ID in the format "XXXXXX-XXXXXX-XXXXXX".')])),
-                ('cloud_identity', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='environment.CloudIdentity')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "billing_account_id",
+                    models.CharField(
+                        max_length=20,
+                        unique=True,
+                        validators=[
+                            django.core.validators.RegexValidator(
+                                "\\A[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}\\Z",
+                                message='Invalid ID format. Enter an ID in the format "XXXXXX-XXXXXX-XXXXXX".',
+                            )
+                        ],
+                    ),
+                ),
+                (
+                    "cloud_identity",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="environment.CloudIdentity",
+                    ),
+                ),
             ],
         ),
     ]

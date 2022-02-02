@@ -10,9 +10,11 @@ def api_request(path):
         def wrapper(*args, **kwargs):
             session = Session()
             request = request_creator_callable(*args, **kwargs)
-            request.url = f'{settings.RESEARCH_ENVIRONMENT_API_URL}{path}'
+            request.url = f"{settings.RESEARCH_ENVIRONMENT_API_URL}{path}"
             prepped = request.prepare()
             refresh_if_expired_and_apply_headers(prepped)
             return session.send(prepped)
+
         return wrapper
+
     return send_request
