@@ -1,9 +1,9 @@
-import google.auth.jwt
+import google.auth.jwt as jwt
 from django.conf import settings
 
 
 def _generate_credentials():
-    credentials = google.auth.jwt.Credentials.from_service_account_file(
+    credentials = jwt.Credentials.from_service_account_file(
         settings.RESEARCH_ENVIRONMENT_API_JWT_SERVICE_ACCOUNT_PATH,
         audience=settings.RESEARCH_ENVIRONMENT_API_JWT_AUDIENCE
     )
