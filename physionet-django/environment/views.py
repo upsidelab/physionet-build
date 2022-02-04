@@ -2,9 +2,9 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
 
+import environment.services as services
 from environment.forms import BillingAccountIdForm, CreateResearchEnvironmentForm
 from environment.decorators import cloud_identity_required, billing_setup_required
-from environment.services import create_cloud_identity, create_billing_setup
 from environment.utilities import user_has_cloud_identity, user_has_billing_setup
 from project.models import AccessPolicy, PublishedProject
 
@@ -15,7 +15,7 @@ def identity_provisioning(request):
         return redirect("billing_setup")
 
     if request.method == "POST":
-        identity = create_cloud_identity(request.user)
+        identity = services.create_cloud_identity(request.user)
         request.session["cloud_identity_otp"] = identity.otp
         return redirect("billing_setup")
     return render(request, "environment/identity_provisioning.html")
@@ -31,7 +31,9 @@ def billing_setup(request):
         form = BillingAccountIdForm(request.POST)
         if form.is_valid():
             # TODO: Billing setup has to be verified
-            create_billing_setup(request.user, form.cleaned_data["billing_account_id"])
+            services.create_billing_setup(
+                request.user, form.cleaned_data["billing_account_id"]
+            )
             return redirect("research_environments")
     else:
         form = BillingAccountIdForm()
@@ -73,7 +75,7 @@ def create_research_environment(request, project_slug):
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
         if form.is_valid():
-            create_research_environment(
+            services.create_research_environment(
                 user=request.user,
                 project=project,
                 region=form.cleaned_data["region"],
