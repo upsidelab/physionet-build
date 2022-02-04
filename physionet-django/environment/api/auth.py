@@ -7,7 +7,6 @@ def _generate_credentials():
         settings.RESEARCH_ENVIRONMENT_API_JWT_SERVICE_ACCOUNT_PATH,
         audience=settings.RESEARCH_ENVIRONMENT_API_JWT_AUDIENCE,
     )
-    credentials.refresh(None)
     return credentials
 
 
