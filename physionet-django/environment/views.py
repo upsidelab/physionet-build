@@ -21,6 +21,7 @@ def identity_provisioning(request):
         identity = services.create_cloud_identity(request.user)
         request.session["cloud_identity_otp"] = identity.otp
         return redirect("billing_setup")
+
     return render(request, "environment/identity_provisioning.html")
 
 
@@ -56,10 +57,11 @@ def billing_setup(request):
 def research_environments(request):
     available_projects = projects_available_for_user(request.user)
 
+    context = {"available_projects": available_projects}
     return render(
         request,
         "environment/research_environments.html",
-        {"available_projects": available_projects},
+        context,
     )
 
 
