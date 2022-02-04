@@ -1,12 +1,15 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.shortcuts import render, redirect
 
 import environment.services as services
 from environment.forms import BillingAccountIdForm, CreateResearchEnvironmentForm
 from environment.decorators import cloud_identity_required, billing_setup_required
-from environment.utilities import user_has_cloud_identity, user_has_billing_setup
-from project.models import AccessPolicy, PublishedProject
+from environment.utilities import (
+    user_has_cloud_identity,
+    user_has_billing_setup,
+    projects_available_for_user,
+    users_project_by_slug,
+)
 
 
 @login_required
@@ -51,13 +54,7 @@ def billing_setup(request):
 @cloud_identity_required
 @billing_setup_required
 def research_environments(request):
-    filters = Q(access_policy=AccessPolicy.OPEN) | Q(
-        access_policy=AccessPolicy.RESTRICTED
-    )
-    if request.user.is_credentialed:
-        filters = filters | Q(access_policy=AccessPolicy.CREDENTIALED)
-
-    available_projects = PublishedProject.objects.filter(filters)
+    available_projects = projects_available_for_user(request.user)
 
     return render(
         request,
@@ -70,7 +67,7 @@ def research_environments(request):
 @cloud_identity_required
 @billing_setup_required
 def create_research_environment(request, project_slug):
-    project = PublishedProject.objects.get(slug=project_slug)
+    project = users_project_by_slug(request.user, project_slug)
 
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
