@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
 
-from environment.forms import BillingAccountIdForm
+from environment.forms import BillingAccountIdForm, CreateResearchEnvironmentForm
 from environment.decorators import cloud_identity_required, billing_setup_required
 from environment.services import create_cloud_identity, create_billing_setup
 from environment.utilities import user_has_cloud_identity, user_has_billing_setup
@@ -62,3 +62,26 @@ def research_environments(request):
         "environment/research_environments.html",
         {"available_projects": available_projects},
     )
+
+
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def create_research_environment(request, project_slug):
+    project = PublishedProject.objects.get(slug=project_slug)
+
+    if request.method == "POST":
+        form = CreateResearchEnvironmentForm(request.POST)
+        if form.is_valid():
+            create_research_environment(
+                user=request.user,
+                project=project,
+                region=form.cleaned_data["region"],
+                instance_type=form.cleaned_data["instance_type"],
+                environment_type=form.cleaned_data["environment_type"],
+            )
+    else:
+        form = CreateResearchEnvironmentForm()
+
+    context = {"form": form, "project": project}
+    return render(request, "environment/create_research_environment.html", context)

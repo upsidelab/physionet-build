@@ -8,7 +8,23 @@ def create_cloud_identity(gcp_user_id, family_name, given_name):
     return Request("POST", json=json)
 
 
-@api_request("/workspace")
-def create_workspace(user_id, billing_id, region):
-    json = {"userid": user_id, "billingid": billing_id, "region": region}
+@api_request("/workbench")
+def create_workbench(
+    user_id,
+    region,
+    environment_type,
+    instance_type,
+    bucket_name,
+    persistent_disk,
+    vm_image,
+):
+    json = {
+        "userid": user_id,
+        "region": region,
+        "type": environment_type,
+        "machinetype": instance_type,
+        "bucketname": bucket_name,
+        "persistentdisk": persistent_disk,
+        "vmimage": vm_image,
+    }
     return Request("POST", json=json)

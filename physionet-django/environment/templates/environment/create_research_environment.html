@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load project_templatetags %}
+
+{% block title %}Create Research Environment{% endblock %}
+
+{% block local_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'project/css/project-home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% include "message_snippet.html" %}
+    <h1 class="mb-5">
+      Create Research Environment
+    </h1>
+
+    <h3>
+        Project: {{ project.title }}
+    </h3>
+
+    <form action="{% url 'billing_setup' %}" method="post" style="width: 24rem;">
+    {% csrf_token %}
+    {{ form }}
+    <button class="btn btn-sm btn-primary mt-3" type="submit">
+        Create environment
+    </button>
+    </form>
+</div>
+{% endblock %}

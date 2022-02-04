@@ -24,3 +24,12 @@ def create_billing_setup(user, billing_account_id):
         cloud_identity=cloud_identity, billing_account_id=billing_account_id
     )
     return billing_setup
+
+
+def create_research_environment(user, project, region, instance_type, environment_type):
+    api.create_workbench(
+        user_id=user.id,
+        region=region,
+        environment_type=environment_type,
+        instance_type=instance_type,
+    )
