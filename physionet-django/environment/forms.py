@@ -12,11 +12,17 @@ class BillingAccountIdForm(forms.Form):
 
 class CreateResearchEnvironmentForm(forms.Form):
     AVAILABLE_REGIONS = [
-        ("us-east1", "US East"),
+        ("us-central1", "us-central1"),
+        ("northamerica-northeast1", "northamerica-northeast1"),
+        ("europe-west3", "europe-west3"),
+        ("australia-southeast1", "australia-southeast1"),
     ]
     AVAILABLE_INSTANCE_TYPES = [
-        ("some1", "some instance type"),
-        ("some2", "test"),
+        ("n1-standard-1", "n1-standard-1"),
+        ("n1-standard-2", "n1-standard-2"),
+        ("n1-standard-4", "n1-standard-4"),
+        ("n1-standard-8", "n1-standard-8"),
+        ("n1-standard-16", "n1-standard-16"),
     ]
     AVAILABLE_ENVIRONMENT_TYPES = [
         ("jupyter", "Jupyter"),

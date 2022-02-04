@@ -80,6 +80,7 @@ def create_research_environment(request, project_slug):
                 instance_type=form.cleaned_data["instance_type"],
                 environment_type=form.cleaned_data["environment_type"],
             )
+            return redirect("research_environments")
     else:
         form = CreateResearchEnvironmentForm()
 

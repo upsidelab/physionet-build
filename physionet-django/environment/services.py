@@ -1,6 +1,6 @@
 import environment.api as api
 from environment.models import CloudIdentity, BillingSetup
-from environment.exceptions import IdentityProvisioningFailed
+from environment.exceptions import IdentityProvisioningFailed, EnvironmentCreationFailed
 
 
 def create_cloud_identity(user):
@@ -26,10 +26,31 @@ def create_billing_setup(user, billing_account_id):
     return billing_setup
 
 
+def _create_workbench_kwargs(user, project, region, instance_type, environment_type):
+    common = {
+        "user_id": user.id,
+        "region": region,
+        "environment_type": environment_type,
+        "instance_type": instance_type,
+        "dataset": project.gcp.bucket_name,
+    }
+    if environment_type == "jupyter":
+        jupyter_kwargs = {
+            "persistentdisk": "10",  # FIXME: Figure out what it should be
+            "vmimage": "common-cpu-notebooks",
+            "bucket_name": "bucket",  # FIXME: Figure out what it should be
+        }
+        return {**common, **jupyter_kwargs}
+    else:
+        return common
+
+
 def create_research_environment(user, project, region, instance_type, environment_type):
-    api.create_workbench(
-        user_id=user.id,
-        region=region,
-        environment_type=environment_type,
-        instance_type=instance_type,
+    kwargs = _create_workbench_kwargs(
+        user, project, region, instance_type, environment_type
     )
+    response = api.create_workbench(**kwargs)
+    if not response.ok:
+        raise EnvironmentCreationFailed()
+
+    return response
