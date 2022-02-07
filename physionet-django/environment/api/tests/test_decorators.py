@@ -1,4 +1,5 @@
 from requests import Request, Session
+from unittest import skipIf
 from unittest.mock import patch, Mock
 from django.test import TestCase
 from django.conf import settings
@@ -8,6 +9,7 @@ from environment.api.decorators import api_request
 SAMPLE_ENDPOINT = "/some_path"
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class DecoratorsTestCase(TestCase):
     def setUp(self):
         session_send_patcher = patch.object(Session, "send")
