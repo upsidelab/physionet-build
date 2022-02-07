@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load project_templatetags %}
+
+{% block title %}Create Cloud Identity{% endblock %}
+
+{% block local_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'project/css/project-home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% include "message_snippet.html" %}
+  <div>
+    <h1 class="mb-5">
+      Research Environments
+    </h1>
+
+    <p>
+      You don't have any research environments yet.
+    </p>
+    <p>
+      To start, click the button below to provide you Google Cloud Identity.
+    </p>
+
+    <form action="{% url 'identity_provisioning' %}" method="post">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-primary" type="submit">
+        Create Cloud Identity
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

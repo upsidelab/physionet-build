@@ -1,0 +1,2 @@
+class IdentityProvisioningFailed(Exception):
+    pass

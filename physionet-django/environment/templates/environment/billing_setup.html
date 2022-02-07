@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load project_templatetags %}
+
+{% block title %}Billing Setup{% endblock %}
+
+{% block local_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'project/css/project-home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% include "message_snippet.html" %}
+  <div>
+    <h1 class="mb-5">
+      Research Environments
+    </h1>
+
+    <div class="mb-5">
+      <p>
+        Your Cloud Identity was successfully created.
+      </p>
+      <div class="card" style="width: 24rem;">
+        <h6 class="card-header p-2">
+          Credentials
+        </h6>
+        <div class="p-2">
+          <div class="card-text">
+            <div>
+              E-Mail: {{ email }}
+            </div>
+            <div>
+              One Time Password: {{ otp|default_if_none:"--" }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p>
+        You need to set up your billing account before creating your first research environment.
+      </p>
+      <div>
+        In order to do that:
+        <ol>
+          <li>
+            Visit <a href="https://console.cloud.google.com/billing">the Google Cloud Platform console</a> and follow the instructions there.
+          </li>
+          <li>
+            Copy the created billing account's ID.
+          </li>
+          <li>
+            Paste the ID in the form below and submit.
+          </li>
+        </ol>
+      </div>
+
+      <form action="{% url 'billing_setup' %}" method="post" style="width: 24rem;">
+        {% csrf_token %}
+        {{ form }}
+        <button class="btn btn-sm btn-primary mt-3" type="submit">
+          Setup Billing Account
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

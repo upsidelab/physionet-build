@@ -22,14 +22,13 @@ urlpatterns = [
     # user app
     path('', include('user.urls')),
     # project app
-path('projects/', include('project.urls')),
+    path('projects/', include('project.urls')),
     # notification app
     path('', include('notification.urls')),
     # search app
     path('', include('search.urls')),
     # export app
     path('', include('export.urls')),
-    path('environments', include('environment.urls')),
 
     path('', views.home, name='home'),
     path('ping/', views.ping),
@@ -83,3 +82,6 @@ if settings.DEBUG:
 
     # debug toolbar
     urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))
+
+if settings.ENABLE_RESEARCH_ENVIRONMENTS:
+    urlpatterns.append(path('environments/', include('environment.urls')))
