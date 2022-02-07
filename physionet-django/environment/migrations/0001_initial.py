@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("userid", models.CharField(max_length=50, unique=True)),
+                ("gcp_user_id", models.CharField(max_length=50, unique=True)),
                 (
                     "email",
                     models.EmailField(

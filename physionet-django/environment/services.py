@@ -12,7 +12,7 @@ def create_cloud_identity(user):
 
     body = response.json()
     identity = CloudIdentity.objects.create(
-        user=user, userid=user.username, email=body["email-id"]
+        user=user, gcp_user_id=user.username, email=body["email-id"]
     )
     identity.otp = body["one-time-password"]
     return identity
