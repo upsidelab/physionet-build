@@ -27,8 +27,10 @@ def create_billing_setup(user, billing_account_id):
 
 
 def _create_workbench_kwargs(user, project, region, instance_type, environment_type):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+
     common = {
-        "user_id": user.id,
+        "user_id": gcp_user_id,
         "region": region,
         "environment_type": environment_type,
         "instance_type": instance_type,
@@ -36,9 +38,9 @@ def _create_workbench_kwargs(user, project, region, instance_type, environment_t
     }
     if environment_type == "jupyter":
         jupyter_kwargs = {
-            "persistentdisk": "10",  # FIXME: Figure out what it should be
             "vmimage": "common-cpu-notebooks",
-            "bucket_name": "bucket",  # FIXME: Figure out what it should be
+            "persistentdisk": 10,                            # FIXME: Figure out what it should be
+            "bucket_name": f"{gcp_user_id}-{project.slug}",  # FIXME: Figure out what it should be
         }
         return {**common, **jupyter_kwargs}
     else:

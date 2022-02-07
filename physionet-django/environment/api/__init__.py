@@ -10,7 +10,7 @@ def create_cloud_identity(gcp_user_id, family_name, given_name):
 
 @api_request("/workbench")
 def create_workbench(
-    user_id,
+    gcp_user_id,
     region,
     environment_type,
     instance_type,
@@ -20,7 +20,7 @@ def create_workbench(
     vm_image=None,
 ):
     json = {
-        "userid": user_id,
+        "userid": gcp_user_id,
         "region": region,
         "type": environment_type,
         "machinetype": instance_type,
