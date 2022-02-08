@@ -1,12 +1,10 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.shortcuts import render, redirect
 
+import environment.services as services
 from environment.forms import BillingAccountIdForm
 from environment.decorators import cloud_identity_required, billing_setup_required
-from environment.services import create_cloud_identity, create_billing_setup
 from environment.utilities import user_has_cloud_identity, user_has_billing_setup
-from project.models import AccessPolicy, PublishedProject
 
 
 @login_required
@@ -15,7 +13,7 @@ def identity_provisioning(request):
         return redirect("billing_setup")
 
     if request.method == "POST":
-        identity = create_cloud_identity(request.user)
+        identity = services.create_cloud_identity(request.user)
         request.session["cloud_identity_otp"] = identity.otp
         return redirect("billing_setup")
     return render(request, "environment/identity_provisioning.html")
@@ -31,7 +29,9 @@ def billing_setup(request):
         form = BillingAccountIdForm(request.POST)
         if form.is_valid():
             # TODO: Billing setup has to be verified
-            create_billing_setup(request.user, form.cleaned_data["billing_account_id"])
+            services.create_billing_setup(
+                request.user, form.cleaned_data["billing_account_id"]
+            )
             return redirect("research_environments")
     else:
         form = BillingAccountIdForm()
@@ -49,16 +49,14 @@ def billing_setup(request):
 @cloud_identity_required
 @billing_setup_required
 def research_environments(request):
-    filters = Q(access_policy=AccessPolicy.OPEN) | Q(
-        access_policy=AccessPolicy.RESTRICTED
-    )
-    if request.user.is_credentialed:
-        filters = filters | Q(access_policy=AccessPolicy.CREDENTIALED)
-
-    available_projects = PublishedProject.objects.filter(filters)
-
+    available_projects = services.get_available_projects(request.user)
+    available_environments = services.get_all_environments(request.user)
+    context = {
+        "available_projects": available_projects,
+        "available_environments": available_environments,
+    }
     return render(
         request,
         "environment/research_environments.html",
-        {"available_projects": available_projects},
+        context,
     )
