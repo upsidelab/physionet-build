@@ -1,6 +1,6 @@
-from typing import List
+from typing import Tuple, Iterable
 
-from django.db.models import Q, QuerySet
+from django.db.models import Q
 
 import environment.api as api
 from environment.models import CloudIdentity, BillingSetup
@@ -11,8 +11,7 @@ from user.models import User
 from project.models import AccessPolicy, PublishedProject
 
 
-# FIXME: Return type incorrect because of dynamically set otp
-def create_cloud_identity(user: User) -> CloudIdentity:
+def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
     response = api.create_cloud_identity(
         user.username, user.profile.first_names, user.profile.last_name
     )
@@ -23,8 +22,8 @@ def create_cloud_identity(user: User) -> CloudIdentity:
     identity = CloudIdentity.objects.create(
         user=user, gcp_user_id=user.username, email=body["email-id"]
     )
-    identity.otp = body["one-time-password"]
-    return identity
+    otp = body["one-time-password"]
+    return otp, identity
 
 
 def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
@@ -35,7 +34,7 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
     return billing_setup
 
 
-def get_available_projects(user: User) -> QuerySet[PublishedProject]:
+def get_available_projects(user: User) -> Iterable[PublishedProject]:
     filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -45,7 +44,7 @@ def get_available_projects(user: User) -> QuerySet[PublishedProject]:
     return PublishedProject.objects.filter(filters)
 
 
-def get_all_environments(user: User) -> List[ResearchEnvironment]:
+def get_all_environments(user: User) -> Iterable[ResearchEnvironment]:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.get_workspace_list(gcp_user_id)
     environments = deserialize_research_environments(response.json())

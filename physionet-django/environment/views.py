@@ -13,8 +13,8 @@ def identity_provisioning(request):
         return redirect("billing_setup")
 
     if request.method == "POST":
-        identity = services.create_cloud_identity(request.user)
-        request.session["cloud_identity_otp"] = identity.otp
+        otp, _ = services.create_cloud_identity(request.user)
+        request.session["cloud_identity_otp"] = otp
         return redirect("billing_setup")
     return render(request, "environment/identity_provisioning.html")
 

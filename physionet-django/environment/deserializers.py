@@ -1,9 +1,9 @@
-from typing import List
+from typing import Iterable
 
 from environment.entities import ResearchEnvironment
 
 
-def deserialize_research_environments(data: dict) -> List[ResearchEnvironment]:
+def deserialize_research_environments(data: dict) -> Iterable[ResearchEnvironment]:
     return [
         ResearchEnvironment(
             id=workbench["id"],
