@@ -1,15 +1,19 @@
 from requests import Request, Session
 from unittest import skipIf
 from unittest.mock import patch, Mock
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.conf import settings
 from environment.api.decorators import api_request
+
+
+SAMPLE_BASE_URL = "http://example.com"
 
 
 SAMPLE_ENDPOINT = "/some_path"
 
 
 @skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
+@override_settings(RESEARCH_ENVIRONMENT_API_URL=SAMPLE_BASE_URL)
 class DecoratorsTestCase(TestCase):
     def setUp(self):
         session_send_patcher = patch.object(Session, "send")
@@ -23,13 +27,13 @@ class DecoratorsTestCase(TestCase):
 
         self.session_send_mock.assert_called_once()
 
-    def test_sets_the_request_url(self):
+    def test_prepends_base_url_to_the_request_url(self):
         self._decorate_and_call()
         sent_request = self.session_send_mock.call_args[0][0]
 
         self.assertEqual(
             sent_request.url,
-            f"{settings.RESEARCH_ENVIRONMENT_API_URL}{SAMPLE_ENDPOINT}",
+            f"{SAMPLE_BASE_URL}{SAMPLE_ENDPOINT}",
         )
 
     def test_applies_authorization(self):
@@ -39,6 +43,6 @@ class DecoratorsTestCase(TestCase):
         self.assertIn("authorization", sent_request.headers)
 
     def _decorate_and_call(self):
-        request_fun = lambda: Request()
-        decorated_fun = api_request(SAMPLE_ENDPOINT)(request_fun)
+        request_fun = lambda: Request(url=SAMPLE_ENDPOINT)
+        decorated_fun = api_request(request_fun)
         decorated_fun()
