@@ -6,6 +6,10 @@
 
 {% block title %}Billing Setup{% endblock %}
 
+{% block local_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'environment/css/environment-base.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container">
   {% include "message_snippet.html" %}

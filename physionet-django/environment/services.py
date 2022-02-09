@@ -16,7 +16,8 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
         user.username, user.profile.first_names, user.profile.last_name
     )
     if not response.ok:
-        raise IdentityProvisioningFailed()
+        error_message = response.json()["message"]
+        raise IdentityProvisioningFailed(error_message)
 
     body = response.json()
     identity = CloudIdentity.objects.create(
