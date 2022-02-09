@@ -50,10 +50,18 @@ def billing_setup(request):
 @billing_setup_required
 def research_environments(request):
     available_projects = services.get_available_projects(request.user)
-    available_environments = services.get_all_environments(request.user)
+    available_environments = services.get_available_environments(request.user)
+    project_environment_pairs = services.match_projects_with_environments(
+        available_projects, available_environments
+    )
+    environment_project_pairs = [
+        (environment, project)
+        for (project, environment) in project_environment_pairs
+        if environment is not None
+    ]
     context = {
-        "available_projects": available_projects,
-        "available_environments": available_environments,
+        "project_environment_pairs": project_environment_pairs,
+        "environment_project_pairs": environment_project_pairs,
     }
     return render(
         request,

@@ -1,4 +1,4 @@
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, Optional
 
 from django.db.models import Q
 
@@ -6,7 +6,7 @@ import environment.api as api
 from environment.models import CloudIdentity, BillingSetup
 from environment.exceptions import IdentityProvisioningFailed
 from environment.deserializers import deserialize_research_environments
-from environment.entities import ResearchEnvironment
+from environment.entities import ResearchEnvironment, EnvironmentStatus
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
 
@@ -35,18 +35,43 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
-    filters = Q(access_policy=AccessPolicy.OPEN) | Q(
+    gcp_filters = Q(gcp__isnull=False)
+    access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
     if user.is_credentialed:
-        filters = filters | Q(access_policy=AccessPolicy.CREDENTIALED)
+        access_policy_filters = access_policy_filters | Q(
+            access_policy=AccessPolicy.CREDENTIALED
+        )
+    return PublishedProject.objects.filter(gcp_filters & access_policy_filters)
 
-    return PublishedProject.objects.filter(filters)
 
-
-def get_all_environments(user: User) -> Iterable[ResearchEnvironment]:
+def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.get_workspace_list(gcp_user_id)
-    environments = deserialize_research_environments(response.json())
+    all_environments = deserialize_research_environments(response.json())
+    running_environments = [
+        environment
+        for environment in all_environments
+        if environment.status is not EnvironmentStatus.DESTROYED
+    ]
 
-    return environments
+    return running_environments
+
+
+def match_projects_with_environments(
+    projects: Iterable[PublishedProject], environments: Iterable[ResearchEnvironment]
+) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
+    return [
+        (
+            project,
+            next(
+                filter(
+                    lambda environment: project.gcp.bucket_name == environment.dataset,
+                    environments,
+                ),
+                None,
+            ),
+        )
+        for project in projects
+    ]

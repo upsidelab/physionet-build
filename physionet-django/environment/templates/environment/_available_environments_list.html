@@ -1,0 +1,52 @@
+<ul class="list-group list-group-flush">
+    <li class="list-group-item">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>
+                    Project
+                </strong>
+            </div>
+            <div class="col-md-3">
+                <strong>
+                    Details
+                </strong>
+            </div>
+            <div class="col-md-2">
+                <strong>
+                    Status
+                </strong>
+            </div>
+            <div class="col-md-4">
+                <strong>
+                    Actions
+                </strong>
+            </div>
+        </div>
+    </li>    
+    {% for environment, project in environment_project_pairs %}
+    <li class="list-group-item">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>
+                    {{ project }}
+                </strong>
+            </div>
+            <div class="col-md-3">
+                <small>
+                    Instance type: {{ environment.instance_type }}<br>
+                    Region: {{ environment.region }}<br>
+                    Environment type: {{ environment.type }}
+                </small>
+            </div>
+            <div class="col-md-2">
+                {{ environment.status }}
+            </div>
+            <div class="col-md-4 text-right">
+                <button type="button" class="btn btn-sm btn-danger">
+                    TODO
+                </button>
+            </div>
+        </div>
+    </li>
+    {% endfor %}
+</ul>

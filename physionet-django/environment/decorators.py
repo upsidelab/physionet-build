@@ -8,8 +8,11 @@ from environment.utilities import user_has_cloud_identity, user_has_billing_setu
 from user.models import User
 
 
+View = Callable[[HttpRequest], HttpResponse]
+
+
 def _redirect_view_if_user(predicate: Callable[[User], bool], redirect_url: str):
-    def wrapper(view: Callable[..., HttpResponse]) -> Callable[..., HttpResponse]:
+    def wrapper(view: View) -> View:
         @wraps(view)
         def wrapped_view(request: HttpRequest, *args, **kwargs) -> HttpResponse:
             if predicate(request.user):

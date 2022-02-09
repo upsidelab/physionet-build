@@ -7,7 +7,7 @@
 {% block title %}Research environments{% endblock %}
 
 {% block local_css %}
-<link rel="stylesheet" type="text/css" href="{% static 'project/css/project-home.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'environment/css/environment-home.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -18,69 +18,18 @@
     {% lorem 20 w %}.
   </div>
 
-<!-- Research environments -->
   <div class="card" >
     <div class="card-header">
-      <h2>Active projects</h2>
+      <h2>Running Environments</h2>
     </div>
-    {# Here is listed all outstanging author invitations #}
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item">
-        <div class="row">
-          <div class="col-md-3"><strong>Project</strong></div>
-          <div class="col-md-3"><strong>Details</strong></div>
-          <div class="col-md-2"><strong>Status</strong></div>
-          <div class="col-md-4"><strong>Actions</strong></div>
-        </div>
-      </li>    
-      <li class="list-group-item">
-        <div class="row">
-            <div class="col-md-3"><strong>Third project</strong></div>
-            <div class="col-md-3"><small>Instance type: micro <br> Region: us-east-2 <br> Environment type: Jupyter</small></div>
-            <div class="col-md-2">Launching</div>
-            <div class="col-md-4 text-right">
-              <button type="button" class="btn btn-sm btn-danger">Cancel</button>
-            </div>
-        </div>
-      </li>
-      <li class="list-group-item">
-        <div class="row">
-          <div class="col-md-3"><strong>Second project</strong></div>
-          <div class="col-md-3"><small>Instance type: micro <br> Region: us-east-2 <br> Environment type: Jupyter</small></div>
-          <div class="col-md-2">Running</div>
-          <div class="col-md-4 text-right">
-            <button type="button" class="btn btn-sm btn-primary">Connect</button>
-            <button type="button" class="btn btn-sm btn-danger">Terminate</button>
-            <button type="button" class="btn btn-sm btn-secondary">Terminate</button>
-          </div>
-      </div>
-    </li>
-    </ul>
+    {% include "environment/_available_environments_list.html" %}
   </div>
   <br>
   <div class="card" >
     <div class="card-header">
       <h2>Available Projects</h2>
     </div>
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item">
-        <div class="row">
-          <div class="col-md-8"><strong>Name</strong></div>
-          <div class="col-md-4"><strong>Action</strong></div>
-        </div>
-      </li>    
-      {% for project in available_projects %}
-        <li class="list-group-item">
-          <div class="row">
-              <div class="col-md-8"><strong>{{ project }}</strong></div>
-              <div class="col-md-4 text-right">
-                <button type="button" class="btn btn-sm btn-primary">Launch Research Environment</button>
-              </div>
-          </div>
-        </li>
-      {% endfor %}
-    </ul>
+    {% include "environment/_available_projects_list.html" %}
   </div>
-
-</div> <!-- /container -->
+</div>
 {% endblock %}
