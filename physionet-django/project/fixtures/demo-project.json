@@ -932,9 +932,6 @@
     "release_notes": "<p>Demo release notes</p>",
     "short_description": "",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": null,
     "project_home_page": "",
     "core_project": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
@@ -957,7 +954,9 @@
     "archive_datetime": "2020-05-21T16:07:36.681Z",
     "archive_reason": 3,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -978,9 +977,6 @@
     "release_notes": "",
     "short_description": "The MIT-BIH Arrhythmia Database contains 48 half-hour excerpts of ambulatory ECG recordings, fully annotated with beat and rhythm labels.",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 1,
     "project_home_page": "https://physionet.org/physiobank/database/mitdb/",
     "core_project": "950032c4-2d96-43d6-84d5-e1652f451a79",
@@ -1002,7 +998,9 @@
     "doi": null,
     "submission_status": 0,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1023,9 +1021,6 @@
     "release_notes": "",
     "short_description": "",
     "access_policy": 2,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 6,
     "project_home_page": "",
     "core_project": "ff038b01-14a2-4af1-9a7d-9f9845c45219",
@@ -1047,7 +1042,9 @@
     "doi": null,
     "submission_status": 0,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1068,9 +1065,6 @@
     "release_notes": "",
     "short_description": "",
     "access_policy": 1,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 1,
     "project_home_page": "",
     "core_project": "2e780890-644d-4166-b0ca-e3d31596405b",
@@ -1092,7 +1086,9 @@
     "doi": null,
     "submission_status": 0,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1113,9 +1109,6 @@
     "release_notes": "",
     "short_description": "TEST",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 8,
     "project_home_page": "",
     "core_project": "387f8bf5-b2ce-4a75-aced-1a108e305307",
@@ -1137,7 +1130,9 @@
     "doi": null,
     "submission_status": 0,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1158,9 +1153,6 @@
     "release_notes": "",
     "short_description": "",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": null,
     "project_home_page": "",
     "core_project": "773ac916-9733-4717-88e4-bd34dba604c4",
@@ -1182,7 +1174,9 @@
     "doi": null,
     "submission_status": 0,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1203,9 +1197,6 @@
     "release_notes": "",
     "short_description": "",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 9,
     "project_home_page": "",
     "core_project": "15ea417c-30b3-4931-9511-9eb4ef51f8a9",
@@ -1229,7 +1220,9 @@
     "doi": null,
     "submission_status": 20,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1250,9 +1243,6 @@
     "release_notes": "",
     "short_description": "",
     "access_policy": 2,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 6,
     "project_home_page": "https://eicu-crd.mit.edu/",
     "core_project": "66951d55-e473-4a98-a24f-4fad05ed967b",
@@ -1284,7 +1274,9 @@
     "has_wfdb": false,
     "display_publications": true,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1305,9 +1297,6 @@
     "release_notes": "<p>This is a stable version.</p>",
     "short_description": "",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 3,
     "project_home_page": "https://physionet.org/physiotools/ecg.shtml",
     "core_project": "ba881793-f671-4215-9487-070c04bdb4e2",
@@ -1342,7 +1331,9 @@
     "programming_languages": [
       1,
       4
-    ]
+    ],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1363,9 +1354,6 @@
     "release_notes": "",
     "short_description": "",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 7,
     "project_home_page": "https://bhi-bsn.embs.org/2018/",
     "core_project": "85c5bad7-5f20-4194-8a20-0ff37ccee9a0",
@@ -1397,7 +1385,9 @@
     "has_wfdb": true,
     "display_publications": true,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1417,11 +1407,8 @@
     "version": "1.0.0",
     "release_notes": "",
     "short_description": "",
-    "access_policy": 2,
-    "is_self_managed_access": true,
-    "self_managed_dua": "<strong>Example End User License</strong> <ol><li>The LICENSEE will not share access to HiRID data with anyone else.</li><li>...</li></ol>",
-    "self_managed_request_template": "<strong>Background</strong> <p>TODO</p> <p></p> <strong>Purpose</strong> <p>TODO</p>",
-    "license": 6,
+    "access_policy": 3,
+    "license": 10,
     "project_home_page": "",
     "core_project": "77951d15-e473-4a98-a24f-4fad05ed967b",
     "editor": [
@@ -1452,7 +1439,9 @@
     "has_wfdb": false,
     "display_publications": true,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1473,9 +1462,6 @@
     "release_notes": "<p>Demo release notes</p>",
     "short_description": "Demo short description",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 9,
     "project_home_page": "",
     "core_project": "15ea417c-30b3-4931-9511-9eb4ef51f8a9",
@@ -1507,7 +1493,8 @@
     "has_wfdb": false,
     "display_publications": true,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {
@@ -1528,9 +1515,6 @@
     "release_notes": "",
     "short_description": "Initial Release",
     "access_policy": 0,
-    "is_self_managed_access": false,
-    "self_managed_dua": "",
-    "self_managed_request_template": "",
     "license": 1,
     "project_home_page": "",
     "core_project": "45ac3560-c2de-4c9d-9f93-baef36f86084",
@@ -1562,7 +1546,9 @@
     "has_wfdb": true,
     "display_publications": true,
     "parent_projects": [],
-    "programming_languages": []
+    "programming_languages": [],
+    "allow_file_downloads": true,
+    "ethics_statement": "The authors declare no ethics concerns."
   }
 },
 {

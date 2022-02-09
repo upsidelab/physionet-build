@@ -64,18 +64,25 @@ def send_contact_message(contact_form):
 
 # ---------- Project App ---------- #
 
-def get_url_prefix(request):
+def get_url_prefix(request, bulk_download=False):
     """
     Return a URL protocol and host, such as 'https://example.com'.
 
     django.contrib.sites.shortcuts is used to look up a "canonical"
     hostname, if one is defined.
+
+    If bulk_download is true, settings.BULK_DOWNLOAD_HOSTNAME (if
+    defined) is used instead.
     """
-    site = get_current_site(request)
-    if request and not request.is_secure():
-        return 'http://' + site.domain
+    if bulk_download and settings.BULK_DOWNLOAD_HOSTNAME:
+        hostname = settings.BULK_DOWNLOAD_HOSTNAME
     else:
-        return 'https://' + site.domain
+        site = get_current_site(request)
+        hostname = site.domain
+    if request and not request.is_secure():
+        return 'http://' + hostname
+    else:
+        return 'https://' + hostname
 
 def email_project_info(project):
     """
@@ -637,7 +644,6 @@ def process_credential_complete(request, application, comments=True):
     Notify user of credentialing decision
     """
     applicant_name = application.get_full_name()
-    response = 'rejected' if application.status == 1 else 'accepted'
     subject = f'Your application for {settings.SITE_NAME} credentialing'
     body = loader.render_to_string(
         'notification/email/process_credential_complete.html', {
@@ -694,11 +700,11 @@ def notify_gcp_access_request(data_access, user, project):
             'data_access': data_access,
             'user': user,
             'project': project,
-            'footer': email_footer(), 'SITE_NAME': settings.SITE_NAME
+            'footer': email_footer(),
+            'SITE_NAME': settings.SITE_NAME,
         })
 
-    send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
-              [email], fail_silently=False)
+    send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
 
 def notify_aws_access_request(user, project, data_access, successful):
     subject = f'{settings.SITE_NAME} Amazon Web Service storage access'
@@ -860,7 +866,8 @@ def notify_account_registration(request, user, uidb64, token):
         'domain': get_current_site(request),
         'url_prefix': get_url_prefix(request),
         'uidb64': uidb64,
-        'token': token
+        'token': token,
+        'SITE_NAME': settings.SITE_NAME,
     }
     body = loader.render_to_string('user/email/register_email.html', context)
     # Not resend the email if there was an integrity error

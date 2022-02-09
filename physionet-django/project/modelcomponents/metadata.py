@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -11,6 +12,12 @@ from project.modelcomponents.fields import SafeHTMLField
 from project.projectfiles import ProjectFiles
 from project.utility import LinkFilter, get_directory_info, get_file_info, list_items
 from project.validators import validate_title, validate_topic, validate_version
+
+
+def get_document_path(instance, filename):
+    extension = filename.split('.')[-1]
+    name = instance.document_type.name.replace(" ", "_")
+    return f'ethics/{name}_{uuid.uuid4()}.{extension}'
 
 
 class Metadata(models.Model):
@@ -58,9 +65,6 @@ class Metadata(models.Model):
 
     # Access information
     access_policy = models.SmallIntegerField(choices=AccessPolicy.choices(), default=AccessPolicy.OPEN)
-    is_self_managed_access = models.BooleanField(default=False)
-    self_managed_dua = SafeHTMLField(blank=True, default='')
-    self_managed_request_template = SafeHTMLField(blank=True, default='')
 
     license = models.ForeignKey('project.License', null=True,
         on_delete=models.SET_NULL)
@@ -73,6 +77,9 @@ class Metadata(models.Model):
     core_project = models.ForeignKey('project.CoreProject',
                                      related_name='%(class)ss',
                                      on_delete=models.CASCADE)
+    allow_file_downloads = models.BooleanField(default=True)
+
+    ethics_statement = SafeHTMLField(blank=True)
 
     class Meta:
         abstract = True
@@ -675,3 +682,22 @@ class PublishedPublication(BasePublication):
     """
     project = models.ForeignKey('project.PublishedProject',
         db_index=True, related_name='publications', on_delete=models.CASCADE)
+
+
+class DocumentType(models.Model):
+    name = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.name
+
+
+class UploadedDocument(models.Model):
+    document_type = models.ForeignKey(DocumentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    project = GenericForeignKey('content_type', 'object_id')
+    document = models.FileField(upload_to=get_document_path)
+
+    def delete(self, *args, **kwargs):
+        self.document.delete()
+        super().delete(*args, **kwargs)
