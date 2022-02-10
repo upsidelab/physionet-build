@@ -1,24 +1,33 @@
+from typing import Tuple, Iterable, Optional
+
+from django.db.models import Q
+
 import environment.api as api
 from environment.models import CloudIdentity, BillingSetup
 from environment.exceptions import IdentityProvisioningFailed, EnvironmentCreationFailed
+from environment.deserializers import deserialize_research_environments
+from environment.entities import ResearchEnvironment, EnvironmentStatus
+from user.models import User
+from project.models import AccessPolicy, PublishedProject
 
 
-def create_cloud_identity(user):
+def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
     response = api.create_cloud_identity(
         user.username, user.profile.first_names, user.profile.last_name
     )
     if not response.ok:
-        raise IdentityProvisioningFailed()
+        error_message = response.json()["message"]
+        raise IdentityProvisioningFailed(error_message)
 
     body = response.json()
     identity = CloudIdentity.objects.create(
         user=user, gcp_user_id=user.username, email=body["email-id"]
     )
-    identity.otp = body["one-time-password"]
-    return identity
+    otp = body["one-time-password"]
+    return otp, identity
 
 
-def create_billing_setup(user, billing_account_id):
+def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
     cloud_identity = user.cloud_identity
     billing_setup = BillingSetup.objects.create(
         cloud_identity=cloud_identity, billing_account_id=billing_account_id
@@ -56,3 +65,46 @@ def create_research_environment(user, project, region, instance_type, environmen
         raise EnvironmentCreationFailed()
 
     return response
+
+
+def get_available_projects(user: User) -> Iterable[PublishedProject]:
+    gcp_filters = Q(gcp__isnull=False)
+    access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
+        access_policy=AccessPolicy.RESTRICTED
+    )
+    if user.is_credentialed:
+        access_policy_filters = access_policy_filters | Q(
+            access_policy=AccessPolicy.CREDENTIALED
+        )
+    return PublishedProject.objects.filter(gcp_filters & access_policy_filters)
+
+
+def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.get_workspace_list(gcp_user_id)
+    all_environments = deserialize_research_environments(response.json())
+    running_environments = [
+        environment
+        for environment in all_environments
+        if environment.status is not EnvironmentStatus.DESTROYED
+    ]
+
+    return running_environments
+
+
+def match_projects_with_environments(
+    projects: Iterable[PublishedProject], environments: Iterable[ResearchEnvironment]
+) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
+    return [
+        (
+            project,
+            next(
+                filter(
+                    lambda environment: project.gcp.bucket_name == environment.dataset,
+                    environments,
+                ),
+                None,
+            ),
+        )
+        for project in projects
+    ]

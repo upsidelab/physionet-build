@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import EmailValidator
+
 from environment.validators import gcp_billing_account_id_validator
 
 
@@ -14,7 +15,9 @@ class CloudIdentity(models.Model):
 
 
 class BillingSetup(models.Model):
-    cloud_identity = models.ForeignKey(CloudIdentity, on_delete=models.CASCADE)
+    cloud_identity = models.OneToOneField(
+        CloudIdentity, related_name="billing_setup", on_delete=models.CASCADE
+    )
     billing_account_id = models.CharField(
         max_length=20, unique=True, validators=[gcp_billing_account_id_validator]
     )

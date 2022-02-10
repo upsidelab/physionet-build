@@ -266,12 +266,14 @@ def submission_info(request, project_slug):
                         reassign_editor_form.cleaned_data['editor']))
 
     url_prefix = notification.get_url_prefix(request)
+    bulk_url_prefix = notification.get_url_prefix(request, bulk_download=True)
     return render(request, 'console/submission_info.html',
         {'project': project, 'authors': authors,
          'author_emails': author_emails, 'storage_info': storage_info,
          'edit_logs': edit_logs, 'copyedit_logs': copyedit_logs,
          'latest_version': latest_version, 'passphrase': passphrase,
          'anonymous_url': anonymous_url, 'url_prefix': url_prefix,
+         'bulk_url_prefix': bulk_url_prefix,
          'reassign_editor_form': reassign_editor_form,
          'project_info_nav': True})
 
@@ -318,12 +320,14 @@ def edit_submission(request, project_slug, *args, **kwargs):
 
     authors, author_emails, storage_info, edit_logs, _, latest_version = project.info_card()
     url_prefix = notification.get_url_prefix(request)
+    bulk_url_prefix = notification.get_url_prefix(request, bulk_download=True)
 
     return render(request, 'console/edit_submission.html',
         {'project': project, 'edit_submission_form': edit_submission_form,
          'authors': authors, 'author_emails': author_emails,
          'storage_info': storage_info, 'edit_logs': edit_logs,
          'latest_version': latest_version, 'url_prefix': url_prefix,
+         'bulk_url_prefix': bulk_url_prefix,
          'editor_home': True, 'reassign_editor_form': reassign_editor_form})
 
 
@@ -355,6 +359,7 @@ def copyedit_submission(request, project_slug, *args, **kwargs):
 
     description_form = project_forms.ContentForm(
         resource_type=project.resource_type.id, instance=project)
+    ethics_form = project_forms.EthicsForm(instance=project)
     access_form = project_forms.AccessMetadataForm(instance=project)
     discovery_form = project_forms.DiscoveryForm(resource_type=project.resource_type.id,
         instance=project)
@@ -372,6 +377,7 @@ def copyedit_submission(request, project_slug, *args, **kwargs):
             description_form = project_forms.ContentForm(
                 resource_type=project.resource_type.id, data=request.POST,
                 instance=project)
+            ethics_form = project_forms.EthicsForm(data=request.POST, instance=project)
             access_form = project_forms.AccessMetadataForm(data=request.POST,
                 instance=project)
             discovery_form = project_forms.DiscoveryForm(
@@ -382,12 +388,17 @@ def copyedit_submission(request, project_slug, *args, **kwargs):
             publication_formset = PublicationFormSet(request.POST,
                                                  instance=project)
             topic_formset = TopicFormSet(request.POST, instance=project)
-            if (description_form.is_valid() and access_form.is_valid()
-                                            and reference_formset.is_valid()
-                                            and publication_formset.is_valid()
-                                            and topic_formset.is_valid()
-                                            and discovery_form.is_valid()):
+            if (
+                description_form.is_valid()
+                and access_form.is_valid()
+                and ethics_form.is_valid()
+                and reference_formset.is_valid()
+                and publication_formset.is_valid()
+                and topic_formset.is_valid()
+                and discovery_form.is_valid()
+            ):
                 description_form.save()
+                ethics_form.save()
                 access_form.save()
                 discovery_form.save()
                 reference_formset.save()
@@ -434,29 +445,49 @@ def copyedit_submission(request, project_slug, *args, **kwargs):
 
     edit_url = reverse('edit_content_item', args=[project.slug])
     url_prefix = notification.get_url_prefix(request)
+    bulk_url_prefix = notification.get_url_prefix(request)
 
-    response = render(request, 'console/copyedit_submission.html', {
-        'project': project, 'description_form': description_form,
-        'individual_size_limit': readable_size(ActiveProject.INDIVIDUAL_FILE_SIZE_LIMIT),
-        'access_form': access_form, 'reference_formset':reference_formset,
-        'publication_formset': publication_formset,
-        'topic_formset': topic_formset,
-        'storage_info': storage_info, 'upload_files_form':upload_files_form,
-        'create_folder_form': create_folder_form,
-        'rename_item_form': rename_item_form,
-        'move_items_form': move_items_form,
-        'delete_items_form': delete_items_form,
-        'subdir': subdir, 'display_files': display_files,
-        'display_dirs': display_dirs, 'dir_breadcrumbs': dir_breadcrumbs,
-        'file_error': file_error, 'editor_home': True,
-        'is_editor': True, 'files_editable': True,
-        'copyedit_form': copyedit_form,
-        'authors': authors, 'author_emails': author_emails,
-        'storage_info': storage_info, 'edit_logs': edit_logs,
-        'copyedit_logs': copyedit_logs, 'latest_version': latest_version,
-        'add_item_url': edit_url, 'remove_item_url': edit_url,
-        'discovery_form': discovery_form, 'url_prefix': url_prefix,
-        'reassign_editor_form': reassign_editor_form})
+    response = render(
+        request,
+        'console/copyedit_submission.html',
+        {
+            'project': project,
+            'description_form': description_form,
+            'ethics_form': ethics_form,
+            'individual_size_limit': readable_size(ActiveProject.INDIVIDUAL_FILE_SIZE_LIMIT),
+            'access_form': access_form,
+            'reference_formset': reference_formset,
+            'publication_formset': publication_formset,
+            'topic_formset': topic_formset,
+            'storage_type': settings.STORAGE_TYPE,
+            'storage_info': storage_info,
+            'upload_files_form': upload_files_form,
+            'create_folder_form': create_folder_form,
+            'rename_item_form': rename_item_form,
+            'move_items_form': move_items_form,
+            'delete_items_form': delete_items_form,
+            'subdir': subdir,
+            'display_files': display_files,
+            'display_dirs': display_dirs,
+            'dir_breadcrumbs': dir_breadcrumbs,
+            'file_error': file_error,
+            'editor_home': True,
+            'is_editor': True,
+            'files_editable': True,
+            'copyedit_form': copyedit_form,
+            'authors': authors,
+            'author_emails': author_emails,
+            'edit_logs': edit_logs,
+            'copyedit_logs': copyedit_logs,
+            'latest_version': latest_version,
+            'add_item_url': edit_url,
+            'remove_item_url': edit_url,
+            'discovery_form': discovery_form,
+            'url_prefix': url_prefix,
+            'bulk_url_prefix': bulk_url_prefix,
+            'reassign_editor_form': reassign_editor_form,
+        },
+    )
     if description_form_saved:
         set_saved_fields_cookie(description_form, request.path, response)
     return response
@@ -494,6 +525,7 @@ def awaiting_authors(request, project_slug, *args, **kwargs):
             project.save()
 
     url_prefix = notification.get_url_prefix(request)
+    bulk_url_prefix = notification.get_url_prefix(request, bulk_download=True)
     yesterday = timezone.now() + timezone.timedelta(days=-1)
 
     return render(request, 'console/awaiting_authors.html',
@@ -501,6 +533,7 @@ def awaiting_authors(request, project_slug, *args, **kwargs):
          'storage_info': storage_info, 'edit_logs': edit_logs,
          'copyedit_logs': copyedit_logs, 'latest_version': latest_version,
          'outstanding_emails': outstanding_emails, 'url_prefix': url_prefix,
+         'bulk_url_prefix': bulk_url_prefix,
          'yesterday': yesterday, 'editor_home': True,
          'reassign_editor_form': reassign_editor_form})
 
@@ -572,6 +605,7 @@ def publish_submission(request, project_slug, *args, **kwargs):
 
     publishable = project.is_publishable()
     url_prefix = notification.get_url_prefix(request)
+    bulk_url_prefix = notification.get_url_prefix(request, bulk_download=True)
     publish_form = forms.PublishForm(project=project)
 
     return render(request, 'console/publish_submission.html',
@@ -580,6 +614,7 @@ def publish_submission(request, project_slug, *args, **kwargs):
          'edit_logs': edit_logs, 'copyedit_logs': copyedit_logs,
          'latest_version': latest_version, 'publish_form': publish_form,
          'max_slug_length': MAX_PROJECT_SLUG_LENGTH, 'url_prefix': url_prefix,
+         'bulk_url_prefix': bulk_url_prefix,
          'reassign_editor_form': reassign_editor_form, 'editor_home': True})
 
 
@@ -836,6 +871,7 @@ def manage_published_project(request, project_slug, version):
     rw_tasks = [task for (task, read_only) in tasks if not read_only]
 
     url_prefix = notification.get_url_prefix(request)
+    bulk_url_prefix = notification.get_url_prefix(request)
 
     return render(
         request,
@@ -860,6 +896,7 @@ def manage_published_project(request, project_slug, version):
             'passphrase': passphrase,
             'published_projects_nav': True,
             'url_prefix': url_prefix,
+            'bulk_url_prefix': bulk_url_prefix,
             'contact_form': contact_form,
             'legacy_author_form': legacy_author_form,
             'can_make_zip': ProjectFiles().can_make_zip(),
@@ -1046,130 +1083,17 @@ def known_references_search(request):
 @user_passes_test(is_admin, redirect_field_name='project_home')
 def complete_credential_applications(request):
     """
-    KP's custom management page for credentialing.
+    Legacy page for processing credentialing applications.
     """
-    process_credential_form = forms.ProcessCredentialForm(
-        responder=request.user)
-
-    if request.method == 'POST':
-        if 'contact_reference' in request.POST and \
-         request.POST['contact_reference'].isdigit():
-            application_id = request.POST.get('contact_reference', '')
-            application = CredentialApplication.objects.get(id=application_id)
-            if not application.reference_contact_datetime:
-                application.reference_contact_datetime = timezone.now()
-                application.save()
-            # notification.contact_reference(request, application)
-            if application.reference_category == 0:
-                mailto = notification.mailto_supervisor(request, application)
-            else:
-                mailto = notification.mailto_reference(request, application)
-            # messages.success(request, 'The reference contact email has
-            #                  been created.')
-            return render(request, 'console/generate_reference_email.html',
-                          {'application': application, 'mailto': mailto})
-        if 'process_application' in request.POST and \
-         request.POST['process_application'].isdigit():
-            application_id = request.POST.get('process_application', '')
-            try:
-                application = CredentialApplication.objects.get(
-                    id=application_id, status=0)
-            except CredentialApplication.DoesNotExist:
-                messages.error(request, """The application has already been
-                    processed. It may have been withdrawn by the applicant or
-                    handled by another administrator.""")
-                return redirect('complete_credential_applications')
-            process_credential_form = forms.ProcessCredentialForm(
-                responder=request.user, data=request.POST,
-                instance=application)
-
-            if process_credential_form.is_valid():
-                application = process_credential_form.save()
-                notification.process_credential_complete(request, application,
-                                                         comments=False)
-                mailto = notification.mailto_process_credential_complete(
-                    request, application)
-                return render(request, 'console/generate_response_email.html',
-                              {'application': application, 'mailto': mailto})
-            else:
-                messages.error(request, 'Invalid submission. See form below.')
-
-    applications = CredentialApplication.objects.filter(status=0)
-
-    # TODO: Remove this step. Exclude applications that are being handled in
-    # the credential processing workflow. Avoid toes.
-    review_underway_list = [x[0] for x in CredentialReview.REVIEW_STATUS_LABELS
-                            if x[0] and x[0] > 10]
-    review_underway = Q(credential_review__status__in=review_underway_list)
-    applications = applications.exclude(review_underway)
-
-    # Get list of references who have been contacted before
-    # These are "known_refs" but using the ref_known_flag() method is slow
-    known_refs_new = CredentialApplication.objects.filter(
-        reference_contact_datetime__isnull=False).values_list(
-        'reference_email', flat=True)
-    known_refs_legacy = LegacyCredential.objects.exclude(
-        reference_email='').values_list('reference_email', flat=True)
-
-    known_refs = set(known_refs_new).union(set(known_refs_legacy))
-    known_refs = [x.lower() for x in known_refs if x]
-
-    # Group applications and sort by application date
-    # 1. reference not contacted, but with reference known
-    known_ref_no_contact = Q(reference_contact_datetime__isnull=True, reference_email__lower__in=known_refs)
-
-    # 2. reference not contacted, but with reference unknown
-    unknown_ref_no_contact = Q(reference_contact_datetime__isnull=True) & ~Q(reference_email__lower__in=known_refs)
-
-    # 3. reference contacted
-    contacted = Q(reference_contact_datetime__isnull=False)
-
-    applications = (
-        applications
-        .filter(known_ref_no_contact | unknown_ref_no_contact | contacted)
-        .select_related('user')
-        .annotate(
-            search_type_ordering=Case(
-                When(known_ref_no_contact, then=Value(2)),
-                When(unknown_ref_no_contact, then=Value(1)),
-                When(contacted, then=Value(0)),
-                default=Value(-1),
-                output_field=IntegerField(),
-            )
-        )
-        .order_by('-search_type_ordering', 'application_datetime')
-    )
-
-    return render(request, 'console/complete_credential_applications.html',
-                  {'process_credential_form': process_credential_form,
-                   'applications': applications, 'known_refs': known_refs,
-                   'complete_credentials_nav': True})
+    return redirect(credential_processing)
 
 @login_required
 @user_passes_test(is_admin, redirect_field_name='project_home')
 def complete_list_credentialed_people(request):
-    legacy_cred_user = LegacyCredential.objects.all().order_by('-mimic_approval_date')
-    new_cred_user = CredentialApplication.objects.filter(status=2).order_by('-decision_datetime')
-
-    credentialed_people = []
-    for item in legacy_cred_user:
-        try:
-            credentialed_people.append([item.first_names, item.last_name,
-                item.email, item.country, datetime.strptime(item.mimic_approval_date, '%m/%d/%Y'),
-                datetime.strptime(item.eicu_approval_date, '%m/%d/%Y'), item.info])
-        except ValueError:
-            credentialed_people.append([item.first_names, item.last_name,
-                item.email, item.country, datetime.strptime(item.mimic_approval_date, '%m/%d/%Y'),
-                None, item.info])
-    for item in new_cred_user:
-        credentialed_people.append([item.first_names, item.last_name, 
-            item.user.email, item.country, item.decision_datetime.replace(tzinfo=None), 
-            item.decision_datetime.replace(tzinfo=None), item.research_summary])
-
-    credentialed_people = sorted(credentialed_people, key = lambda x: x[4])
-    return render(request, 'console/complete_list_credentialed_people.html',
-        {'credentialed_people': credentialed_people})
-
+    """
+    Legacy page that displayed a list of all approved MIMIC users.
+    """
+    return redirect(credential_applications, "successful")
 
 @login_required
 @user_passes_test(is_admin, redirect_field_name='project_home')
@@ -1411,16 +1335,7 @@ def credential_processing(request):
     """
     Process applications for credentialed access.
     """
-    applications = CredentialApplication.objects.filter(status=0)
-
-    # TODO: Remove this step. If KP has contacted the reference, exclude the
-    # application from our list. Avoid toes.
-    review_not_underway = (Q(credential_review__status__lte=10) |
-                           Q(credential_review__isnull=True))
-
-    ref_contacted = Q(reference_contact_datetime__isnull=False)
-
-    applications = applications.select_related('user__profile').exclude(review_not_underway, ref_contacted)
+    applications = CredentialApplication.objects.filter(status=0).select_related('user__profile')
 
     # Awaiting initial review
     initial_1 = Q(credential_review__isnull=True)
@@ -2066,25 +1981,6 @@ def known_references(request):
 
     return render(request, 'console/known_references.html', {
         'all_known_ref': all_known_ref, 'known_ref_nav': True})
-
-
-@login_required
-@user_passes_test(is_admin, redirect_field_name='project_home')
-def complete_credential_applications_mailto(request):
-    """
-    Return the mailto link to a credentialing applicant.
-    """
-    app_id = request.GET['app_id']
-    try:
-        app = CredentialApplication.objects.get(id=app_id)
-    except CredentialApplication.DoesNotExist:
-        return JsonResponse({'mailtolink': 'false'})
-
-    mailto = notification.mailto_process_credential_complete(request, app,
-                                                             comments=False)
-
-    return JsonResponse({'mailtolink': mailto})
-
 
 @login_required
 @user_passes_test(is_admin, redirect_field_name='project_home')

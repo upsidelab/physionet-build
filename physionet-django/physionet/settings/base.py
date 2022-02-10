@@ -86,7 +86,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'physionet.context_processors.access_policy',
-                'physionet.context_processors.platform_name',
+                'physionet.context_processors.platform_config',
             ],
         },
     },
@@ -166,8 +166,11 @@ CREDENTIAL_EMAIL = 'PhysioNet Credentialing <credentialing@physionet.org>'
 
 GCP_DELEGATION_EMAIL = config('GCP_DELEGATION_EMAIL', default=False)
 
-GCP_BUCKET_PREFIX = "testing-delete."
-GCP_DOMAIN = "physionet.org"
+GCP_BUCKET_PREFIX = 'testing-delete.'
+GCP_DOMAIN = config('GCP_DOMAIN', default='')
+
+# Alternate hostname to be used in example download commands
+BULK_DOWNLOAD_HOSTNAME = config('BULK_DOWNLOAD_HOSTNAME', default=None)
 
 # Header tags for the AWS lambda function that grants access to S3 storage
 AWS_HEADER_KEY = config('AWS_KEY', default=False)
@@ -487,24 +490,34 @@ class StorageTypes:
     LOCAL = 'LOCAL'
     GCP = 'GCP'
 
-
 STORAGE_TYPE = config('STORAGE_TYPE', default=StorageTypes.LOCAL)
+GCP_STORAGE_BUCKET_NAME = config('GCP_MEDIA_BUCKET_NAME')
+GCP_STATIC_BUCKET_NAME = config('GCP_STATIC_BUCKET_NAME')
 
 if STORAGE_TYPE == StorageTypes.GCP:
     DEFAULT_FILE_STORAGE = 'physionet.storage.MediaStorage'
     STATICFILES_STORAGE = 'physionet.storage.StaticStorage'
-    GCP_STORAGE_BUCKET_NAME = config('GCP_MEDIA_BUCKET_NAME')
-    GCP_STATIC_BUCKET_NAME = config('GCP_STATIC_BUCKET_NAME')
     GCP_BUCKET_LOCATION = config('GCP_BUCKET_LOCATION')
     GS_PROJECT_ID = config('GCP_PROJECT_ID')
 
 SITE_NAME = config('SITE_NAME')
+STRAPLINE = config('STRAPLINE')
 EMAIL_SIGNATURE = config('EMAIL_SIGNATURE')
+
+FOOTER_MANAGED_BY = config('FOOTER_MANAGED_BY')
+FOOTER_SUPPORTED_BY = config('FOOTER_SUPPORTED_BY')
+FOOTER_ACCESSIBILITY_PAGE = config('FOOTER_ACCESSIBILITY_PAGE', default=None)
+
+ENABLE_FILE_DOWNLOADS_OPTION = config('ENABLE_FILE_DOWNLOADS_OPTION', cast=bool, default=False)
+COPY_FILES_TO_NEW_VERSION = config('COPY_FILES_TO_NEW_VERSION', cast=bool, default=True)
 
 ENABLE_RESEARCH_ENVIRONMENTS = config('ENABLE_RESEARCH_ENVIRONMENTS', default=False, cast=bool)
 
 if ENABLE_RESEARCH_ENVIRONMENTS:
+    RESEARCH_ENVIRONMENT_API_JWT_SERVICE_ACCOUNT_PATH = os.path.join(
+        BASE_DIR,
+        config('RESEARCH_ENVIRONMENT_API_JWT_SERVICE_ACCOUNT_PATH')
+    )
     RESEARCH_ENVIRONMENT_API_URL = config('RESEARCH_ENVIRONMENT_API_URL')
-    RESEARCH_ENVIRONMENT_API_JWT_SERVICE_ACCOUNT_PATH = config('RESEARCH_ENVIRONMENT_API_JWT_SERVICE_ACCOUNT_PATH')
     RESEARCH_ENVIRONMENT_API_JWT_AUDIENCE = config('RESEARCH_ENVIRONMENT_API_JWT_AUDIENCE')
     INSTALLED_APPS.append('environment')

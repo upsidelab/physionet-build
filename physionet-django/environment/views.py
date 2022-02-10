@@ -4,12 +4,7 @@ from django.shortcuts import render, redirect
 import environment.services as services
 from environment.forms import BillingAccountIdForm, CreateResearchEnvironmentForm
 from environment.decorators import cloud_identity_required, billing_setup_required
-from environment.utilities import (
-    user_has_cloud_identity,
-    user_has_billing_setup,
-    projects_available_for_user,
-    users_project_by_slug,
-)
+from environment.utilities import user_has_cloud_identity, user_has_billing_setup, users_project_by_slug
 
 
 @login_required
@@ -18,8 +13,8 @@ def identity_provisioning(request):
         return redirect("billing_setup")
 
     if request.method == "POST":
-        identity = services.create_cloud_identity(request.user)
-        request.session["cloud_identity_otp"] = identity.otp
+        otp, _ = services.create_cloud_identity(request.user)
+        request.session["cloud_identity_otp"] = otp
         return redirect("billing_setup")
 
     return render(request, "environment/identity_provisioning.html")
@@ -55,9 +50,20 @@ def billing_setup(request):
 @cloud_identity_required
 @billing_setup_required
 def research_environments(request):
-    available_projects = projects_available_for_user(request.user)
-
-    context = {"available_projects": available_projects}
+    available_projects = services.get_available_projects(request.user)
+    available_environments = services.get_available_environments(request.user)
+    project_environment_pairs = services.match_projects_with_environments(
+        available_projects, available_environments
+    )
+    environment_project_pairs = [
+        (environment, project)
+        for (project, environment) in project_environment_pairs
+        if environment is not None
+    ]
+    context = {
+        "project_environment_pairs": project_environment_pairs,
+        "environment_project_pairs": environment_project_pairs,
+    }
     return render(
         request,
         "environment/research_environments.html",

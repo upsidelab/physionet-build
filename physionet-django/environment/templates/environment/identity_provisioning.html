@@ -7,7 +7,7 @@
 {% block title %}Create Cloud Identity{% endblock %}
 
 {% block local_css %}
-<link rel="stylesheet" type="text/css" href="{% static 'project/css/project-home.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'environment/css/environment-base.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -25,7 +25,7 @@
       To start, click the button below to provide you Google Cloud Identity.
     </p>
 
-    <form action="{% url 'identity_provisioning' %}" method="post">
+    <form id="environment_identity_provisioning_form" action="{% url 'identity_provisioning' %}" method="post">
       {% csrf_token %}
       <button class="btn btn-sm btn-primary" type="submit">
         Create Cloud Identity
@@ -33,4 +33,23 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block local_js_bottom %}
+<script>
+  (function() {
+    const form = document.getElementById("environment_identity_provisioning_form");
+    let allowSubmit = true;
+
+    form.onsubmit = function() {
+      if (allowSubmit) {
+        form.querySelector("button").classList.add("disabled");
+        allowSubmit = false;
+        return true;
+      } else {
+        return false;
+      }
+    };
+  })();
+</script>
 {% endblock %}
