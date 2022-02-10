@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -35,3 +36,4 @@ class ResearchEnvironment:
     status: EnvironmentStatus
     type: EnvironmentType
     instance_type: InstanceType
+    bucket_name: Optional[str]

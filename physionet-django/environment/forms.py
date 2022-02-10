@@ -27,7 +27,7 @@ class CreateResearchEnvironmentForm(forms.Form):
     ]
     AVAILABLE_ENVIRONMENT_TYPES = [
         ("jupyter", "Jupyter"),
-        ("rstudio", "RStudio"),
+        # ("rstudio", "RStudio"), # FIXME: Add better support for RStudio
     ]
 
     region = forms.ChoiceField(label="Region", choices=AVAILABLE_REGIONS)

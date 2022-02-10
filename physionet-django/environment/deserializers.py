@@ -18,6 +18,7 @@ def deserialize_research_environments(data: dict) -> Iterable[ResearchEnvironmen
             status=EnvironmentStatus(workbench["status"]),
             type=EnvironmentType(workbench["type"]),
             instance_type=InstanceType(workbench["machine-type"]),
+            bucket_name=workbench.get("bucket-name"), # FIXME: Optional here for now - has to be set for Jupyter notebooks
         )
         for workspace in data["workspace-list"]
         for workbench in workspace["workbench-list"]

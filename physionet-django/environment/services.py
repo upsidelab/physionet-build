@@ -43,13 +43,13 @@ def _create_workbench_kwargs(user, project, region, instance_type, environment_t
         "region": region,
         "environment_type": environment_type,
         "instance_type": instance_type,
-        "dataset": project.gcp.bucket_name,
+        "dataset": project.slug, # FIXME: Dashes in the name are not accepted by the API
     }
     if environment_type == "jupyter":
         jupyter_kwargs = {
             "vmimage": "common-cpu-notebooks",
-            "persistentdisk": 10,                            # FIXME: Figure out what it should be
-            "bucket_name": f"{gcp_user_id}-{project.slug}",  # FIXME: Figure out what it should be
+            "persistentdisk": 10, # TODO: Make this configurable
+            "bucket_name": project.get_project_file_root(),
         }
         return {**common, **jupyter_kwargs}
     else:
@@ -68,6 +68,7 @@ def create_research_environment(user, project, region, instance_type, environmen
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
+    version_filters = Q(is_latest_version=True) # TODO: Add support for non-latest versions
     gcp_filters = Q(gcp__isnull=False)
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
@@ -76,7 +77,7 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
         access_policy_filters = access_policy_filters | Q(
             access_policy=AccessPolicy.CREDENTIALED
         )
-    return PublishedProject.objects.filter(gcp_filters & access_policy_filters)
+    return PublishedProject.objects.filter(version_filters & gcp_filters & access_policy_filters)
 
 
 def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
@@ -100,7 +101,7 @@ def match_projects_with_environments(
             project,
             next(
                 filter(
-                    lambda environment: project.gcp.bucket_name == environment.dataset,
+                    lambda environment: project.project_file_root() == environment.bucket_name,
                     environments,
                 ),
                 None,
