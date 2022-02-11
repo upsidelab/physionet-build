@@ -36,7 +36,7 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
-    gcp_filters = Q(gcp__isnull=False)
+    version_filters = Q(is_latest_version=True) # TODO: Add support for non-latest versions
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -44,7 +44,7 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
         access_policy_filters = access_policy_filters | Q(
             access_policy=AccessPolicy.CREDENTIALED
         )
-    return PublishedProject.objects.filter(gcp_filters & access_policy_filters)
+    return PublishedProject.objects.filter(version_filters & access_policy_filters)
 
 
 def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
