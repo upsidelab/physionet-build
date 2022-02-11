@@ -3,6 +3,14 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+class EnumWithDefault(Enum):
+    @classmethod
+    def from_string_or_none(cls, maybe_string: Optional[str]) -> 'EnumWithDefault':
+        if not maybe_string:
+            return cls.UNKNOWN
+        return cls(maybe_string)
+
+
 class Region(Enum):
     US_CENTRAL = "us-central1"
     NORTHAMERICA_NORTHEAST = "northamerica-northeast1"
@@ -18,13 +26,15 @@ class InstanceType(Enum):
     N1_STANDARD_16 = "n1-standard-16"
 
 
-class EnvironmentStatus(Enum):
-    DESTROYED = "destroyed"
+class EnvironmentStatus(EnumWithDefault):
+    UNKNOWN = "unknown"
     RUNNING = "running"
+    DESTROYED = "destroyed"
 
 
-class EnvironmentType(Enum):
-    JUPYTER = "jypyternotebook"  # Typo in API
+class EnvironmentType(EnumWithDefault):
+    UNKNOWN = "unknown"
+    JUPYTER = "jypyternotebook" # Typo in API
     RSTUDIO = "rstudio"
 
 
@@ -33,7 +43,8 @@ class ResearchEnvironment:
     id: str
     dataset: str
     region: Region
-    status: EnvironmentStatus
     type: EnvironmentType
     instance_type: InstanceType
+    status: EnvironmentStatus
     bucket_name: Optional[str]
+    url: Optional[str]
