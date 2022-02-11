@@ -1,5 +1,5 @@
-from functools import wraps
 from typing import Callable
+from functools import wraps
 
 from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
