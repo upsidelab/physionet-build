@@ -1,3 +1,5 @@
+{% load action_buttons %}
+
 <ul class="list-group list-group-flush">
     <li class="list-group-item">
         <div class="row">
@@ -43,50 +45,15 @@
             </div>
             <div class="col-md-4 text-right">
                 {% if environment.is_running or environment.is_paused %}
-                    <div class="mb-2">
+                    <div class="d-flex flex-wrap justify-content-start align-content-around">
                         {% if environment.is_running %}
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-primary environment-simple-action-button"
-                                data-workbench-id="{{ environment.id }}"
-                                data-region="{{ environment.region.value }}"
-                                data-http-method="PATCH"
-                                data-http-url="{% url 'stop_running_environment' %}"
-                            >
-                                Pause
-                            </button>
+                            {% environment_action_button environment=environment button_type="pause" text="Pause" %}
                         {% else %}
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary environment-simple-action-button"
-                                data-workbench-id="{{ environment.id }}"
-                                data-region="{{ environment.region.value }}"
-                                data-http-method="PATCH"
-                                data-http-url="{{ environment.is_running {% url 'start_stopped_environment' %} }}"
-                            >
-                                Start
-                            </button>
+                            {% environment_action_button environment=environment button_type="start" text="Start" %}
                         {% endif %}
+                        {% environment_instance_change_dropdown environment=environment %}
+                        {% environment_action_button environment=environment button_type="destroy" text="Destroy" %}
                     </div>
-
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-secondary"
-                        data-workbench-id="{{ environment.id }}"
-                        data-region="{{ environment.region.value }}"
-                    >
-                        Change Instance Type
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-danger environment-simple-action-button"
-                        data-workbench-id="{{ environment.id }}"
-                        data-region="{{ environment.region.value }}"
-                        data-http-method="DELETE"
-                        data-http-url="{% url 'delete_environment' %}"
-                    >
-                        Destroy
-                    </button>
                 {% else %}
                     <div>
                         Provisioning...
@@ -103,19 +70,17 @@
     (function() {
         const csrfToken = getCookie('csrftoken');
 
-        const simpleActionButtons = document.getElementsByClassName("environment-simple-action-button");
+        const simpleActionButtons = document.getElementsByClassName("environment-action-button");
         Array.from(simpleActionButtons).forEach((button) => {
             let allowSubmit = true;
-            const patchData = {
-                workbench_id: button.dataset.workbenchId,
-                region: button.dataset.region,
-            };
+            const data = button.dataset.requestData;
+
             button.onclick = function() {
                 if (!allowSubmit) return;
 
                 fetch(button.dataset.httpUrl, {
                     method: button.dataset.httpMethod,
-                    body: JSON.stringify(patchData),
+                    body: data,
                     credentials: "same-origin",
                     headers: {
                         "X-CSRFToken": csrfToken,
