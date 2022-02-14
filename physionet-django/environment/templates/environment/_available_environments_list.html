@@ -33,20 +33,97 @@
             </div>
             <div class="col-md-3">
                 <small>
-                    Instance type: {{ environment.instance_type }}<br>
-                    Region: {{ environment.region }}<br>
-                    Environment type: {{ environment.type }}
+                    Instance type: {{ environment.instance_type.value }}<br>
+                    Region: {{ environment.region.value }}<br>
+                    Environment type: {{ environment.type.value }}
                 </small>
             </div>
             <div class="col-md-2">
-                {{ environment.status }}
+                {{ environment.status.value }}
             </div>
             <div class="col-md-4 text-right">
-                <button type="button" class="btn btn-sm btn-danger">
-                    TODO
-                </button>
+                {% if environment.is_running or environment.is_paused %}
+                    <div class="mb-2">
+                        {% if environment.is_running %}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-primary environment-simple-action-button"
+                                data-workbench-id="{{ environment.id }}"
+                                data-region="{{ environment.region.value }}"
+                                data-http-method="PATCH"
+                                data-http-url="{% url 'stop_running_environment' %}"
+                            >
+                                Pause
+                            </button>
+                        {% else %}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-secondary environment-simple-action-button"
+                                data-workbench-id="{{ environment.id }}"
+                                data-region="{{ environment.region.value }}"
+                                data-http-method="PATCH"
+                                data-http-url="{{ environment.is_running {% url 'start_stopped_environment' %} }}"
+                            >
+                                Start
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-secondary"
+                        data-workbench-id="{{ environment.id }}"
+                        data-region="{{ environment.region.value }}"
+                    >
+                        Change Instance Type
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-danger environment-simple-action-button"
+                        data-workbench-id="{{ environment.id }}"
+                        data-region="{{ environment.region.value }}"
+                        data-http-method="DELETE"
+                        data-http-url="{% url 'delete_environment' %}"
+                    >
+                        Destroy
+                    </button>
+                {% else %}
+                    <div>
+                        Provisioning...
+                    </div>
+                {% endif %}
             </div>
         </div>
     </li>
     {% endfor %}
 </ul>
+
+{% block local_js_bottom %}
+<script>
+    (function() {
+        const csrfToken = getCookie('csrftoken');
+
+        const simpleActionButtons = document.getElementsByClassName("environment-simple-action-button");
+        Array.from(simpleActionButtons).forEach((button) => {
+            let allowSubmit = true;
+            const patchData = {
+                workbench_id: button.dataset.workbenchId,
+                region: button.dataset.region,
+            };
+            button.onclick = function() {
+                if (!allowSubmit) return;
+
+                fetch(button.dataset.httpUrl, {
+                    method: button.dataset.httpMethod,
+                    body: JSON.stringify(patchData),
+                    credentials: "same-origin",
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "Content-Type": "application/json",
+                    },
+                });
+            };
+        });
+    })();
+</script>
+{% endblock %}

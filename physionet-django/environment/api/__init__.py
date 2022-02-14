@@ -14,3 +14,34 @@ def create_cloud_identity(
 @api_request
 def get_workspace_list(gcp_user_id: str) -> Request:
     return Request("GET", url=f"/workspace/list/{gcp_user_id}")
+
+
+@api_request
+def stop_workbench(gcp_user_id: str, workbench_id: str, region: str) -> Request:
+    params = {"userid": gcp_user_id, "id": workbench_id, "region": region}
+    return Request("PUT", url="/workbench/stop", params=params)
+
+
+@api_request
+def start_workbench(gcp_user_id: str, workbench_id: str, region: str) -> Request:
+    params = {"userid": gcp_user_id, "id": workbench_id, "region": region}
+    return Request("PUT", url="/workbench/start", params=params)
+
+
+@api_request
+def change_workbench_instance_type(
+    gcp_user_id: str, workbench_id: str, region: str, new_instance_type: str
+) -> Request:
+    params = {
+        "userid": gcp_user_id,
+        "id": workbench_id,
+        "region": region,
+        "machinetype": new_instance_type,
+    }
+    return Request("PUT", url="/workbench/update", params=params)
+
+
+@api_request
+def delete_workbench(gcp_user_id: str, workbench_id: str, region: str) -> Request:
+    params = {"userid": gcp_user_id, "id": workbench_id, "region": region}
+    return Request("DELETE", url="/workbench", params=params)

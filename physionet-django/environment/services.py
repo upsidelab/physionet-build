@@ -4,9 +4,20 @@ from django.db.models import Q
 
 import environment.api as api
 from environment.models import CloudIdentity, BillingSetup
-from environment.exceptions import IdentityProvisioningFailed
+from environment.exceptions import (
+    IdentityProvisioningFailed,
+    StopEnvironmentFailed,
+    StartEnvironmentFailed,
+    DeleteEnvironmentFailed,
+    ChangeEnvironmentInstanceTypeFailed,
+)
 from environment.deserializers import deserialize_research_environments
-from environment.entities import ResearchEnvironment, EnvironmentStatus
+from environment.entities import (
+    ResearchEnvironment,
+    EnvironmentStatus,
+    InstanceType,
+    Region,
+)
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
 
@@ -36,7 +47,9 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
-    version_filters = Q(is_latest_version=True) # TODO: Add support for non-latest versions
+    version_filters = Q(
+        is_latest_version=True
+    )  # TODO: Add support for non-latest versions
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -68,7 +81,7 @@ def match_projects_with_environments(
             project,
             next(
                 filter(
-                    lambda environment: project.gcp.bucket_name == environment.dataset,
+                    lambda environment: project.slug == environment.dataset,
                     environments,
                 ),
                 None,
@@ -76,3 +89,57 @@ def match_projects_with_environments(
         )
         for project in projects
     ]
+
+
+def stop_running_environment(user: User, workbench_id: str, region: Region):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.stop_workbench(
+        gcp_user_id=gcp_user_id,
+        workbench_id=workbench_id,
+        region=region.value,
+    )
+    if not response.ok:
+        error_message = response.json()["message"]
+        raise StopEnvironmentFailed(error_message)
+
+
+def start_stopped_environment(user: User, workbench_id: str, region: Region):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.start_workbench(
+        gcp_user_id=gcp_user_id,
+        workbench_id=workbench_id,
+        region=region.value,
+    )
+    if not response.ok:
+        error_message = response.json()["message"]
+        raise StartEnvironmentFailed(error_message)
+
+
+def change_environment_instance_type(
+    user: User,
+    workbench_id: str,
+    region: Region,
+    new_instance_type: InstanceType,
+):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.change_workbench_instance_type(
+        gcp_user_id=gcp_user_id,
+        workbench_id=workbench_id,
+        region=region.value,
+        new_instance_type=new_instance_type.value,
+    )
+    if not response.ok:
+        error_message = response.json()["message"]
+        raise ChangeEnvironmentInstanceTypeFailed(error_message)
+
+
+def delete_environment(user: User, workbench_id: str, region: Region):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.delete_workbench(
+        gcp_user_id=gcp_user_id,
+        workbench_id=workbench_id,
+        region=region.value,
+    )
+    if not response.ok:
+        error_message = response.json()["message"]
+        raise DeleteEnvironmentFailed(error_message)
