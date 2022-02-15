@@ -17,6 +17,30 @@ def get_workspace_list(gcp_user_id: str) -> Request:
 
 
 @api_request
+def create_workbench(
+    gcp_user_id,
+    region,
+    environment_type,
+    instance_type,
+    dataset,
+    bucket_name=None,
+    persistent_disk=None,
+    vm_image=None,
+):
+    json = {
+        "userid": gcp_user_id,
+        "region": region,
+        "type": environment_type,
+        "machinetype": instance_type,
+        "dataset": dataset,
+        "bucketname": bucket_name,
+        "persistentdisk": persistent_disk,
+        "vmimage": vm_image,
+    }
+    return Request("POST", url="/workbench", json=json)
+
+
+@api_request
 def workspace_creation(gcp_user_id: str, billing_id: str, region: str) -> Request:
     json = {"userid": gcp_user_id, "billingid": billing_id, "region": region}
     return Request("POST", url="/workspace", json=json)

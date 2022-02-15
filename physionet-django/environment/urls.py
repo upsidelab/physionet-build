@@ -11,4 +11,9 @@ urlpatterns = [
         name="identity_provisioning",
     ),
     path("billing-setup/", views.billing_setup, name="billing_setup"),
+    path(
+        "create-research-environment/<project_slug>/",
+        views.create_research_environment,
+        name="create_research_environment",
+    ),
 ]

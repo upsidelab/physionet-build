@@ -1,4 +1,3 @@
-from abc import ABC, abstractclassmethod
 from typing import Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -47,4 +46,5 @@ class ResearchEnvironment:
     type: EnvironmentType
     instance_type: InstanceType
     status: EnvironmentStatus
+    bucket_name: Optional[str]
     url: Optional[str]

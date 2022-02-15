@@ -2,10 +2,14 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 import environment.services as services
+from environment.forms import BillingAccountIdForm, CreateResearchEnvironmentForm
 from environment.exceptions import BillingVerificationFailed
-from environment.forms import BillingAccountIdForm
 from environment.decorators import cloud_identity_required, billing_setup_required
-from environment.utilities import user_has_cloud_identity, user_has_billing_setup
+from environment.utilities import (
+    user_has_cloud_identity,
+    user_has_billing_setup,
+    users_project_by_slug,
+)
 
 
 @login_required
@@ -17,6 +21,7 @@ def identity_provisioning(request):
         otp, _ = services.create_cloud_identity(request.user)
         request.session["cloud_identity_otp"] = otp
         return redirect("billing_setup")
+
     return render(request, "environment/identity_provisioning.html")
 
 
@@ -76,3 +81,27 @@ def research_environments(request):
         "environment/research_environments.html",
         context,
     )
+
+
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def create_research_environment(request, project_slug):
+    project = users_project_by_slug(request.user, project_slug)
+
+    if request.method == "POST":
+        form = CreateResearchEnvironmentForm(request.POST)
+        if form.is_valid():
+            services.create_research_environment(
+                user=request.user,
+                project=project,
+                region=form.cleaned_data["region"],
+                instance_type=form.cleaned_data["instance_type"],
+                environment_type=form.cleaned_data["environment_type"],
+            )
+            return redirect("research_environments")
+    else:
+        form = CreateResearchEnvironmentForm()
+
+    context = {"form": form, "project": project}
+    return render(request, "environment/create_research_environment.html", context)
