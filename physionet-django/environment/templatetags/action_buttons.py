@@ -33,7 +33,7 @@ button_types = {
 }
 
 
-@register.inclusion_tag("tags/environment_action_button.html")
+@register.inclusion_tag("tag/environment_action_button.html")
 def environment_action_button(
     environment: ResearchEnvironment,
     button_type: str,
@@ -54,7 +54,7 @@ def environment_action_button(
     }
 
 
-@register.inclusion_tag("tags/environment_instance_change_dropdown.html")
+@register.inclusion_tag("tag/environment_instance_change_dropdown.html")
 def environment_instance_change_dropdown(environment: ResearchEnvironment) -> dict:
     instance_types = [t.value for t in InstanceType]
     return {
