@@ -11,6 +11,11 @@ def create_cloud_identity(
     return Request("POST", url="/user", json=json)
 
 
+def create_workspace(gcp_user_id: str, billing_id: str, region: str) -> Request:
+    json = {"userid": gcp_user_id, "billingid": billing_id, "region": region}
+    return Request("POST", url="/workspace", json=json)
+
+
 @api_request
 def get_workspace_list(gcp_user_id: str) -> Request:
     return Request("GET", url=f"/workspace/list/{gcp_user_id}")

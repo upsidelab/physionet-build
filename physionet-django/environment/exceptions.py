@@ -16,3 +16,6 @@ class DeleteEnvironmentFailed(Exception):
 
 class ChangeEnvironmentInstanceTypeFailed(Exception):
     pass
+
+class BillingVerificationFailed(Exception):
+    pass

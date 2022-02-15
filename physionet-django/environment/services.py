@@ -10,6 +10,7 @@ from environment.exceptions import (
     StartEnvironmentFailed,
     DeleteEnvironmentFailed,
     ChangeEnvironmentInstanceTypeFailed,
+    BillingVerificationFailed,
 )
 from environment.deserializers import deserialize_research_environments
 from environment.entities import (
@@ -36,6 +37,18 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
     )
     otp = body["one-time-password"]
     return otp, identity
+
+
+def verify_billing_and_create_workspace(user: User, billing_id: str):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.create_workspace(
+        gcp_user_id=gcp_user_id,
+        billing_id=billing_id,
+        region="us-central1",  # FIXME: Temporary hardcoded
+    )
+    if not response.ok:
+        error_message = response.json()["error"]
+        raise BillingVerificationFailed(error_message)
 
 
 def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
