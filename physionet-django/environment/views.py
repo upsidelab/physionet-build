@@ -33,7 +33,7 @@ def billing_setup(request):
             try:
                 services.verify_billing_and_create_workspace(
                     user=request.user,
-                    billing_id=form.cleaned_data["billing_account_id"]
+                    billing_id=form.cleaned_data["billing_account_id"],
                 )
                 services.create_billing_setup(
                     request.user, form.cleaned_data["billing_account_id"]

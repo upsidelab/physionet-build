@@ -4,14 +4,7 @@ from django.db.models import Q
 
 import environment.api as api
 from environment.models import CloudIdentity, BillingSetup
-from environment.exceptions import (
-    IdentityProvisioningFailed,
-    StopEnvironmentFailed,
-    StartEnvironmentFailed,
-    DeleteEnvironmentFailed,
-    ChangeEnvironmentInstanceTypeFailed,
-    BillingVerificationFailed,
-)
+from environment.exceptions import IdentityProvisioningFailed, BillingVerificationFailed
 from environment.deserializers import deserialize_research_environments
 from environment.entities import ResearchEnvironment, EnvironmentStatus
 from user.models import User
@@ -43,7 +36,9 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
-    version_filters = Q(is_latest_version=True) # TODO: Add support for non-latest versions
+    version_filters = Q(
+        is_latest_version=True
+    )  # TODO: Add support for non-latest versions
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -90,7 +85,7 @@ def verify_billing_and_create_workspace(user: User, billing_id: str):
     response = api.workspace_creation(
         gcp_user_id=gcp_user_id,
         billing_id=billing_id,
-        region="us-central1"  # FIXME: Temporary hardcoded
+        region="us-central1",  # FIXME: Temporary hardcoded
     )
     if not response.ok:
         error_message = response.json()["error"]
