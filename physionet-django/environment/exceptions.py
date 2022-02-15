@@ -4,3 +4,7 @@ class IdentityProvisioningFailed(Exception):
 
 class EnvironmentCreationFailed(Exception):
     pass
+
+
+class BillingVerificationFailed(Exception):
+    pass

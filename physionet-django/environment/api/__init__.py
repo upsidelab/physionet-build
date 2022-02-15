@@ -38,3 +38,9 @@ def create_workbench(
         "vmimage": vm_image,
     }
     return Request("POST", url="/workbench", json=json)
+
+
+@api_request
+def workspace_creation(gcp_user_id: str, billing_id: str, region: str) -> Request:
+    json = {"userid": gcp_user_id, "billingid": billing_id, "region": region}
+    return Request("POST", url="/workspace", json=json)
