@@ -46,6 +46,7 @@ class ResearchEnvironment:
     type: EnvironmentType
     instance_type: InstanceType
     status: EnvironmentStatus
+    bucket_name: Optional[str]
     url: Optional[str]
 
     @property

@@ -51,3 +51,27 @@ def change_workbench_instance_type(
 def delete_workbench(gcp_user_id: str, workbench_id: str, region: str) -> Request:
     params = {"userid": gcp_user_id, "id": workbench_id, "region": region}
     return Request("DELETE", url="/workbench", params=params)
+
+
+@api_request
+def create_workbench(
+    gcp_user_id,
+    region,
+    environment_type,
+    instance_type,
+    dataset,
+    bucket_name=None,
+    persistent_disk=None,
+    vm_image=None,
+):
+    json = {
+        "userid": gcp_user_id,
+        "region": region,
+        "type": environment_type,
+        "machinetype": instance_type,
+        "dataset": dataset,
+        "bucketname": bucket_name,
+        "persistentdisk": persistent_disk,
+        "vmimage": vm_image,
+    }
+    return Request("POST", url="/workbench", json=json)

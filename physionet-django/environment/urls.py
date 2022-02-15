@@ -27,4 +27,9 @@ urlpatterns = [
         name="change_environment_instance_type",
     ),
     path("environment/delete", views.delete_environment, name="delete_environment"),
+    path(
+        "create-research-environment/<project_slug>/",
+        views.create_research_environment,
+        name="create_research_environment",
+    ),
 ]

@@ -11,6 +11,7 @@ from environment.exceptions import (
     DeleteEnvironmentFailed,
     ChangeEnvironmentInstanceTypeFailed,
     BillingVerificationFailed,
+    EnvironmentCreationFailed,
 )
 from environment.deserializers import deserialize_research_environments
 from environment.entities import (
@@ -57,6 +58,38 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
         cloud_identity=cloud_identity, billing_account_id=billing_account_id
     )
     return billing_setup
+
+
+def _create_workbench_kwargs(user, project, region, instance_type, environment_type):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+
+    common = {
+        "user_id": gcp_user_id,
+        "region": region,
+        "environment_type": environment_type,
+        "instance_type": instance_type,
+        "dataset": project.slug,  # FIXME: Dashes in the name are not accepted by the API
+    }
+    if environment_type == "jupyter":
+        jupyter_kwargs = {
+            "vmimage": "common-cpu-notebooks",
+            "persistentdisk": 10,  # TODO: Make this configurable
+            "bucket_name": project.get_project_file_root(),
+        }
+        return {**common, **jupyter_kwargs}
+    else:
+        return common
+
+
+def create_research_environment(user, project, region, instance_type, environment_type):
+    kwargs = _create_workbench_kwargs(
+        user, project, region, instance_type, environment_type
+    )
+    response = api.create_workbench(**kwargs)
+    if not response.ok:
+        raise EnvironmentCreationFailed()
+
+    return response
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
