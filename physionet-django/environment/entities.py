@@ -3,14 +3,6 @@ from dataclasses import dataclass
 from enum import Enum
 
 
-class EnumWithDefault(Enum):
-    @classmethod
-    def from_string_or_none(cls, maybe_string: Optional[str]) -> "EnumWithDefault":
-        if not maybe_string:
-            return cls.UNKNOWN
-        return cls(maybe_string)
-
-
 class Region(Enum):
     US_CENTRAL = "us-central1"
     NORTHAMERICA_NORTHEAST = "northamerica-northeast1"
@@ -26,16 +18,24 @@ class InstanceType(Enum):
     N1_STANDARD_16 = "n1-standard-16"
 
 
-class EnvironmentStatus(EnumWithDefault):
-    UNKNOWN = "unknown"
+class EnvironmentStatus(Enum):
+    PROVISIONING = "workbench-setup-inprogress"
+    PROVISIONING_FAILED = "workbench-setup-failed"
     RUNNING = "running"
+    TERMINATED = "terminated"  # Paused
     DESTROYED = "destroyed"
 
 
-class EnvironmentType(EnumWithDefault):
+class EnvironmentType(Enum):
     UNKNOWN = "unknown"
     JUPYTER = "jypyternotebook"  # Typo in API
     RSTUDIO = "rstudio"
+
+    @classmethod
+    def from_string_or_none(cls, maybe_string: Optional[str]) -> "EnvironmentType":
+        if not maybe_string:
+            return cls.UNKNOWN
+        return cls(maybe_string)
 
 
 @dataclass
@@ -48,3 +48,11 @@ class ResearchEnvironment:
     status: EnvironmentStatus
     bucket_name: Optional[str]
     url: Optional[str]
+
+    @property
+    def is_running(self):
+        return self.status == EnvironmentStatus.RUNNING
+
+    @property
+    def is_paused(self):
+        return self.status == EnvironmentStatus.TERMINATED

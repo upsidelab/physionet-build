@@ -1,3 +1,5 @@
+{% load action_buttons %}
+
 <ul class="list-group list-group-flush">
     <li class="list-group-item">
         <div class="row">
@@ -33,20 +35,63 @@
             </div>
             <div class="col-md-3">
                 <small>
-                    Instance type: {{ environment.instance_type }}<br>
-                    Region: {{ environment.region }}<br>
-                    Environment type: {{ environment.type }}
+                    Instance type: {{ environment.instance_type.value }}<br>
+                    Region: {{ environment.region.value }}<br>
+                    Environment type: {{ environment.type.value }}
                 </small>
             </div>
             <div class="col-md-2">
-                {{ environment.status }}
+                {{ environment.status.value }}
             </div>
             <div class="col-md-4 text-right">
-                <button type="button" class="btn btn-sm btn-danger">
-                    TODO
-                </button>
+                {% if environment.is_running or environment.is_paused %}
+                    <div class="d-flex flex-wrap justify-content-start align-content-around">
+                        {% if environment.is_running %}
+                            <a href="//{{ environment.url }}">
+                                <button type="button" class="btn btn-sm btn-link m-1">Open</button>
+                            </a>
+                            {% environment_action_button environment=environment button_type="pause" text="Pause" %}
+                        {% else %}
+                            {% environment_action_button environment=environment button_type="start" text="Start" %}
+                        {% endif %}
+                        {% environment_instance_change_dropdown environment=environment %}
+                        {% environment_action_button environment=environment button_type="destroy" text="Destroy" %}
+                    </div>
+                {% else %}
+                    <div>
+                        Provisioning...
+                    </div>
+                {% endif %}
             </div>
         </div>
     </li>
     {% endfor %}
 </ul>
+
+{% block local_js_bottom %}
+<script>
+    (function() {
+        const csrfToken = getCookie('csrftoken');
+
+        const simpleActionButtons = document.getElementsByClassName("environment-action-button");
+        Array.from(simpleActionButtons).forEach((button) => {
+            let allowSubmit = true;
+            const data = button.dataset.requestData;
+
+            button.onclick = function() {
+                if (!allowSubmit) return;
+
+                fetch(button.dataset.httpUrl, {
+                    method: button.dataset.httpMethod,
+                    body: data,
+                    credentials: "same-origin",
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "Content-Type": "application/json",
+                    },
+                });
+            };
+        });
+    })();
+</script>
+{% endblock %}

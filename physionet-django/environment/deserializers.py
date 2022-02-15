@@ -22,7 +22,9 @@ def deserialize_research_environments(data: dict) -> Iterable[ResearchEnvironmen
                 "bucket-name"
             ),  # FIXME: Optional here for now - has to be set for Jupyter notebooks
             type=EnvironmentType.from_string_or_none(workbench["type"]),
-            status=EnvironmentStatus.from_string_or_none(workbench["status"]),
+            status=EnvironmentStatus(
+                workbench["status"] or workbench["workbench-setup-status"]
+            ),
         )
         for workspace in data["workspace-list"]
         for workbench in workspace["workbench-list"]

@@ -6,11 +6,20 @@ import environment.api as api
 from environment.models import CloudIdentity, BillingSetup
 from environment.exceptions import (
     IdentityProvisioningFailed,
+    StopEnvironmentFailed,
+    StartEnvironmentFailed,
+    DeleteEnvironmentFailed,
+    ChangeEnvironmentInstanceTypeFailed,
     BillingVerificationFailed,
     EnvironmentCreationFailed,
 )
 from environment.deserializers import deserialize_research_environments
-from environment.entities import ResearchEnvironment, EnvironmentStatus
+from environment.entities import (
+    ResearchEnvironment,
+    EnvironmentStatus,
+    InstanceType,
+    Region,
+)
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
 
@@ -29,6 +38,18 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
     )
     otp = body["one-time-password"]
     return otp, identity
+
+
+def verify_billing_and_create_workspace(user: User, billing_id: str):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.create_workspace(
+        gcp_user_id=gcp_user_id,
+        billing_id=billing_id,
+        region="us-central1",  # FIXME: Temporary hardcoded
+    )
+    if not response.ok:
+        error_message = response.json()["error"]
+        raise BillingVerificationFailed(error_message)
 
 
 def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
@@ -116,13 +137,55 @@ def match_projects_with_environments(
     ]
 
 
-def verify_billing_and_create_workspace(user: User, billing_id: str):
+def stop_running_environment(user: User, workbench_id: str, region: Region):
     gcp_user_id = user.cloud_identity.gcp_user_id
-    response = api.workspace_creation(
+    response = api.stop_workbench(
         gcp_user_id=gcp_user_id,
-        billing_id=billing_id,
-        region="us-central1",  # FIXME: Temporary hardcoded
+        workbench_id=workbench_id,
+        region=region.value,
     )
     if not response.ok:
-        error_message = response.json()["error"]
-        raise BillingVerificationFailed(error_message)
+        error_message = response.json()["message"]
+        raise StopEnvironmentFailed(error_message)
+
+
+def start_stopped_environment(user: User, workbench_id: str, region: Region):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.start_workbench(
+        gcp_user_id=gcp_user_id,
+        workbench_id=workbench_id,
+        region=region.value,
+    )
+    if not response.ok:
+        error_message = response.json()["message"]
+        raise StartEnvironmentFailed(error_message)
+
+
+def change_environment_instance_type(
+    user: User,
+    workbench_id: str,
+    region: Region,
+    new_instance_type: InstanceType,
+):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.change_workbench_instance_type(
+        gcp_user_id=gcp_user_id,
+        workbench_id=workbench_id,
+        region=region.value,
+        new_instance_type=new_instance_type.value,
+    )
+    if not response.ok:
+        error_message = response.json()["message"]
+        raise ChangeEnvironmentInstanceTypeFailed(error_message)
+
+
+def delete_environment(user: User, workbench_id: str, region: Region):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.delete_workbench(
+        gcp_user_id=gcp_user_id,
+        workbench_id=workbench_id,
+        region=region.value,
+    )
+    if not response.ok:
+        error_message = response.json()["message"]
+        raise DeleteEnvironmentFailed(error_message)

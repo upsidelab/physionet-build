@@ -1,10 +1,20 @@
-from django.contrib.auth.decorators import login_required
+import json
+
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods, require_GET
 
 import environment.services as services
 from environment.forms import BillingAccountIdForm, CreateResearchEnvironmentForm
 from environment.exceptions import BillingVerificationFailed
-from environment.decorators import cloud_identity_required, billing_setup_required
+from environment.decorators import (
+    cloud_identity_required,
+    billing_setup_required,
+    require_DELETE,
+    require_PATCH,
+)
+from environment.entities import Region, InstanceType
 from environment.utilities import (
     user_has_cloud_identity,
     user_has_billing_setup,
@@ -12,6 +22,7 @@ from environment.utilities import (
 )
 
 
+@require_http_methods(["GET", "POST"])
 @login_required
 def identity_provisioning(request):
     if user_has_cloud_identity(request.user):
@@ -25,6 +36,7 @@ def identity_provisioning(request):
     return render(request, "environment/identity_provisioning.html")
 
 
+@require_http_methods(["GET", "POST"])
 @login_required
 @cloud_identity_required
 def billing_setup(request):
@@ -58,6 +70,7 @@ def billing_setup(request):
     return render(request, "environment/billing_setup.html", context)
 
 
+@require_GET
 @login_required
 @cloud_identity_required
 @billing_setup_required
@@ -105,3 +118,60 @@ def create_research_environment(request, project_slug):
 
     context = {"form": form, "project": project}
     return render(request, "environment/create_research_environment.html", context)
+
+
+@require_PATCH
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def stop_running_environment(request):
+    data = json.loads(request.body)
+    services.stop_running_environment(
+        user=request.user,
+        workbench_id=data["workbench_id"],
+        region=Region(data["region"]),
+    )
+    return JsonResponse({})
+
+
+@require_PATCH
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def start_stopped_environment(request):
+    data = json.loads(request.body)
+    services.start_stopped_environment(
+        user=request.user,
+        workbench_id=data["workbench_id"],
+        region=Region(data["region"]),
+    )
+    return JsonResponse({})
+
+
+@require_PATCH
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def change_environment_instance_type(request):
+    data = json.loads(request.body)
+    services.change_environment_instance_type(
+        user=request.user,
+        workbench_id=data["workbench_id"],
+        region=Region(data["region"]),
+        new_instance_type=InstanceType(data["instance_type"]),
+    )
+    return JsonResponse({})
+
+
+@require_DELETE
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def delete_environment(request):
+    data = json.loads(request.body)
+    services.delete_environment(
+        user=request.user,
+        workbench_id=data["workbench_id"],
+        region=Region(data["region"]),
+    )
+    return JsonResponse({})
