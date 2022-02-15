@@ -47,6 +47,9 @@
                 {% if environment.is_running or environment.is_paused %}
                     <div class="d-flex flex-wrap justify-content-start align-content-around">
                         {% if environment.is_running %}
+                            <a href="//{{ environment.url }}">
+                                <button type="button" class="btn btn-sm btn-link m-1">Open</button>
+                            </a>
                             {% environment_action_button environment=environment button_type="pause" text="Pause" %}
                         {% else %}
                             {% environment_action_button environment=environment button_type="start" text="Start" %}
