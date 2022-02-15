@@ -14,7 +14,8 @@ def deserialize_research_environments(data: dict) -> Iterable[ResearchEnvironmen
         ResearchEnvironment(
             id=workbench["id"],
             dataset=workbench["dataset"],
-            url=workbench.get("url") or workbench.get('version-url'), # RStudio sends version-url
+            url=workbench.get("url")
+            or workbench.get("version-url"),  # RStudio sends version-url
             instance_type=InstanceType(workbench["machine-type"]),
             region=Region(workbench["region"]),
             type=EnvironmentType.from_string_or_none(workbench["type"]),

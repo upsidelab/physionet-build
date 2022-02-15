@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 import environment.services as services
+from environment.exceptions import BillingVerificationFailed
 from environment.forms import BillingAccountIdForm
 from environment.decorators import cloud_identity_required, billing_setup_required
 from environment.utilities import user_has_cloud_identity, user_has_billing_setup
@@ -29,10 +30,17 @@ def billing_setup(request):
         form = BillingAccountIdForm(request.POST)
         if form.is_valid():
             # TODO: Billing setup has to be verified
-            services.create_billing_setup(
-                request.user, form.cleaned_data["billing_account_id"]
-            )
-            return redirect("research_environments")
+            try:
+                services.verify_billing_and_create_workspace(
+                    user=request.user,
+                    billing_id=form.cleaned_data["billing_account_id"],
+                )
+                services.create_billing_setup(
+                    request.user, form.cleaned_data["billing_account_id"]
+                )
+                return redirect("research_environments")
+            except BillingVerificationFailed as err:
+                form.add_error("billing_account_id", err)
     else:
         form = BillingAccountIdForm()
 

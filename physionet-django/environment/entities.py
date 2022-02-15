@@ -6,7 +6,7 @@ from enum import Enum
 
 class EnumWithDefault(Enum):
     @classmethod
-    def from_string_or_none(cls, maybe_string: Optional[str]) -> 'EnumWithDefault':
+    def from_string_or_none(cls, maybe_string: Optional[str]) -> "EnumWithDefault":
         if not maybe_string:
             return cls.UNKNOWN
         return cls(maybe_string)
@@ -35,7 +35,7 @@ class EnvironmentStatus(EnumWithDefault):
 
 class EnvironmentType(EnumWithDefault):
     UNKNOWN = "unknown"
-    JUPYTER = "jypyternotebook" # Typo in API
+    JUPYTER = "jypyternotebook"  # Typo in API
     RSTUDIO = "rstudio"
 
 
