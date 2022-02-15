@@ -4,7 +4,14 @@ from django.db.models import Q
 
 import environment.api as api
 from environment.models import CloudIdentity, BillingSetup
-from environment.exceptions import IdentityProvisioningFailed
+from environment.exceptions import (
+    IdentityProvisioningFailed,
+    StopEnvironmentFailed,
+    StartEnvironmentFailed,
+    DeleteEnvironmentFailed,
+    ChangeEnvironmentInstanceTypeFailed,
+    BillingVerificationFailed,
+)
 from environment.deserializers import deserialize_research_environments
 from environment.entities import ResearchEnvironment, EnvironmentStatus
 from user.models import User
@@ -68,7 +75,7 @@ def match_projects_with_environments(
             project,
             next(
                 filter(
-                    lambda environment: project.gcp.bucket_name == environment.dataset,
+                    lambda environment: project.slug == environment.dataset,
                     environments,
                 ),
                 None,
@@ -76,3 +83,15 @@ def match_projects_with_environments(
         )
         for project in projects
     ]
+
+
+def verify_billing_and_create_workspace(user: User, billing_id: str):
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.workspace_creation(
+        gcp_user_id=gcp_user_id,
+        billing_id=billing_id,
+        region="us-central1"  # FIXME: Temporary hardcoded
+    )
+    if not response.ok:
+        error_message = response.json()["error"]
+        raise BillingVerificationFailed(error_message)
