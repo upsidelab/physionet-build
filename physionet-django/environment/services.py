@@ -11,7 +11,7 @@ from environment.exceptions import (
     DeleteEnvironmentFailed,
     ChangeEnvironmentInstanceTypeFailed,
     BillingVerificationFailed,
-    EnvironmentCreationFailed,
+    EnvironmentCreationFailed, GetAvailableEnvironmentsFailed,
 )
 from environment.deserializers import deserialize_research_environments
 from environment.entities import (
@@ -109,6 +109,8 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
 def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.get_workspace_list(gcp_user_id)
+    if not response.ok:
+        raise GetAvailableEnvironmentsFailed()
     all_environments = deserialize_research_environments(response.json())
     running_environments = [
         environment

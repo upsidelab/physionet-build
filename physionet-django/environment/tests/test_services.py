@@ -12,7 +12,7 @@ from environment.services import (
     stop_running_environment,
     start_stopped_environment,
     change_environment_instance_type,
-    delete_environment,
+    delete_environment, verify_billing_and_create_workspace, get_available_environments,
 )
 from environment.exceptions import (
     IdentityProvisioningFailed,
@@ -20,11 +20,16 @@ from environment.exceptions import (
     StopEnvironmentFailed,
     StartEnvironmentFailed,
     ChangeEnvironmentInstanceTypeFailed,
-    DeleteEnvironmentFailed,
+    DeleteEnvironmentFailed, BillingVerificationFailed, GetAvailableEnvironmentsFailed,
 )
 from environment.models import CloudIdentity, BillingSetup
-from environment.entities import Region, InstanceType
-
+from environment.entities import Region, InstanceType, EnvironmentStatus, ResearchEnvironment
+from environment.tests.mocks import get_workspace_list_json
+from environment.tests.helpers import (
+    create_user_without_cloud_identity,
+    create_user_with_cloud_identity,
+    create_user_with_billing_setup,
+)
 
 User = get_user_model()
 
@@ -32,7 +37,7 @@ User = get_user_model()
 @skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class CreateCloudIdentityTestCase(TestCase):
     def setUp(self):
-        self.user_without_cloud_identity = User.objects.create_user("foo", "bar", "baz")
+        self.user = create_user_without_cloud_identity()
 
     @patch("environment.api.create_cloud_identity")
     def test_raises_if_request_fails(self, mock_create_cloud_identity):
@@ -40,7 +45,7 @@ class CreateCloudIdentityTestCase(TestCase):
         self.assertRaises(
             IdentityProvisioningFailed,
             create_cloud_identity,
-            self.user_without_cloud_identity,
+            self.user,
         )
 
     @patch("environment.api.create_cloud_identity")
@@ -55,31 +60,26 @@ class CreateCloudIdentityTestCase(TestCase):
             "email-id": mock_email,
         }
 
-        otp, identity = create_cloud_identity(self.user_without_cloud_identity)
+        otp, identity = create_cloud_identity(self.user)
         self.assertEqual(otp, mock_otp)
         self.assertEqual(
-            identity.gcp_user_id, self.user_without_cloud_identity.username
+            identity.gcp_user_id, self.user.username
         )
         self.assertEqual(identity.email, mock_email)
-        self.assertEqual(self.user_without_cloud_identity.cloud_identity, identity)
+        self.assertEqual(self.user.cloud_identity, identity)
 
 
 class CreateBillingSetupTestCase(TestCase):
     def setUp(self):
-        self.user_without_billing_setup = User.objects.create_user("foo", "bar", "baz")
-        CloudIdentity.objects.create(
-            user=self.user_without_billing_setup,
-            gcp_user_id=self.user_without_billing_setup.username,
-            email=self.user_without_billing_setup.email,
-        )
+        self.user = create_user_with_cloud_identity()
 
     def test_creates_billing_setup_for_specified_user(self):
         mock_billing_account = "XXXXXX-XXXXXX-XXXXXX"
         billing_setup = create_billing_setup(
-            self.user_without_billing_setup, mock_billing_account
+            self.user, mock_billing_account
         )
         self.assertEqual(
-            self.user_without_billing_setup.cloud_identity.billing_setup, billing_setup
+            self.user.cloud_identity.billing_setup, billing_setup
         )
         self.assertEqual(billing_setup.billing_account_id, mock_billing_account)
 
@@ -89,15 +89,7 @@ class CreateResearchEnvironmentTestCase(TestCase):
         self.project = MagicMock()
         self.project.slug = "slug"
         self.project.get_project_file_root.return_value = "bucket"
-        self.user = User.objects.create_user("foo", "bar", "baz")
-        cloud_identity = CloudIdentity.objects.create(
-            user=self.user,
-            gcp_user_id=self.user.username,
-            email=self.user.email,
-        )
-        BillingSetup.objects.create(
-            cloud_identity=cloud_identity, billing_account_id="XXXXXX-XXXXXX-XXXXXX"
-        )
+        self.user = create_user_with_billing_setup()
 
     @patch("environment.api.create_workbench")
     def test_raises_if_request_fails(self, mock_create_research_environment):
@@ -127,15 +119,7 @@ class CreateResearchEnvironmentTestCase(TestCase):
 
 class StopRunningEnvironmentTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user("foo", "bar", "baz")
-        cloud_identity = CloudIdentity.objects.create(
-            user=self.user,
-            gcp_user_id=self.user.username,
-            email=self.user.email,
-        )
-        BillingSetup.objects.create(
-            cloud_identity=cloud_identity, billing_account_id="XXXXXX-XXXXXX-XXXXXX"
-        )
+        self.user = create_user_with_billing_setup()
 
     @patch("environment.api.stop_workbench")
     def test_raises_if_request_fails(self, mock_stop_workbench):
@@ -149,7 +133,7 @@ class StopRunningEnvironmentTestCase(TestCase):
         )
 
     @patch("environment.api.stop_workbench")
-    def test_raises_if_request_fails(self, mock_stop_workbench):
+    def test_raises_if_request_succeeds(self, mock_stop_workbench):
         mock_stop_workbench.return_value.ok = True
         result = stop_running_environment(
             self.user, "workbench_id", Region.AUSTRALIA_SOUTHEAST
@@ -159,15 +143,7 @@ class StopRunningEnvironmentTestCase(TestCase):
 
 class StartStoppedEnvironmentTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user("foo", "bar", "baz")
-        cloud_identity = CloudIdentity.objects.create(
-            user=self.user,
-            gcp_user_id=self.user.username,
-            email=self.user.email,
-        )
-        BillingSetup.objects.create(
-            cloud_identity=cloud_identity, billing_account_id="XXXXXX-XXXXXX-XXXXXX"
-        )
+        self.user = create_user_with_billing_setup()
 
     @patch("environment.api.start_workbench")
     def test_raises_if_request_fails(self, mock_start_workbench):
@@ -181,7 +157,7 @@ class StartStoppedEnvironmentTestCase(TestCase):
         )
 
     @patch("environment.api.start_workbench")
-    def test_raises_if_request_fails(self, mock_stop_workbench):
+    def test_raises_if_request_succeeds(self, mock_stop_workbench):
         mock_stop_workbench.return_value.ok = True
         result = start_stopped_environment(
             self.user, "workbench_id", Region.AUSTRALIA_SOUTHEAST
@@ -191,15 +167,7 @@ class StartStoppedEnvironmentTestCase(TestCase):
 
 class ChangeEnvironmentInstanceTypeTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user("foo", "bar", "baz")
-        cloud_identity = CloudIdentity.objects.create(
-            user=self.user,
-            gcp_user_id=self.user.username,
-            email=self.user.email,
-        )
-        BillingSetup.objects.create(
-            cloud_identity=cloud_identity, billing_account_id="XXXXXX-XXXXXX-XXXXXX"
-        )
+        self.user = create_user_with_billing_setup()
 
     @patch("environment.api.change_workbench_instance_type")
     def test_raises_if_request_fails(self, mock_change_workbench_instance_type):
@@ -214,7 +182,7 @@ class ChangeEnvironmentInstanceTypeTestCase(TestCase):
         )
 
     @patch("environment.api.change_workbench_instance_type")
-    def test_raises_if_request_fails(self, mock_change_workbench_instance_type):
+    def test_raises_if_request_succeeds(self, mock_change_workbench_instance_type):
         mock_change_workbench_instance_type.return_value.ok = True
         result = change_environment_instance_type(
             self.user,
@@ -227,15 +195,7 @@ class ChangeEnvironmentInstanceTypeTestCase(TestCase):
 
 class DeleteEnvironmentTestCase(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user("foo", "bar", "baz")
-        cloud_identity = CloudIdentity.objects.create(
-            user=self.user,
-            gcp_user_id=self.user.username,
-            email=self.user.email,
-        )
-        BillingSetup.objects.create(
-            cloud_identity=cloud_identity, billing_account_id="XXXXXX-XXXXXX-XXXXXX"
-        )
+        self.user = create_user_with_billing_setup()
 
     @patch("environment.api.delete_workbench")
     def test_raises_if_request_fails(self, mock_delete_workbench):
@@ -249,9 +209,50 @@ class DeleteEnvironmentTestCase(TestCase):
         )
 
     @patch("environment.api.delete_workbench")
-    def test_raises_if_request_fails(self, mock_delete_workbench):
+    def test_raises_if_request_succeeds(self, mock_delete_workbench):
         mock_delete_workbench.return_value.ok = True
         result = delete_environment(
             self.user, "workbench_id", Region.AUSTRALIA_SOUTHEAST
         )
         self.assertEqual(result, mock_delete_workbench.return_value)
+
+
+class VerifyBillingAndCreateWorkspaceTestCase(TestCase):
+    def setUp(self):
+        self.user = create_user_with_cloud_identity()
+        self.some_billing_id = "XXXXXX-XXXXXX-XXXXXX"
+
+    @patch("environment.api.create_workspace")
+    def test_raises_if_request_fails(self, mock_create_workspace):
+        mock_create_workspace.return_value.ok = False
+        self.assertRaises(
+            BillingVerificationFailed, verify_billing_and_create_workspace, self.user,
+            self.some_billing_id
+        )
+
+    @patch("environment.api.create_workspace")
+    def test_not_raises_if_request_succeeds(self, mock_create_workspace):
+        mock_create_workspace.return_value.ok = True
+        verify_billing_and_create_workspace(self.user, self.some_billing_id)
+
+
+class GetAvailableEnvironmentsTestCase(TestCase):
+    def setUp(self):
+        self.user = create_user_with_cloud_identity()
+
+    @patch("environment.api.get_workspace_list")
+    def test_get_running_environments_succeed(self, mock_get_workspace_list):
+        mock_get_workspace_list.return_value.json.return_value = get_workspace_list_json
+
+        running_environments = get_available_environments(self.user)
+
+        self.assertTrue(all(True if environment.status != EnvironmentStatus.DESTROYED else False
+                            for environment in running_environments))
+        self.assertIsInstance(running_environments, list)
+        self.assertTrue(all(True if isinstance(environment, ResearchEnvironment) else False
+                            for environment in running_environments))
+
+    @patch("environment.api.get_workspace_list")
+    def test_raises_if_request_fails(self, mock_get_workspace_list):
+        mock_get_workspace_list.return_value.ok = False
+        self.assertRaises(GetAvailableEnvironmentsFailed, get_available_environments, self.user)

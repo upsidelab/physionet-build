@@ -24,3 +24,7 @@ class EnvironmentCreationFailed(Exception):
 
 class BillingVerificationFailed(Exception):
     pass
+
+
+class GetAvailableEnvironmentsFailed(Exception):
+    pass
