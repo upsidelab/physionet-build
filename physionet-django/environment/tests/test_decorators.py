@@ -1,33 +1,93 @@
+from unittest.mock import Mock
+
 from django.test import TestCase
+from django.urls import reverse
+
+from environment.decorators import cloud_identity_required, billing_setup_required, require_PATCH, require_DELETE
 
 
 class CloudIdentityRequiredTestCase(TestCase):
     def test_redirects_user_without_cloud_identity_to_identity_provisioning(self):
-        pass
+        request_with_user_without_cloud_identity = Mock(
+            user=Mock(spec=[]),
+        )
+        view = Mock()
+        decorated_view = cloud_identity_required(view)
+        response = decorated_view(request_with_user_without_cloud_identity)
+        self.assertRedirects(response, reverse("identity_provisioning"), fetch_redirect_response=False)
+        view.assert_not_called()
 
     def test_does_not_redirect_user_with_cloud_identity(self):
-        pass
+        request_with_user_without_cloud_identity = Mock(
+            user=Mock(spec=['cloud_identity']),
+        )
+        view = Mock()
+        decorated_view = cloud_identity_required(view)
+        decorated_view(request_with_user_without_cloud_identity)
+        view.assert_called()
 
 
 class BillingSetupRequiredTestCase(TestCase):
     def test_redirects_user_without_billing_account_to_billing_setup(self):
-        pass
+        request_with_user_without_billing_account = Mock(
+            user=Mock(spec=[]),
+        )
+        view = Mock()
+        decorated_view = billing_setup_required(view)
+        response = decorated_view(request_with_user_without_billing_account)
+        self.assertRedirects(response, reverse("billing_setup"), fetch_redirect_response=False)
+        view.assert_not_called()
 
     def test_does_not_redirect_user_with_billing_account(self):
-        pass
+        request_with_user_without_billing_account = Mock(
+            user=Mock(spec=['cloud_identity']),
+        )
+        view = Mock()
+        decorated_view = billing_setup_required(view)
+        decorated_view(request_with_user_without_billing_account)
+        view.assert_called()
 
 
 class RequirePatchTestCase(TestCase):
     def test_returns_405_for_non_patch_requests(self):
-        pass
+        methods = ["DELETE", "GET", "POST", "HEAD", "PUT", "CONNECT", "OPTIONS", "TRACE"]
+        responses = []
+        for method in methods:
+            request = Mock(
+                method=method
+            )
+            view = Mock()
+            decorated_view = require_PATCH(view)
+            responses.append(decorated_view(request))
+        self.assertTrue(all(response.status_code == 405 for response in responses))
 
     def test_succeeds_for_patch_request(self):
-        pass
-
+        request = Mock(
+            method="PATCH"
+        )
+        view = Mock()
+        decorated_view = require_PATCH(view)
+        decorated_view(request)
+        view.assert_called()
 
 class RequireDeleteTestCase(TestCase):
     def test_returns_405_for_non_delete_requests(self):
-        pass
+        methods = ["PATCH", "GET", "POST", "HEAD", "PUT", "CONNECT", "OPTIONS", "TRACE"]
+        responses = []
+        for method in methods:
+            request = Mock(
+                method=method
+            )
+            view = Mock()
+            decorated_view = require_DELETE(view)
+            responses.append(decorated_view(request))
+        self.assertTrue(all(response.status_code == 405 for response in responses))
 
     def test_succeeds_for_delete_request(self):
-        pass
+        request = Mock(
+            method="DELETE"
+        )
+        view = Mock()
+        decorated_view = require_DELETE(view)
+        decorated_view(request)
+        view.assert_called()
