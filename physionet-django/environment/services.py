@@ -147,6 +147,7 @@ def stop_running_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["message"]
         raise StopEnvironmentFailed(error_message)
+    return response
 
 
 def start_stopped_environment(user: User, workbench_id: str, region: Region):
@@ -159,6 +160,7 @@ def start_stopped_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["message"]
         raise StartEnvironmentFailed(error_message)
+    return response
 
 
 def change_environment_instance_type(
@@ -177,6 +179,7 @@ def change_environment_instance_type(
     if not response.ok:
         error_message = response.json()["message"]
         raise ChangeEnvironmentInstanceTypeFailed(error_message)
+    return response
 
 
 def delete_environment(user: User, workbench_id: str, region: Region):
@@ -189,3 +192,4 @@ def delete_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["message"]
         raise DeleteEnvironmentFailed(error_message)
+    return response
