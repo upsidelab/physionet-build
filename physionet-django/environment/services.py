@@ -12,6 +12,7 @@ from environment.exceptions import (
     ChangeEnvironmentInstanceTypeFailed,
     BillingVerificationFailed,
     EnvironmentCreationFailed,
+    GetAvailableEnvironmentsFailed,
 )
 from environment.deserializers import deserialize_research_environments
 from environment.entities import (
@@ -109,6 +110,8 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
 def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.get_workspace_list(gcp_user_id)
+    if not response.ok:
+        raise GetAvailableEnvironmentsFailed()
     all_environments = deserialize_research_environments(response.json())
     running_environments = [
         environment
@@ -147,6 +150,7 @@ def stop_running_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["message"]
         raise StopEnvironmentFailed(error_message)
+    return response
 
 
 def start_stopped_environment(user: User, workbench_id: str, region: Region):
@@ -159,6 +163,7 @@ def start_stopped_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["message"]
         raise StartEnvironmentFailed(error_message)
+    return response
 
 
 def change_environment_instance_type(
@@ -177,6 +182,7 @@ def change_environment_instance_type(
     if not response.ok:
         error_message = response.json()["message"]
         raise ChangeEnvironmentInstanceTypeFailed(error_message)
+    return response
 
 
 def delete_environment(user: User, workbench_id: str, region: Region):
@@ -189,3 +195,4 @@ def delete_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["message"]
         raise DeleteEnvironmentFailed(error_message)
+    return response
