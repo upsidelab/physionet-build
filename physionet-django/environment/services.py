@@ -11,7 +11,8 @@ from environment.exceptions import (
     DeleteEnvironmentFailed,
     ChangeEnvironmentInstanceTypeFailed,
     BillingVerificationFailed,
-    EnvironmentCreationFailed, GetAvailableEnvironmentsFailed,
+    EnvironmentCreationFailed,
+    GetAvailableEnvironmentsFailed,
 )
 from environment.deserializers import deserialize_research_environments
 from environment.entities import (

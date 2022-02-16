@@ -1,4 +1,3 @@
-
 get_workspace_list_json = {
     "user-id": "karoltest",
     "workspace-list": [
@@ -33,17 +32,17 @@ get_workspace_list_json = {
                             "activity_name": "jupyternotebook-workbench-creation",
                             "activity_status": "inprogress",
                             "activity_time": "2022-02-11 13:12:45.217569+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/1a78b5dd-585a-4ee0-b4ef-b5ad6973db78?project=555685585495"
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/1a78b5dd-585a-4ee0-b4ef-b5ad6973db78?project=555685585495",
                         },
                         {
                             "activity-name": "jupyternotebook-workbench-creation",
                             "activity-status": "failed",
                             "activity-time": "2022-02-11 13:13:27.480345+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/1a78b5dd-585a-4ee0-b4ef-b5ad6973db78?project=555685585495"
-                        }
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/1a78b5dd-585a-4ee0-b4ef-b5ad6973db78?project=555685585495",
+                        },
                     ],
                     "workbench-setup-status": "workbench-setup-failed",
-                    "zone": None
+                    "zone": None,
                 },
                 {
                     "bucket-name": None,
@@ -67,17 +66,17 @@ get_workspace_list_json = {
                             "activity_name": "jupyternotebook-workbench-creation",
                             "activity_status": "inprogress",
                             "activity_time": "2022-02-11 13:16:28.430760+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/5f004ebb-46b7-4bfb-b4f9-2393966be0e7?project=555685585495"
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/5f004ebb-46b7-4bfb-b4f9-2393966be0e7?project=555685585495",
                         },
                         {
                             "activity-name": "jupyternotebook-workbench-creation",
                             "activity-status": "failed",
                             "activity-time": "2022-02-11 13:17:11.858064+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/5f004ebb-46b7-4bfb-b4f9-2393966be0e7?project=555685585495"
-                        }
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/5f004ebb-46b7-4bfb-b4f9-2393966be0e7?project=555685585495",
+                        },
                     ],
                     "workbench-setup-status": "workbench-setup-failed",
-                    "zone": None
+                    "zone": None,
                 },
                 {
                     "bucket-name": "reseacher_dataset",
@@ -94,8 +93,8 @@ get_workspace_list_json = {
                             "email": "randomvalue-jupyter@karoltest-us-c1-syhzv.iam.gserviceaccount.com",
                             "scopes": [
                                 "https://www.googleapis.com/auth/cloud-platform",
-                                "https://www.googleapis.com/auth/userinfo.email"
-                            ]
+                                "https://www.googleapis.com/auth/userinfo.email",
+                            ],
                         }
                     ],
                     "state-file-path": "karoltest-us-c1-syhzv-workspace-randomvalue-jupyterlab",
@@ -109,8 +108,8 @@ get_workspace_list_json = {
                                 "n1-standard-2",
                                 "n1-standard-4",
                                 "n1-standard-8",
-                                "n1-standard-16"
-                            ]
+                                "n1-standard-16",
+                            ],
                         }
                     ],
                     "url": "3434c1e99c27f58c-dot-us-central1.notebooks.googleusercontent.com",
@@ -120,23 +119,23 @@ get_workspace_list_json = {
                             "activity_name": "jupyternotebook-workbench-creation",
                             "activity_status": "inprogress",
                             "activity_time": "2022-02-11 13:19:44.981779+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/abeb90a5-c6af-4533-af67-18d52203b31c?project=555685585495"
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/abeb90a5-c6af-4533-af67-18d52203b31c?project=555685585495",
                         },
                         {
                             "activity-name": "jupyternotebook-workbench-creation",
                             "activity-status": "success",
                             "activity-time": "2022-02-11 13:22:35.970836+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/abeb90a5-c6af-4533-af67-18d52203b31c?project=555685585495"
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/abeb90a5-c6af-4533-af67-18d52203b31c?project=555685585495",
                         },
                         {
                             "activity-name": "jupyternotebook-workbench-destroy",
                             "activity-status": "success",
                             "activity-time": "2022-02-14 11:47:10.952821+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/923ede53-368d-4a8c-a1e0-b614c378aadb?project=555685585495"
-                        }
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/923ede53-368d-4a8c-a1e0-b614c378aadb?project=555685585495",
+                        },
                     ],
                     "workbench-setup-status": "workbench-destroy-done",
-                    "zone": "us-central1-c"
+                    "zone": "us-central1-c",
                 },
                 {
                     "bucket-name": "reseacher_dataset",
@@ -153,8 +152,8 @@ get_workspace_list_json = {
                             "email": "demopsn-jupyter@karoltest-us-c1-syhzv.iam.gserviceaccount.com",
                             "scopes": [
                                 "https://www.googleapis.com/auth/cloud-platform",
-                                "https://www.googleapis.com/auth/userinfo.email"
-                            ]
+                                "https://www.googleapis.com/auth/userinfo.email",
+                            ],
                         }
                     ],
                     "state-file-path": "karoltest-us-c1-syhzv-workspace-demopsn-jupyterlab",
@@ -168,8 +167,8 @@ get_workspace_list_json = {
                                 "n1-standard-2",
                                 "n1-standard-4",
                                 "n1-standard-8",
-                                "n1-standard-16"
-                            ]
+                                "n1-standard-16",
+                            ],
                         }
                     ],
                     "url": "64af3c40e28610b7-dot-us-central1.notebooks.googleusercontent.com",
@@ -179,43 +178,43 @@ get_workspace_list_json = {
                             "activity_name": "jupyternotebook-workbench-creation",
                             "activity_status": "inprogress",
                             "activity_time": "2022-02-14 11:43:04.927372+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/e158cd18-7ef2-4d80-babd-0b4b28947d9a?project=555685585495"
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/e158cd18-7ef2-4d80-babd-0b4b28947d9a?project=555685585495",
                         },
                         {
                             "activity-name": "jupyternotebook-workbench-creation",
                             "activity-status": "success",
                             "activity-time": "2022-02-14 11:45:24.087950+00:00",
-                            "log-url": "https://console.cloud.google.com/cloud-build/builds/e158cd18-7ef2-4d80-babd-0b4b28947d9a?project=555685585495"
+                            "log-url": "https://console.cloud.google.com/cloud-build/builds/e158cd18-7ef2-4d80-babd-0b4b28947d9a?project=555685585495",
                         },
                         {
                             "activity-name": "jupyter-workbench-instance-stop",
                             "activity-status": "success",
-                            "activity-time": "2022-02-14 13:28:21.493055+00:00"
+                            "activity-time": "2022-02-14 13:28:21.493055+00:00",
                         },
                         {
                             "activity-name": "jupyternotebook-workspace-instance-start",
                             "activity-status": "success",
-                            "activity-time": "2022-02-14 13:50:23.976601+00:00"
+                            "activity-time": "2022-02-14 13:50:23.976601+00:00",
                         },
                         {
                             "activity-name": "jupyter-workbench-instance-stop",
                             "activity-status": "success",
-                            "activity-time": "2022-02-14 14:33:26.368161+00:00"
+                            "activity-time": "2022-02-14 14:33:26.368161+00:00",
                         },
                         {
                             "activity-name": "jupyter-workbench-instance-stop",
                             "activity-status": "success",
-                            "activity-time": "2022-02-14 14:33:27.189779+00:00"
+                            "activity-time": "2022-02-14 14:33:27.189779+00:00",
                         },
                         {
                             "activity-name": "jupyternotebook-workspace-instance-start",
                             "activity-status": "success",
-                            "activity-time": "2022-02-15 12:17:48.522094+00:00"
-                        }
+                            "activity-time": "2022-02-15 12:17:48.522094+00:00",
+                        },
                     ],
                     "workbench-setup-status": "workbench-setup-done",
-                    "zone": "us-central1-a"
-                }
+                    "zone": "us-central1-a",
+                },
             ],
             "workspace-activity-log": [
                 {
@@ -223,11 +222,11 @@ get_workspace_list_json = {
                     "activity-status": "success",
                     "activity-time": "2022-02-11 13:10:54.613402+00:00",
                     "gcp-project-id": "karoltest-us-c1-syhzv",
-                    "log-url": "https://console.cloud.google.com/cloud-build/builds/73e463ac-71ee-4b32-89f2-f9ce2c7ec9e7?project=555685585495"
+                    "log-url": "https://console.cloud.google.com/cloud-build/builds/73e463ac-71ee-4b32-89f2-f9ce2c7ec9e7?project=555685585495",
                 }
             ],
             "workspace-setup-status": "workspace-setup-done",
-            "workspace-status": "active"
+            "workspace-status": "active",
         }
-    ]
+    ],
 }

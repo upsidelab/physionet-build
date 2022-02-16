@@ -12,7 +12,9 @@ from environment.services import (
     stop_running_environment,
     start_stopped_environment,
     change_environment_instance_type,
-    delete_environment, verify_billing_and_create_workspace, get_available_environments,
+    delete_environment,
+    verify_billing_and_create_workspace,
+    get_available_environments,
 )
 from environment.exceptions import (
     IdentityProvisioningFailed,
@@ -20,10 +22,16 @@ from environment.exceptions import (
     StopEnvironmentFailed,
     StartEnvironmentFailed,
     ChangeEnvironmentInstanceTypeFailed,
-    DeleteEnvironmentFailed, BillingVerificationFailed, GetAvailableEnvironmentsFailed,
+    DeleteEnvironmentFailed,
+    BillingVerificationFailed,
+    GetAvailableEnvironmentsFailed,
 )
-from environment.models import CloudIdentity, BillingSetup
-from environment.entities import Region, InstanceType, EnvironmentStatus, ResearchEnvironment
+from environment.entities import (
+    Region,
+    InstanceType,
+    EnvironmentStatus,
+    ResearchEnvironment,
+)
 from environment.tests.mocks import get_workspace_list_json
 from environment.tests.helpers import (
     create_user_without_cloud_identity,
@@ -62,28 +70,24 @@ class CreateCloudIdentityTestCase(TestCase):
 
         otp, identity = create_cloud_identity(self.user)
         self.assertEqual(otp, mock_otp)
-        self.assertEqual(
-            identity.gcp_user_id, self.user.username
-        )
+        self.assertEqual(identity.gcp_user_id, self.user.username)
         self.assertEqual(identity.email, mock_email)
         self.assertEqual(self.user.cloud_identity, identity)
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class CreateBillingSetupTestCase(TestCase):
     def setUp(self):
         self.user = create_user_with_cloud_identity()
 
     def test_creates_billing_setup_for_specified_user(self):
         mock_billing_account = "XXXXXX-XXXXXX-XXXXXX"
-        billing_setup = create_billing_setup(
-            self.user, mock_billing_account
-        )
-        self.assertEqual(
-            self.user.cloud_identity.billing_setup, billing_setup
-        )
+        billing_setup = create_billing_setup(self.user, mock_billing_account)
+        self.assertEqual(self.user.cloud_identity.billing_setup, billing_setup)
         self.assertEqual(billing_setup.billing_account_id, mock_billing_account)
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class CreateResearchEnvironmentTestCase(TestCase):
     def setUp(self):
         self.project = MagicMock()
@@ -117,6 +121,7 @@ class CreateResearchEnvironmentTestCase(TestCase):
         self.assertEqual(result, mock_create_workbench.return_value)
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class StopRunningEnvironmentTestCase(TestCase):
     def setUp(self):
         self.user = create_user_with_billing_setup()
@@ -141,6 +146,7 @@ class StopRunningEnvironmentTestCase(TestCase):
         self.assertEqual(result, mock_stop_workbench.return_value)
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class StartStoppedEnvironmentTestCase(TestCase):
     def setUp(self):
         self.user = create_user_with_billing_setup()
@@ -165,6 +171,7 @@ class StartStoppedEnvironmentTestCase(TestCase):
         self.assertEqual(result, mock_stop_workbench.return_value)
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class ChangeEnvironmentInstanceTypeTestCase(TestCase):
     def setUp(self):
         self.user = create_user_with_billing_setup()
@@ -193,6 +200,7 @@ class ChangeEnvironmentInstanceTypeTestCase(TestCase):
         self.assertEqual(result, mock_change_workbench_instance_type.return_value)
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class DeleteEnvironmentTestCase(TestCase):
     def setUp(self):
         self.user = create_user_with_billing_setup()
@@ -217,6 +225,7 @@ class DeleteEnvironmentTestCase(TestCase):
         self.assertEqual(result, mock_delete_workbench.return_value)
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class VerifyBillingAndCreateWorkspaceTestCase(TestCase):
     def setUp(self):
         self.user = create_user_with_cloud_identity()
@@ -226,8 +235,10 @@ class VerifyBillingAndCreateWorkspaceTestCase(TestCase):
     def test_raises_if_request_fails(self, mock_create_workspace):
         mock_create_workspace.return_value.ok = False
         self.assertRaises(
-            BillingVerificationFailed, verify_billing_and_create_workspace, self.user,
-            self.some_billing_id
+            BillingVerificationFailed,
+            verify_billing_and_create_workspace,
+            self.user,
+            self.some_billing_id,
         )
 
     @patch("environment.api.create_workspace")
@@ -236,6 +247,7 @@ class VerifyBillingAndCreateWorkspaceTestCase(TestCase):
         verify_billing_and_create_workspace(self.user, self.some_billing_id)
 
 
+@skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class GetAvailableEnvironmentsTestCase(TestCase):
     def setUp(self):
         self.user = create_user_with_cloud_identity()
@@ -246,13 +258,23 @@ class GetAvailableEnvironmentsTestCase(TestCase):
 
         running_environments = get_available_environments(self.user)
 
-        self.assertTrue(all(True if environment.status != EnvironmentStatus.DESTROYED else False
-                            for environment in running_environments))
+        self.assertTrue(
+            all(
+                True if environment.status != EnvironmentStatus.DESTROYED else False
+                for environment in running_environments
+            )
+        )
         self.assertIsInstance(running_environments, list)
-        self.assertTrue(all(True if isinstance(environment, ResearchEnvironment) else False
-                            for environment in running_environments))
+        self.assertTrue(
+            all(
+                True if isinstance(environment, ResearchEnvironment) else False
+                for environment in running_environments
+            )
+        )
 
     @patch("environment.api.get_workspace_list")
     def test_raises_if_request_fails(self, mock_get_workspace_list):
         mock_get_workspace_list.return_value.ok = False
-        self.assertRaises(GetAvailableEnvironmentsFailed, get_available_environments, self.user)
+        self.assertRaises(
+            GetAvailableEnvironmentsFailed, get_available_environments, self.user
+        )
