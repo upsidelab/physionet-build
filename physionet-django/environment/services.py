@@ -61,7 +61,13 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
     return billing_setup
 
 
-def _create_workbench_kwargs(user: User, project: PublishedProject, region: Region, instance_type: InstanceType, environment_type: str):
+def _create_workbench_kwargs(
+    user: User,
+    project: PublishedProject,
+    region: Region,
+    instance_type: InstanceType,
+    environment_type: str,
+):
     gcp_user_id = user.cloud_identity.gcp_user_id
 
     common = {
@@ -82,7 +88,13 @@ def _create_workbench_kwargs(user: User, project: PublishedProject, region: Regi
         return common
 
 
-def create_research_environment(user: User, project: PublishedProject, region: Region, instance_type: InstanceType, environment_type: str):
+def create_research_environment(
+    user: User,
+    project: PublishedProject,
+    region: Region,
+    instance_type: InstanceType,
+    environment_type: str,
+):
     kwargs = _create_workbench_kwargs(
         user, project, region, instance_type, environment_type
     )
