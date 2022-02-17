@@ -108,9 +108,11 @@ def create_research_environment(request, project_slug):
             services.create_research_environment(
                 user=request.user,
                 project=project,
-                region=form.cleaned_data["region"],
-                instance_type=form.cleaned_data["instance_type"],
-                environment_type=form.cleaned_data["environment_type"],
+                region=Region(form.cleaned_data["region"]),
+                instance_type=InstanceType(form.cleaned_data["instance_type"]),
+                environment_type=form.cleaned_data[
+                    "environment_type"
+                ],  # FIXME: Create common EnvironmentType enum
             )
             return redirect("research_environments")
     else:

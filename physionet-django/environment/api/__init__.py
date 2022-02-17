@@ -1,3 +1,5 @@
+from typing import Optional
+
 from requests import Request
 
 from environment.api.decorators import api_request
@@ -55,14 +57,14 @@ def delete_workbench(gcp_user_id: str, workbench_id: str, region: str) -> Reques
 
 @api_request
 def create_workbench(
-    gcp_user_id,
-    region,
-    environment_type,
-    instance_type,
-    dataset,
-    bucket_name=None,
-    persistent_disk=None,
-    vm_image=None,
+    gcp_user_id: str,
+    region: str,
+    environment_type: str,
+    instance_type: str,
+    dataset: str,
+    bucket_name: Optional[str] = None,
+    persistent_disk: Optional[str] = None,
+    vm_image: Optional[str] = None,
 ):
     json = {
         "userid": gcp_user_id,
