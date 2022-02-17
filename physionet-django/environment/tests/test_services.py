@@ -103,8 +103,8 @@ class CreateResearchEnvironmentTestCase(TestCase):
             create_research_environment,
             self.user,
             self.project,
-            "region",
-            "instance_type",
+            Region.AUSTRALIA_SOUTHEAST,
+            InstanceType.N1_STANDARD_1,
             "enviornment_type",
         )
 
@@ -114,8 +114,8 @@ class CreateResearchEnvironmentTestCase(TestCase):
         result = create_research_environment(
             self.user,
             self.project,
-            "region",
-            "instance_type",
+            Region.AUSTRALIA_SOUTHEAST,
+            InstanceType.N1_STANDARD_1,
             "enviornment_type",
         )
         self.assertEqual(result, mock_create_workbench.return_value)
