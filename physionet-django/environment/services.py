@@ -61,34 +61,35 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
     return billing_setup
 
 
-def _create_workbench_kwargs(user, project, region, instance_type, environment_type):
+def _create_workbench_kwargs(user: User, project: PublishedProject, region: Region, instance_type: InstanceType, environment_type: str):
     gcp_user_id = user.cloud_identity.gcp_user_id
 
     common = {
-        "user_id": gcp_user_id,
-        "region": region,
+        "gcp_user_id": gcp_user_id,
+        "region": region.value,
         "environment_type": environment_type,
-        "instance_type": instance_type,
+        "instance_type": instance_type.value,
         "dataset": project.slug,  # FIXME: Dashes in the name are not accepted by the API
     }
     if environment_type == "jupyter":
         jupyter_kwargs = {
-            "vmimage": "common-cpu-notebooks",
-            "persistentdisk": 10,  # TODO: Make this configurable
-            "bucket_name": project.get_project_file_root(),
+            "vm_image": "common-cpu-notebooks",
+            "persistent_disk": "10",  # TODO: Make this configurable
+            "bucket_name": project.project_file_root(),
         }
         return {**common, **jupyter_kwargs}
     else:
         return common
 
 
-def create_research_environment(user, project, region, instance_type, environment_type):
+def create_research_environment(user: User, project: PublishedProject, region: Region, instance_type: InstanceType, environment_type: str):
     kwargs = _create_workbench_kwargs(
         user, project, region, instance_type, environment_type
     )
     response = api.create_workbench(**kwargs)
     if not response.ok:
-        raise EnvironmentCreationFailed()
+        error_message = response.json()["error"]
+        raise EnvironmentCreationFailed(error_message)
 
     return response
 
@@ -111,7 +112,8 @@ def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.get_workspace_list(gcp_user_id)
     if not response.ok:
-        raise GetAvailableEnvironmentsFailed()
+        error_message = response.json()["error"]
+        raise GetAvailableEnvironmentsFailed(error_message)
     all_environments = deserialize_research_environments(response.json())
     running_environments = [
         environment
@@ -148,7 +150,7 @@ def stop_running_environment(user: User, workbench_id: str, region: Region):
         region=region.value,
     )
     if not response.ok:
-        error_message = response.json()["message"]
+        error_message = response.json()["error"]
         raise StopEnvironmentFailed(error_message)
     return response
 
