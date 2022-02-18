@@ -35,7 +35,7 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
 
     body = response.json()
     identity = CloudIdentity.objects.create(
-        user=user, gcp_user_id=user.username, email=body["email-id"]
+        user=user, gcp_user_id=f"researcher.{user.username}", email=body["email-id"]
     )
     otp = body["one-time-password"]
     return otp, identity
