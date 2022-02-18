@@ -107,9 +107,6 @@ def create_research_environment(
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
-    version_filters = Q(
-        is_latest_version=True
-    )  # TODO: Add support for non-latest versions
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -117,7 +114,7 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
         access_policy_filters = access_policy_filters | Q(
             access_policy=AccessPolicy.CREDENTIALED
         )
-    return PublishedProject.objects.filter(version_filters & access_policy_filters)
+    return PublishedProject.objects.filter(access_policy_filters)
 
 
 def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
