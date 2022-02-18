@@ -144,7 +144,9 @@ def match_projects_with_environments(
             project,
             next(
                 filter(
-                    lambda environment: project.slug == environment.dataset,
+                    # FIXME: Add persistent identifier to API layer instead matching on bucket
+                    lambda environment: project.project_file_root()
+                    == environment.bucket_name,
                     environments,
                 ),
                 None,

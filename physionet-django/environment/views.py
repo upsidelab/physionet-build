@@ -18,7 +18,6 @@ from environment.entities import Region, InstanceType
 from environment.utilities import (
     user_has_cloud_identity,
     user_has_billing_setup,
-    users_project_by_slug,
 )
 
 
@@ -100,7 +99,7 @@ def research_environments(request):
 @cloud_identity_required
 @billing_setup_required
 def create_research_environment(request, project_slug):
-    project = users_project_by_slug(request.user, project_slug)
+    project = services.get_available_projects(request.user).get(slug=project_slug)
 
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
