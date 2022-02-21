@@ -98,8 +98,10 @@ def research_environments(request):
 @login_required
 @cloud_identity_required
 @billing_setup_required
-def create_research_environment(request, project_slug):
-    project = services.get_available_projects(request.user).get(slug=project_slug)
+def create_research_environment(request, project_slug, project_version):
+    project = services.get_available_projects(request.user).get(
+        slug=project_slug, version=project_version
+    )
 
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
@@ -107,12 +109,10 @@ def create_research_environment(request, project_slug):
             services.create_research_environment(
                 user=request.user,
                 project=project,
-                region=Region(form.cleaned_data["region"]),
-                instance_type=InstanceType(form.cleaned_data["instance_type"]),
-                environment_type=form.cleaned_data[
-                    "environment_type"
-                ],  # FIXME: Create common EnvironmentType enum
-                persistent_disk=form.cleaned_data["persistent_disk"],
+                region=form.cleaned_data["region"],
+                instance_type=form.cleaned_data["instance_type"],
+                environment_type=form.cleaned_data["environment_type"],
+                persistent_disk=form.cleaned_data.get("persistent_disk"),
             )
             return redirect("research_environments")
     else:

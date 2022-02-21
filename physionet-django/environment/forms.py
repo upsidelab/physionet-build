@@ -48,7 +48,6 @@ class CreateResearchEnvironmentForm(forms.Form):
         validators=[MinValueValidator(0), MaxValueValidator(64000)],
         widget=forms.TextInput(attrs={"class": "form-control"}),
         required=False,
-        disabled=True,
     )
 
     def clean(self):

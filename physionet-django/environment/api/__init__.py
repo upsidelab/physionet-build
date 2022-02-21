@@ -76,4 +76,7 @@ def create_workbench(
         "persistentdisk": persistent_disk,
         "vmimage": vm_image,
     }
-    return Request("POST", url="/workbench", json=json)
+    json_without_empty_values = {
+        key: val for key, val in json.items() if val is not None
+    }
+    return Request("POST", url="/workbench", json=json_without_empty_values)

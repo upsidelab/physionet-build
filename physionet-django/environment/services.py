@@ -64,24 +64,24 @@ def create_billing_setup(user: User, billing_account_id: str) -> BillingSetup:
 def _create_workbench_kwargs(
     user: User,
     project: PublishedProject,
-    region: Region,
-    instance_type: InstanceType,
+    region: str,
+    instance_type: str,
     environment_type: str,
-    persistent_disk: Optional[str],
-):
+    persistent_disk: Optional[int],
+) -> dict:
     gcp_user_id = user.cloud_identity.gcp_user_id
 
     common = {
         "gcp_user_id": gcp_user_id,
-        "region": region.value,
+        "region": region,
         "environment_type": environment_type,
-        "instance_type": instance_type.value,
+        "instance_type": instance_type,
         "dataset": project.slug,  # FIXME: Dashes in the name are not accepted by the API
     }
     if environment_type == "jupyter":
         jupyter_kwargs = {
             "vm_image": "common-cpu-notebooks",
-            "persistent_disk": persistent_disk,
+            "persistent_disk": str(persistent_disk),
             "bucket_name": project.project_file_root(),
         }
         return {**common, **jupyter_kwargs}
@@ -92,10 +92,10 @@ def _create_workbench_kwargs(
 def create_research_environment(
     user: User,
     project: PublishedProject,
-    region: Region,
-    instance_type: InstanceType,
+    region: str,
+    instance_type: str,
     environment_type: str,
-    persistent_disk: Optional[str],
+    persistent_disk: Optional[int],
 ):
     kwargs = _create_workbench_kwargs(
         user,
