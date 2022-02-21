@@ -29,7 +29,9 @@ from project.modelcomponents.submission import CopyeditLog, EditLog, SubmissionI
 from project.modelcomponents.unpublishedproject import UnpublishedProject
 from project.projectfiles import ProjectFiles
 from project.validators import validate_subdir
-from environment.models import ProjectDatasetGroup
+
+if settings.ENABLE_RESEARCH_ENVIRONMENTS:
+    from environment.models import ProjectDatasetGroup
 
 LOGGER = logging.getLogger(__name__)
 
@@ -511,7 +513,7 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
 
                 # If reasearch environments are enabled, the editor should also provide
                 # the IAM group name that controls access to the dataset
-                if gcp_dataset_group_name is not None:
+                if settings.ENABLE_RESEARCH_ENVIRONMENTS and gcp_dataset_group_name is not None:
                     ProjectDatasetGroup.objects.create(project=published_project, name=gcp_dataset_group_name)
 
                 # If this is a new version, all version fields have to be updated

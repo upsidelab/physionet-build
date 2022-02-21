@@ -3,6 +3,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 
 from environment.validators import gcp_billing_account_id_validator
+from environment.models import ProjectDatasetGroup
 
 
 class BillingAccountIdForm(forms.Form):
@@ -60,3 +61,10 @@ class CreateResearchEnvironmentForm(forms.Form):
                 raise ValidationError(
                     "Disk parameter is required for Jupyter environments."
                 )
+
+
+class GcpProjectDatasetGroupForm(forms.ModelForm):
+    class Meta:
+        model = ProjectDatasetGroup
+        fields = ("name",)
+        labels = {"name": "Dataset Group Name"}

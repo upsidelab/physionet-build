@@ -345,9 +345,24 @@
         {% endif %}
       </li>
     </ul>
-
   </div>
 </div>
+
+{% if gcp_project_dataset_group_form %}
+  <div class="card mb-3">
+    <div class="card-header">
+      Manage environment integration
+    </div>
+    <div class="card-body">
+      <form method="POST" id="project_dataset_group_form">
+        {% include "inline_form_snippet.html" with form=gcp_project_dataset_group_form %}
+        <button class="btn btn-primary btn-fixed" name="set_project_dataset_group" type="submit">
+          Set dataset group
+        </button>
+      </form>
+    </div>
+  </div>
+{% endif %}
 
 {% endblock %}
 

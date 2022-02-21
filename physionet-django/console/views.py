@@ -57,7 +57,9 @@ from project.utility import readable_size
 from project.validators import MAX_PROJECT_SLUG_LENGTH
 from project.views import get_file_forms, get_project_file_info, process_files_post
 from user.models import AssociatedEmail, CredentialApplication, CredentialReview, LegacyCredential, User
-from environment.models import ProjectDatasetGroup
+
+if settings.ENABLE_RESEARCH_ENVIRONMENTS:
+    import environment.forms
 
 LOGGER = logging.getLogger(__name__)
 
@@ -786,6 +788,10 @@ def manage_published_project(request, project_slug, version):
     contact_form = forms.PublishedProjectContactForm(project=project,
                                                      instance=project.contact)
     legacy_author_form = forms.CreateLegacyAuthorForm(project=project)
+    if settings.ENABLE_RESEARCH_ENVIRONMENTS:
+        gcp_project_dataset_group_form = environment.forms.GcpProjectDatasetGroupForm(instance=project.gcp_dataset_group)
+    else:
+        gcp_project_dataset_group_form = None
 
     if request.method == 'POST':
         if any(x in request.POST for x in ['create_doi_core',
@@ -866,6 +872,12 @@ def manage_published_project(request, project_slug, version):
             if legacy_author_form.is_valid():
                 legacy_author_form.save()
                 legacy_author_form = forms.CreateLegacyAuthorForm(project=project)
+        elif settings.ENABLE_RESEARCH_ENVIRONMENTS and 'set_project_dataset_group' in request.POST:
+            gcp_project_dataset_group_form = environment.forms.GcpProjectDatasetGroupForm(
+                instance=project.gcp_dataset_group, data=request.POST)
+            if gcp_project_dataset_group_form.is_valid():
+                gcp_project_dataset_group_form.save()
+                messages.success(request, 'The dataset group has been updated')
 
     data_access = DataAccess.objects.filter(project=project)
     authors, author_emails, storage_info, edit_logs, copyedit_logs, latest_version = project.info_card()
@@ -905,6 +917,7 @@ def manage_published_project(request, project_slug, version):
             'legacy_author_form': legacy_author_form,
             'can_make_zip': ProjectFiles().can_make_zip(),
             'can_make_checksum': ProjectFiles().can_make_checksum(),
+            'gcp_project_dataset_group_form': gcp_project_dataset_group_form,
         },
     )
 
