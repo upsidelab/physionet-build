@@ -112,6 +112,7 @@ def create_research_environment(request, project_slug):
                 environment_type=form.cleaned_data[
                     "environment_type"
                 ],  # FIXME: Create common EnvironmentType enum
+                persistent_disk=form.cleaned_data["persistent_disk"],
             )
             return redirect("research_environments")
     else:

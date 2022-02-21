@@ -67,6 +67,7 @@ def _create_workbench_kwargs(
     region: Region,
     instance_type: InstanceType,
     environment_type: str,
+    persistent_disk: Optional[str],
 ):
     gcp_user_id = user.cloud_identity.gcp_user_id
 
@@ -80,7 +81,7 @@ def _create_workbench_kwargs(
     if environment_type == "jupyter":
         jupyter_kwargs = {
             "vm_image": "common-cpu-notebooks",
-            "persistent_disk": "10",  # TODO: Make this configurable
+            "persistent_disk": persistent_disk,
             "bucket_name": project.project_file_root(),
         }
         return {**common, **jupyter_kwargs}
@@ -94,9 +95,15 @@ def create_research_environment(
     region: Region,
     instance_type: InstanceType,
     environment_type: str,
+    persistent_disk: Optional[str],
 ):
     kwargs = _create_workbench_kwargs(
-        user, project, region, instance_type, environment_type
+        user,
+        project,
+        region,
+        instance_type,
+        environment_type,
+        persistent_disk,
     )
     response = api.create_workbench(**kwargs)
     if not response.ok:
