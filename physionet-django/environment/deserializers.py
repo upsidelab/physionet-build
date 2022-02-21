@@ -18,9 +18,7 @@ def deserialize_research_environments(data: dict) -> Iterable[ResearchEnvironmen
             or workbench.get("version-url"),  # RStudio sends version-url
             instance_type=InstanceType(workbench["machine-type"]),
             region=Region(workbench["region"]),
-            bucket_name=workbench.get(
-                "bucket-name"
-            ),  # FIXME: Optional here for now - has to be set for Jupyter notebooks
+            bucket_name=workbench.get("bucket-name"),
             type=EnvironmentType.from_string_or_none(workbench["type"]),
             status=EnvironmentStatus(
                 workbench["status"] or workbench["workbench-setup-status"]
