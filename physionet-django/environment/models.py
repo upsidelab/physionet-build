@@ -1,7 +1,10 @@
 from django.db import models
 from django.core.validators import EmailValidator
 
-from environment.validators import gcp_billing_account_id_validator
+from environment.validators import (
+    gcp_billing_account_id_validator,
+    gcp_project_dataset_group_validator,
+)
 
 
 class CloudIdentity(models.Model):
@@ -21,4 +24,14 @@ class BillingSetup(models.Model):
     billing_account_id = models.CharField(
         max_length=20, unique=True, validators=[gcp_billing_account_id_validator]
     )
-    # TODO: status?
+
+
+class ProjectDatasetGroup(models.Model):
+    project = models.OneToOneField(
+        "project.PublishedProject",
+        related_name="gcp_dataset_group",
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(
+        max_length=30, unique=True, validators=[gcp_project_dataset_group_validator]
+    )

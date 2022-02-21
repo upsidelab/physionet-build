@@ -25,6 +25,7 @@ from project.models import (
 from project.projectfiles import ProjectFiles
 from project.validators import MAX_PROJECT_SLUG_LENGTH, validate_doi, validate_slug
 from user.models import CredentialApplication, CredentialReview, User
+from environment.validators import MAX_PROJECT_DATASET_GROUP_LENGTH, gcp_project_dataset_group_validator
 
 RESPONSE_CHOICES = (
     (1, 'Accept'),
@@ -284,6 +285,12 @@ class PublishForm(forms.Form):
     slug = forms.CharField(max_length=MAX_PROJECT_SLUG_LENGTH,
                            validators=[validate_slug])
     make_zip = forms.ChoiceField(choices=YES_NO, label='Make zip of all files')
+    
+    if settings.ENABLE_RESEARCH_ENVIRONMENTS:
+        gcp_project_dataset_group = forms.CharField(
+            max_length=MAX_PROJECT_DATASET_GROUP_LENGTH,
+            validators=[gcp_project_dataset_group_validator]
+        )
 
     def __init__(self, project, *args, **kwargs):
         super().__init__(*args, **kwargs)

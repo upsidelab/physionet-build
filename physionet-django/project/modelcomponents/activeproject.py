@@ -29,6 +29,7 @@ from project.modelcomponents.submission import CopyeditLog, EditLog, SubmissionI
 from project.modelcomponents.unpublishedproject import UnpublishedProject
 from project.projectfiles import ProjectFiles
 from project.validators import validate_subdir
+from environment.models import ProjectDatasetGroup
 
 LOGGER = logging.getLogger(__name__)
 
@@ -457,7 +458,7 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
         """
         ProjectFiles().rmtree(self.file_root())
 
-    def publish(self, slug=None, make_zip=True, title=None):
+    def publish(self, slug=None, make_zip=True, title=None, gcp_dataset_group_name=None):
         """
         Create a published version of this project and update the
         submission status.
@@ -507,6 +508,11 @@ class ActiveProject(Metadata, UnpublishedProject, SubmissionInfo):
                 published_project.update_internal_links(old_project=self)
 
                 published_project.save()
+
+                # If reasearch environments are enabled, the editor should also provide
+                # the IAM group name that controls access to the dataset
+                if gcp_dataset_group_name is not None:
+                    ProjectDatasetGroup.objects.create(project=published_project, name=gcp_dataset_group_name)
 
                 # If this is a new version, all version fields have to be updated
                 if self.version_order > 0:

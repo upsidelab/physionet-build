@@ -57,6 +57,7 @@ from project.utility import readable_size
 from project.validators import MAX_PROJECT_SLUG_LENGTH
 from project.views import get_file_forms, get_project_file_info, process_files_post
 from user.models import AssociatedEmail, CredentialApplication, CredentialReview, LegacyCredential, User
+from environment.models import ProjectDatasetGroup
 
 LOGGER = logging.getLogger(__name__)
 
@@ -577,8 +578,11 @@ def publish_submission(request, project_slug, *args, **kwargs):
                 slug = project.get_previous_slug()
             else:
                 slug = publish_form.cleaned_data['slug']
-            published_project = project.publish(slug=slug,
-                make_zip=int(publish_form.cleaned_data['make_zip']))
+            published_project = project.publish(
+                slug=slug,
+                make_zip=int(publish_form.cleaned_data['make_zip']),
+                gcp_dataset_group_name=publish_form.cleaned_data.get('gcp_project_dataset_group'),
+            )
 
             notification.publish_notify(request, published_project)
 

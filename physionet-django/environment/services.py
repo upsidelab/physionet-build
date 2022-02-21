@@ -77,7 +77,7 @@ def _create_workbench_kwargs(
         "region": region,
         "environment_type": environment_type,
         "instance_type": instance_type,
-        "dataset": project.slug,  # FIXME: Dashes in the name are not accepted by the API
+        "dataset": project.gcp_dataset_group.name,
     }
     if environment_type == "jupyter":
         jupyter_kwargs = {
@@ -115,6 +115,7 @@ def create_research_environment(
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
+    dataset_group_filters = Q(gcp_dataset_group__isnull=False)
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -122,14 +123,16 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
         access_policy_filters = access_policy_filters | Q(
             access_policy=AccessPolicy.CREDENTIALED
         )
-    return PublishedProject.objects.filter(access_policy_filters)
+    return PublishedProject.objects.filter(
+        dataset_group_filters & access_policy_filters
+    ).select_related("gcp_dataset_group")
 
 
 def _get_projects_for_environments(
     environments: Iterable[ResearchEnvironment],
 ) -> Iterable[PublishedProject]:
     datasets = map(lambda environment: environment.dataset, environments)
-    return PublishedProject.objects.filter(slug__in=datasets)
+    return PublishedProject.objects.filter(gcp_dataset_group__name__in=datasets)
 
 
 def get_environments_with_projects(
@@ -149,7 +152,7 @@ def get_environments_with_projects(
     ]
     environment_key = lambda environment: environment.dataset
     projects = _get_projects_for_environments(running_environments)
-    project_key = lambda project: project.slug
+    project_key = lambda project: project.gcp_dataset_group.name
     environment_project_pairs = inner_join_iterators(  # TODO: Consider left join as this will preserve environments for deleted projects
         environment_key, running_environments, project_key, projects
     )
@@ -161,7 +164,7 @@ def get_available_projects_with_environments(
     user: User,
     environments: Iterable[ResearchEnvironment],
 ) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
-    project_key = lambda project: project.slug
+    project_key = lambda project: project.gcp_dataset_group.name
     available_projects = get_available_projects(user)
     environment_key = lambda environment: environment.dataset
     return left_join_iterators(
