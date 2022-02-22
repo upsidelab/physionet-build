@@ -25,7 +25,7 @@
             </div>
         </div>
     </li>    
-    {% for project, environment in environment_project_pairs %}
+    {% for environment, project in environment_project_pairs %}
         <li class="list-group-item">
             <div class="row">
                 <div class="col-md-3">
@@ -56,10 +56,6 @@
                             {% endif %}
                             {% environment_instance_change_dropdown environment=environment %}
                             {% environment_action_button environment=environment button_type="destroy" text="Destroy" %}
-                        </div>
-                    {% else %}
-                        <div>
-                            Provisioning...
                         </div>
                     {% endif %}
                 </div>

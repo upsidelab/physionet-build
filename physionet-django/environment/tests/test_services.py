@@ -14,7 +14,7 @@ from environment.services import (
     change_environment_instance_type,
     delete_environment,
     verify_billing_and_create_workspace,
-    get_available_environments_with_projects,
+    get_environments_with_projects,
 )
 from environment.exceptions import (
     IdentityProvisioningFailed,
@@ -259,7 +259,7 @@ class GetAvailableEnvironmentsWithProjectsTestCase(TestCase):
     def test_fetches_environments_and_parses_to_entity(self, mock_get_workspace_list):
         mock_get_workspace_list.return_value.json.return_value = get_workspace_list_json
 
-        environment_project_pairs = get_available_environments_with_projects(self.user)
+        environment_project_pairs = get_environments_with_projects(self.user)
 
         self.assertTrue(
             all(
@@ -280,7 +280,7 @@ class GetAvailableEnvironmentsWithProjectsTestCase(TestCase):
         mock_get_workspace_list.return_value.json.return_value = get_workspace_list_json
         demopsn_project = PublishedProject.objects.get(slug="demopsn")
 
-        environment_project_pairs = get_available_environments_with_projects(self.user)
+        environment_project_pairs = get_environments_with_projects(self.user)
         self.assertEqual(len(environment_project_pairs), 1)
         self.assertEqual(environment_project_pairs[0][0].dataset, "demopsn")
         self.assertEqual(environment_project_pairs[0][1], demopsn_project)
@@ -290,6 +290,6 @@ class GetAvailableEnvironmentsWithProjectsTestCase(TestCase):
         mock_get_workspace_list.return_value.ok = False
         self.assertRaises(
             GetAvailableEnvironmentsFailed,
-            get_available_environments_with_projects,
+            get_environments_with_projects,
             self.user,
         )

@@ -114,7 +114,7 @@ def create_research_environment(
     return response
 
 
-def _get_available_projects(user: User) -> Iterable[PublishedProject]:
+def get_available_projects(user: User) -> Iterable[PublishedProject]:
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -132,7 +132,7 @@ def _get_projects_for_environments(
     return PublishedProject.objects.filter(slug__in=datasets)
 
 
-def get_available_environments_with_projects(
+def get_environments_with_projects(
     user: User,
 ) -> Iterable[Tuple[ResearchEnvironment, PublishedProject]]:
     gcp_user_id = user.cloud_identity.gcp_user_id
@@ -144,12 +144,13 @@ def get_available_environments_with_projects(
     running_environments = [
         environment
         for environment in all_environments
-        if environment.status is not EnvironmentStatus.DESTROYED
+        if environment.status
+        not in [EnvironmentStatus.DESTROYED, EnvironmentStatus.PROVISIONING_FAILED]
     ]
     environment_key = lambda environment: environment.dataset
     projects = _get_projects_for_environments(running_environments)
     project_key = lambda project: project.slug
-    environment_project_pairs = inner_join_iterators(
+    environment_project_pairs = inner_join_iterators(  # TODO: Consider left join as this will preserve environments for deleted projects
         environment_key, running_environments, project_key, projects
     )
 
@@ -157,13 +158,17 @@ def get_available_environments_with_projects(
 
 
 def get_available_projects_with_environments(
-    user: User, environments: Iterable[ResearchEnvironment]
-) -> Iterable[Tuple[PublishedProject, ResearchEnvironment]]:
+    user: User,
+    environments: Iterable[ResearchEnvironment],
+) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
     project_key = lambda project: project.slug
-    available_projects = _get_available_projects(user)
+    available_projects = get_available_projects(user)
     environment_key = lambda environment: environment.dataset
     return left_join_iterators(
-        project_key, available_projects, environment_key, environments
+        project_key,
+        available_projects,
+        environment_key,
+        environments,
     )
 
 

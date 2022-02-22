@@ -151,17 +151,17 @@ class ResearchEnvironmentsTestCase(TestCase):
         self.assertRedirects(response, reverse("billing_setup"))
 
     @patch("environment.services.get_available_projects_with_environments")
-    @patch("environment.services.get_available_environments_with_projects")
+    @patch("environment.services.get_environments_with_projects")
     def test_fetches_and_matches_available_environments_and_projects(
         self,
         mock_get_available_projects_with_environments,
-        mock_get_available_environments_with_projects,
+        mock_get_environments_with_projects,
     ):
         user = create_user_with_billing_setup()
         self.client.force_login(user=user)
 
         response = self.client.get(self.url)
-        mock_get_available_environments_with_projects.assert_called()
+        mock_get_environments_with_projects.assert_called()
         mock_get_available_projects_with_environments.assert_called()
         self.assertEqual(response.status_code, 200)
 
