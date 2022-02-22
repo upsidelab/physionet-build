@@ -79,15 +79,7 @@ def research_environments(request):
     project_environment_pairs = services.match_projects_with_environments(
         available_projects, available_environments
     )
-    environment_project_pairs = [
-        (environment, project)
-        for (project, environment) in project_environment_pairs
-        if environment is not None
-    ]
-    context = {
-        "project_environment_pairs": project_environment_pairs,
-        "environment_project_pairs": environment_project_pairs,
-    }
+    context = {"project_environment_pairs": project_environment_pairs}
     return render(
         request,
         "environment/research_environments.html",

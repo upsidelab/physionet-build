@@ -21,6 +21,7 @@ from environment.entities import (
     InstanceType,
     Region,
 )
+from environment.utilities import full_outer_join_iterators
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
 
@@ -143,21 +144,11 @@ def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
 def match_projects_with_environments(
     projects: Iterable[PublishedProject], environments: Iterable[ResearchEnvironment]
 ) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
-    return [
-        (
-            project,
-            next(
-                filter(
-                    # FIXME: Add persistent identifier to API layer instead matching on bucket
-                    lambda environment: project.project_file_root()
-                    == environment.bucket_name,
-                    environments,
-                ),
-                None,
-            ),
-        )
-        for project in projects
-    ]
+    key_projects = lambda project: project.project_file_root()
+    key_environments = lambda environment: environment.bucket_name
+    return full_outer_join_iterators(
+        key_projects, projects, key_environments, environments
+    )
 
 
 def stop_running_environment(user: User, workbench_id: str, region: Region):
