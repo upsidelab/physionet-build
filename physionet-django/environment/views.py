@@ -74,12 +74,16 @@ def billing_setup(request):
 @cloud_identity_required
 @billing_setup_required
 def research_environments(request):
-    available_projects = services.get_available_projects(request.user)
-    available_environments = services.get_available_environments(request.user)
-    project_environment_pairs = services.match_projects_with_environments(
-        available_projects, available_environments
+    environment_project_pairs = services.get_available_environments_with_projects(
+        request.user
     )
-    context = {"project_environment_pairs": project_environment_pairs}
+    available_project_environment_pairs = (
+        services.get_available_projects_with_environments(request.user)
+    )
+    context = {
+        "environment_project_pairs": environment_project_pairs,  # An environment may be running for an unavailable project
+        "available_project_environment_pairs": available_project_environment_pairs,  # Available projects with info whether it has an environment
+    }
     return render(
         request,
         "environment/research_environments.html",

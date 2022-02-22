@@ -21,7 +21,7 @@ from environment.entities import (
     InstanceType,
     Region,
 )
-from environment.utilities import full_outer_join_iterators
+from environment.utilities import left_join_iterators, inner_join_iterators
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
 
@@ -114,7 +114,7 @@ def create_research_environment(
     return response
 
 
-def get_available_projects(user: User) -> Iterable[PublishedProject]:
+def _get_available_projects(user: User) -> Iterable[PublishedProject]:
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -125,7 +125,16 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
     return PublishedProject.objects.filter(access_policy_filters)
 
 
-def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
+def _get_projects_for_environments(
+    environments: Iterable[ResearchEnvironment],
+) -> Iterable[PublishedProject]:
+    datasets = map(lambda environment: environment.dataset, environments)
+    return PublishedProject.objects.filter(slug__in=datasets)
+
+
+def get_available_environments_with_projects(
+    user: User,
+) -> Iterable[Tuple[ResearchEnvironment, PublishedProject]]:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.get_workspace_list(gcp_user_id)
     if not response.ok:
@@ -137,17 +146,24 @@ def get_available_environments(user: User) -> Iterable[ResearchEnvironment]:
         for environment in all_environments
         if environment.status is not EnvironmentStatus.DESTROYED
     ]
+    environment_key = lambda environment: environment.dataset
+    projects = _get_projects_for_environments(running_environments)
+    project_key = lambda project: project.slug
+    environment_project_pairs = inner_join_iterators(
+        environment_key, running_environments, project_key, projects
+    )
 
-    return running_environments
+    return environment_project_pairs
 
 
-def match_projects_with_environments(
-    projects: Iterable[PublishedProject], environments: Iterable[ResearchEnvironment]
-) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
-    key_projects = lambda project: project.project_file_root()
-    key_environments = lambda environment: environment.bucket_name
-    return full_outer_join_iterators(
-        key_projects, projects, key_environments, environments
+def get_available_projects_with_environments(
+    user: User, environments: Iterable[ResearchEnvironment]
+) -> Iterable[Tuple[PublishedProject, ResearchEnvironment]]:
+    project_key = lambda project: project.slug
+    available_projects = _get_available_projects(user)
+    environment_key = lambda environment: environment.dataset
+    return left_join_iterators(
+        project_key, available_projects, environment_key, environments
     )
 
 

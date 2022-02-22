@@ -25,48 +25,46 @@
             </div>
         </div>
     </li>    
-    {% for project, environment in project_environment_pairs %}
-        {% if environment is not None %}
-            <li class="list-group-item">
-                <div class="row">
-                    <div class="col-md-3">
-                        <strong>
-                            {{ project }}
-                        </strong>
-                    </div>
-                    <div class="col-md-3">
-                        <small>
-                            Instance type: {{ environment.instance_type.value }}<br>
-                            Region: {{ environment.region.value }}<br>
-                            Environment type: {{ environment.type.value }}
-                        </small>
-                    </div>
-                    <div class="col-md-2">
-                        {{ environment.status.value }}
-                    </div>
-                    <div class="col-md-4 text-right">
-                        {% if environment.is_running or environment.is_paused %}
-                            <div class="d-flex flex-wrap justify-content-start align-content-around">
-                                {% if environment.is_running %}
-                                    <a href="//{{ environment.url }}">
-                                        <button type="button" class="btn btn-sm btn-link m-1">Open</button>
-                                    </a>
-                                    {% environment_action_button environment=environment button_type="pause" text="Pause" %}
-                                {% else %}
-                                    {% environment_action_button environment=environment button_type="start" text="Start" %}
-                                {% endif %}
-                                {% environment_instance_change_dropdown environment=environment %}
-                                {% environment_action_button environment=environment button_type="destroy" text="Destroy" %}
-                            </div>
-                        {% else %}
-                            <div>
-                                Provisioning...
-                            </div>
-                        {% endif %}
-                    </div>
+    {% for project, environment in environment_project_pairs %}
+        <li class="list-group-item">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>
+                        {{ project }}
+                    </strong>
                 </div>
-            </li>
-        {% endif %}
+                <div class="col-md-3">
+                    <small>
+                        Instance type: {{ environment.instance_type.value }}<br>
+                        Region: {{ environment.region.value }}<br>
+                        Environment type: {{ environment.type.value }}
+                    </small>
+                </div>
+                <div class="col-md-2">
+                    {{ environment.status.value }}
+                </div>
+                <div class="col-md-4 text-right">
+                    {% if environment.is_running or environment.is_paused %}
+                        <div class="d-flex flex-wrap justify-content-start align-content-around">
+                            {% if environment.is_running %}
+                                <a href="//{{ environment.url }}">
+                                    <button type="button" class="btn btn-sm btn-link m-1">Open</button>
+                                </a>
+                                {% environment_action_button environment=environment button_type="pause" text="Pause" %}
+                            {% else %}
+                                {% environment_action_button environment=environment button_type="start" text="Start" %}
+                            {% endif %}
+                            {% environment_instance_change_dropdown environment=environment %}
+                            {% environment_action_button environment=environment button_type="destroy" text="Destroy" %}
+                        </div>
+                    {% else %}
+                        <div>
+                            Provisioning...
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </li>
     {% endfor %}
 </ul>
 

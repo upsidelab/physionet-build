@@ -14,7 +14,7 @@ from environment.services import (
     change_environment_instance_type,
     delete_environment,
     verify_billing_and_create_workspace,
-    get_available_environments,
+    get_available_environments_with_projects,
 )
 from environment.exceptions import (
     IdentityProvisioningFailed,
@@ -38,6 +38,7 @@ from environment.tests.helpers import (
     create_user_with_cloud_identity,
     create_user_with_billing_setup,
 )
+from project.models import PublishedProject
 
 User = get_user_model()
 
@@ -250,33 +251,45 @@ class VerifyBillingAndCreateWorkspaceTestCase(TestCase):
 
 
 @skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
-class GetAvailableEnvironmentsTestCase(TestCase):
+class GetAvailableEnvironmentsWithProjectsTestCase(TestCase):
     def setUp(self):
         self.user = create_user_with_cloud_identity()
 
     @patch("environment.api.get_workspace_list")
-    def test_get_running_environments_succeed(self, mock_get_workspace_list):
+    def test_fetches_environments_and_parses_to_entity(self, mock_get_workspace_list):
         mock_get_workspace_list.return_value.json.return_value = get_workspace_list_json
 
-        running_environments = get_available_environments(self.user)
+        environment_project_pairs = get_available_environments_with_projects(self.user)
 
         self.assertTrue(
             all(
                 True if environment.status != EnvironmentStatus.DESTROYED else False
-                for environment in running_environments
+                for environment, _project in environment_project_pairs
             )
         )
-        self.assertIsInstance(running_environments, list)
+        self.assertIsInstance(environment_project_pairs, list)
         self.assertTrue(
             all(
                 True if isinstance(environment, ResearchEnvironment) else False
-                for environment in running_environments
+                for environment, project in environment_project_pairs
             )
         )
+
+    @patch("environment.api.get_workspace_list")
+    def test_matches_running_environments_with_projects(self, mock_get_workspace_list):
+        mock_get_workspace_list.return_value.json.return_value = get_workspace_list_json
+        demopsn_project = PublishedProject.objects.get(slug="demopsn")
+
+        environment_project_pairs = get_available_environments_with_projects(self.user)
+        self.assertEqual(len(environment_project_pairs), 1)
+        self.assertEqual(environment_project_pairs[0][0].dataset, "demopsn")
+        self.assertEqual(environment_project_pairs[0][1], demopsn_project)
 
     @patch("environment.api.get_workspace_list")
     def test_raises_if_request_fails(self, mock_get_workspace_list):
         mock_get_workspace_list.return_value.ok = False
         self.assertRaises(
-            GetAvailableEnvironmentsFailed, get_available_environments, self.user
+            GetAvailableEnvironmentsFailed,
+            get_available_environments_with_projects,
+            self.user,
         )
