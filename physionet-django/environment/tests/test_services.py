@@ -70,7 +70,7 @@ class CreateCloudIdentityTestCase(TestCase):
 
         otp, identity = create_cloud_identity(self.user)
         self.assertEqual(otp, mock_otp)
-        self.assertEqual(identity.gcp_user_id, self.user.username)
+        self.assertEqual(identity.gcp_user_id, f"researcher.{self.user.username}")
         self.assertEqual(identity.email, mock_email)
         self.assertEqual(self.user.cloud_identity, identity)
 
@@ -96,16 +96,17 @@ class CreateResearchEnvironmentTestCase(TestCase):
         self.user = create_user_with_billing_setup()
 
     @patch("environment.api.create_workbench")
-    def test_raises_if_request_fails(self, mock_create_research_environment):
-        mock_create_research_environment.return_value.ok = False
+    def test_raises_if_request_fails(self, mock_create_workbench):
+        mock_create_workbench.return_value.ok = False
         self.assertRaises(
             EnvironmentCreationFailed,
             create_research_environment,
             self.user,
             self.project,
-            Region.AUSTRALIA_SOUTHEAST,
-            InstanceType.N1_STANDARD_1,
+            "us-central1",
+            "n1-standard-1",
             "enviornment_type",
+            "100",
         )
 
     @patch("environment.api.create_workbench")
@@ -114,9 +115,10 @@ class CreateResearchEnvironmentTestCase(TestCase):
         result = create_research_environment(
             self.user,
             self.project,
-            Region.AUSTRALIA_SOUTHEAST,
-            InstanceType.N1_STANDARD_1,
+            "us-central1",
+            "n1-standard-1",
             "enviornment_type",
+            "100",
         )
         self.assertEqual(result, mock_create_workbench.return_value)
 

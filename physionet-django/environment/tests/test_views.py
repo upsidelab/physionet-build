@@ -171,7 +171,10 @@ class ResearchEnvironmentsTestCase(TestCase):
 
 @skipIf(not settings.ENABLE_RESEARCH_ENVIRONMENTS, "Research environments are disabled")
 class CreateResearchEnvironmentTestCase(TestCase):
-    url = reverse("create_research_environment", kwargs={"project_slug": "some_slug"})
+    url = reverse(
+        "create_research_environment",
+        kwargs={"project_slug": "some_slug", "project_version": "some_version"},
+    )
 
     def test_redirects_to_login_if_not_logged_in(self):
         response = self.client.get(self.url)
