@@ -1,3 +1,4 @@
+import re
 from os import walk, chdir, listdir, path
 from requests.auth import HTTPBasicAuth
 from requests import post, put, get
