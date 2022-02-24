@@ -23,7 +23,15 @@ from environment.entities import (
 )
 from environment.utilities import left_join_iterators, inner_join_iterators
 from user.models import User
-from project.models import AccessPolicy, PublishedProject
+from project.models import AccessPolicy, PublishedProject, DataAccess
+
+
+def _project_dataset(project: PublishedProject) -> str:
+    return project.dataaccesss.get(platform=5).location
+
+
+def _environment_dataset(environment: ResearchEnvironment) -> str:
+    return environment.dataset
 
 
 def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
@@ -77,7 +85,9 @@ def _create_workbench_kwargs(
         "region": region,
         "environment_type": environment_type,
         "instance_type": instance_type,
-        "dataset": project.slug,  # FIXME: Dashes in the name are not accepted by the API
+        "dataset": _project_dataset(
+            project
+        ),  # FIXME: Dashes in the name are not accepted by the API
     }
     if environment_type == "jupyter":
         jupyter_kwargs = {
@@ -115,6 +125,7 @@ def create_research_environment(
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
+    data_access_filters = Q(dataaccesss__platform=5)
     access_policy_filters = Q(access_policy=AccessPolicy.OPEN) | Q(
         access_policy=AccessPolicy.RESTRICTED
     )
@@ -122,14 +133,16 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
         access_policy_filters = access_policy_filters | Q(
             access_policy=AccessPolicy.CREDENTIALED
         )
-    return PublishedProject.objects.filter(access_policy_filters)
+    return PublishedProject.objects.filter(data_access_filters & access_policy_filters)
 
 
 def _get_projects_for_environments(
     environments: Iterable[ResearchEnvironment],
 ) -> Iterable[PublishedProject]:
-    datasets = map(lambda environment: environment.dataset, environments)
-    return PublishedProject.objects.filter(slug__in=datasets)
+    datasets = map(_environment_dataset, environments)
+    return PublishedProject.objects.filter(
+        dataaccesss__platform=5, dataaccesss__location__in=datasets
+    )
 
 
 def get_environments_with_projects(
@@ -142,16 +155,11 @@ def get_environments_with_projects(
         raise GetAvailableEnvironmentsFailed(error_message)
     all_environments = deserialize_research_environments(response.json())
     running_environments = [
-        environment
-        for environment in all_environments
-        if environment.status
-        not in [EnvironmentStatus.DESTROYED, EnvironmentStatus.PROVISIONING_FAILED]
+        environment for environment in all_environments if environment.is_running
     ]
-    environment_key = lambda environment: environment.dataset
     projects = _get_projects_for_environments(running_environments)
-    project_key = lambda project: project.slug
     environment_project_pairs = inner_join_iterators(  # TODO: Consider left join as this will preserve environments for deleted projects
-        environment_key, running_environments, project_key, projects
+        _environment_dataset, running_environments, _project_dataset, projects
     )
 
     return environment_project_pairs
@@ -161,13 +169,11 @@ def get_available_projects_with_environments(
     user: User,
     environments: Iterable[ResearchEnvironment],
 ) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
-    project_key = lambda project: project.slug
     available_projects = get_available_projects(user)
-    environment_key = lambda environment: environment.dataset
     return left_join_iterators(
-        project_key,
+        _project_dataset,
         available_projects,
-        environment_key,
+        _environment_dataset,
         environments,
     )
 
