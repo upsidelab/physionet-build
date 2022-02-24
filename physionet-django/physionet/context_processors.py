@@ -15,3 +15,7 @@ def platform_config(request):
         'FOOTER_ACCESSIBILITY_PAGE': settings.FOOTER_ACCESSIBILITY_PAGE,
         'STRAPLINE': settings.STRAPLINE,
     }
+
+
+def enable_research_environments(request):
+    return settings.ENABLE_RESEARCH_ENVIRONMENTS
