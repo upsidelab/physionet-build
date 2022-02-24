@@ -881,6 +881,7 @@ class DataAccessForm(forms.ModelForm):
     def clean_platform(self):
         if project_has_environment_group(self.project):
             raise forms.ValidationError('The project already has an environment group.')
+        return self.cleaned_data['platform']
 
     def clean_location(self):
         platform = self.cleaned_data.get('platform')
