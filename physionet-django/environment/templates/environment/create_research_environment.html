@@ -8,6 +8,7 @@
 
 {% block local_css %}
 <link rel="stylesheet" type="text/css" href="{% static 'project/css/project-home.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'environment/css/create_research_environment.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -18,7 +19,7 @@
     </h1>
     <div class="card" style="width: 36rem;">
       <div class="card-body">
-        <h3 class="card-title mb-3">
+        <h3 class="card-title">
             Project: <span class="font-italic">{{ project.title }}</span>
         </h3>
 
