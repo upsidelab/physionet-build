@@ -17,5 +17,7 @@ def platform_config(request):
     }
 
 
-def enable_research_environments(request):
-    return settings.ENABLE_RESEARCH_ENVIRONMENTS
+def environments_config(request):
+    return {
+        "ENABLE_RESEARCH_ENVIRONMENTS": settings.ENABLE_RESEARCH_ENVIRONMENTS,
+    }

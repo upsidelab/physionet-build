@@ -87,6 +87,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'physionet.context_processors.access_policy',
                 'physionet.context_processors.platform_config',
+                'physionet.context_processors.environments_config',
             ],
         },
     },

@@ -28,7 +28,7 @@
 
 <ul class="navbar-nav ml-auto">
   {% if user.is_authenticated %}
-    {% if enable_research_environments %}
+    {% if ENABLE_RESEARCH_ENVIRONMENTS %}
       <li class="nav-item">
         <a id="nav_environments" class="nav-link" href="{% url 'research_environments' %}">
           Research Environments
