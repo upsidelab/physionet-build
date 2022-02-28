@@ -25,6 +25,7 @@ class EnvironmentStatus(Enum):
     SERVING = "serving"
     TERMINATED = "terminated"  # Paused
     DESTROYED = "destroyed"
+    STOPPED = "stopped"
 
 
 class EnvironmentType(Enum):
@@ -56,4 +57,4 @@ class ResearchEnvironment:
 
     @property
     def is_paused(self):
-        return self.status == EnvironmentStatus.TERMINATED
+        return self.status in [EnvironmentStatus.TERMINATED, EnvironmentStatus.STOPPED]

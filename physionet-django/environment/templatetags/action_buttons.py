@@ -1,7 +1,7 @@
 import json
-from typing import Optional
 
 from django import template
+from django.urls import reverse
 
 from environment.entities import ResearchEnvironment, InstanceType
 
@@ -11,53 +11,99 @@ register = template.Library()
 
 button_types = {
     "pause": {
+        "button_text": "Pause",
         "http_method": "PATCH",
         "url_name": "stop_running_environment",
-        "class": "btn btn-sm btn-primary m-1",
+        "button_class": "btn btn-primary m-1",
     },
     "start": {
+        "button_text": "Start",
         "http_method": "PATCH",
         "url_name": "start_stopped_environment",
-        "class": "btn btn-sm btn-primary m-1",
+        "button_class": "btn btn-primary m-1",
     },
     "update": {
+        "button_text": "Save Instance",
         "http_method": "PATCH",
         "url_name": "change_environment_instance_type",
-        "class": "dropdown-item",
+        "button_class": "btn btn-primary",
     },
     "destroy": {
+        "button_text": "Destroy",
         "http_method": "DELETE",
         "url_name": "delete_environment",
-        "class": "btn btn-sm btn-danger m-1",
+        "button_class": "btn btn-danger m-1",
+    },
+    "modal_instance": {
+        "button_text": "Change Instance Type",
+        "button_class": "btn-secondary",
+        "modal_title": "Choose Instance Type",
+        "modal_body": None,
+        "action_button_type": "update",
+    },
+    "modal_pause": {
+        "button_text": "Pause",
+        "button_class": "btn-primary",
+        "modal_title": "Pause",
+        "modal_body": "Are you sure you want to pause this environment?",
+        "action_button_type": "pause"
+    },
+    "modal_destroy": {
+        "button_text": "Destroy",
+        "button_class": "btn-danger",
+        "modal_title": "Destroy",
+        "modal_body": "Are you sure you want to destroy this environment?",
+        "action_button_type": "destroy"
+    },
+    "modal_start": {
+        "button_text": "Start",
+        "button_class": "btn-primary",
+        "modal_title": "Start",
+        "modal_body": "Are you sure you want to start this environment?",
+        "action_button_type": "start"
     },
 }
+
+
+@register.inclusion_tag("tag/environment_modal_button.html")
+def environment_modal_button(
+    environment: ResearchEnvironment,
+    button_type: str,
+) -> dict:
+    data = button_types[button_type]
+    request_data = {"workbench_id": environment.id, "region": environment.region.value}
+    result_data = {
+        'environment': environment,
+        'request_data': json.dumps(request_data),
+        'button_text': data['button_text'],
+        'button_class': data['button_class'],
+        'modal_title': data['modal_title'],
+        'modal_body': data['modal_body'],
+        'action_button_type': data['action_button_type'],
+    }
+    if button_type == 'modal_instance':
+        instance_types = [t.value for t in InstanceType]
+        result_data['instance_types'] = instance_types
+
+    return result_data
 
 
 @register.inclusion_tag("tag/environment_action_button.html")
 def environment_action_button(
     environment: ResearchEnvironment,
     button_type: str,
-    text: str,
-    instance_type: Optional[str] = None,
 ) -> dict:
-    button_type_data = button_types[button_type]
+    data = button_types[button_type]
     request_data = {"workbench_id": environment.id, "region": environment.region.value}
-    if instance_type:
-        request_data["instance_type"] = instance_type
 
-    return {
-        "http_method": button_type_data["http_method"],
-        "class": button_type_data["class"],
-        "url_name": button_type_data["url_name"],
-        "text": text,
-        "request_data": json.dumps(request_data),
+    result_data = {
+        'button_class': data['button_class'],
+        'button_text': data['button_text'],
+        'button_type': button_type,
+        'url': reverse(data['url_name']),
+        'http_method': data['http_method'],
+        'request_data': json.dumps(request_data),
     }
+    return result_data
 
 
-@register.inclusion_tag("tag/environment_instance_change_dropdown.html")
-def environment_instance_change_dropdown(environment: ResearchEnvironment) -> dict:
-    instance_types = [t.value for t in InstanceType]
-    return {
-        "environment": environment,
-        "instance_types": instance_types,
-    }
