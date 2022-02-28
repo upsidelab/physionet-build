@@ -4,12 +4,14 @@ from functools import wraps
 from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.http import require_http_methods
+from django.db.models import Model
 
 from environment.utilities import user_has_cloud_identity, user_has_billing_setup
-from user.models import User
 
 
 View = Callable[[HttpRequest], HttpResponse]
+
+User = Model
 
 
 def _redirect_view_if_user(predicate: Callable[[User], bool], redirect_url: str):
