@@ -40,14 +40,19 @@ def schedule_stop_environment_if_training_accepted(instance: Training, **kwargs)
 @receiver(post_init, sender=DataAccessRequest)
 def memoize_original_acceptation_status(instance: DataAccessRequest, **kwargs):
     instance._original_is_accepted = instance.is_accepted()
+    instance._original_is_revoked = instance.is_revoked()
 
 
 @receiver(post_save, sender=DataAccessRequest)
 def schedule_stop_environment_if_data_access_request_accepted(
     instance: DataAccessRequest, **kwargs
 ):
-    if instance.is_accepted() and not instance._original_is_accepted:
-        if not instance.duration:  # Indefinite access
+    request_was_accepted = instance.is_accepted() and not instance._original_is_accepted
+    access_was_revoked = instance.is_revoked() and not instance._original_is_revoked
+    if request_was_accepted:
+        if request_was_accepted and not instance.duration:  # Indefinite access
             return
         schedule = timezone.now() + instance.duration
         stop_environments_with_expired_access(instance.id, schedule=schedule)
+    elif access_was_revoked:
+        stop_environments_with_expired_access(instance.id)
