@@ -36,7 +36,7 @@ def _environment_dataset(environment: ResearchEnvironment) -> str:
 
 def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
     response = api.create_cloud_identity(
-        user.username, user.profile.first_names, user.profile.last_name
+        f"researcher.{user.username}", user.profile.first_names, user.profile.last_name
     )
     if not response.ok:
         error_message = response.json()["message"]

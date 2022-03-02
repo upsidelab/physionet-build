@@ -13,25 +13,19 @@
 {% block content %}
 <div class="container">
   {% include "message_snippet.html" %}
-  <div>
-    <h1 class="mb-5">
-      Research Environments
-    </h1>
-
-    <p>
-      You don't have any research environments yet.
-    </p>
-    <p>
-      To start, click the button below to provide you Google Cloud Identity.
-    </p>
-
-    <form id="environment_identity_provisioning_form" action="{% url 'identity_provisioning' %}" method="post">
-      {% csrf_token %}
-      <button class="btn btn-sm btn-primary" type="submit">
-        Create Cloud Identity
-      </button>
-    </form>
-  </div>
+    <h2 class="mb-4">Research Environments</h2>
+    <div class="card" style="width: 36rem;">
+      <div class="card-body">
+        <p class="card-text font-weight-bold">You don't have any research environments yet.</p>
+        <p class="card-text">To start, click the button below to provide you Google Cloud Identity.</p>
+        <form id="environment_identity_provisioning_form" action="{% url 'identity_provisioning' %}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-primary" type="submit">
+            Create Cloud Identity
+          </button>
+        </form>
+      </div>
+    </div>
 </div>
 {% endblock %}
 

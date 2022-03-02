@@ -1,0 +1,10 @@
+form > label {
+    font-weight: bold;
+    margin-top: 1rem;
+}
+
+.environment-type {
+    width: 24px;
+    display: inline;
+    list-style-type: none;
+}
