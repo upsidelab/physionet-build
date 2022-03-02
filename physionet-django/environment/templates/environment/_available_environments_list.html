@@ -65,27 +65,35 @@
         </li>
     {% endfor %}
 </ul>
+
+{% block local_js_bottom %}
 <script>
-    const csrfToken = getCookie('csrftoken');
+    (function() {
+        const csrfToken = getCookie('csrftoken');
 
-    function send_request(request_data, http_method, url, button_type) {
-        let data = request_data;
-        if (button_type === "update") {
-            const instance = $('#form-select').find("option:selected").text();
-            if (instance === "") return;
-            data = JSON.parse(data);
-            data["instance_type"] = instance;
-            data = JSON.stringify(data)
+        function send_request(request_data, http_method, url, button_type) {
+            let data = request_data;
+            if (button_type === "update") {
+                const instance = document
+                    .getElementById('form-select')
+                    .find("option:selected")
+                    .text();
+                if (instance === "") return;
+
+                data = JSON.parse(data);
+                data["instance_type"] = instance;
+                data = JSON.stringify(data)
+            }
+            fetch(url, {
+                method: http_method,
+                body: data,
+                credentials: "same-origin",
+                headers: {
+                    "X-CSRFToken": csrfToken,
+                    "Content-Type": "application/json",
+                },
+            });
         }
-        fetch(url, {
-            method: http_method,
-            body: data,
-            credentials: "same-origin",
-            headers: {
-                "X-CSRFToken": csrfToken,
-                "Content-Type": "application/json",
-            },
-        });
-    }
+    })();
 </script>
-
+{% endblock %}
