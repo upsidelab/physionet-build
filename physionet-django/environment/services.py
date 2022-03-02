@@ -36,7 +36,7 @@ def _environment_dataset(environment: ResearchEnvironment) -> str:
 
 def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
     response = api.create_cloud_identity(
-        f"researcher.{user.username}", user.profile.first_names, user.profile.last_name
+        f"researcher_{user.username}", user.profile.first_names, user.profile.last_name
     )
     if not response.ok:
         error_message = response.json()["message"]
@@ -44,7 +44,7 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
 
     body = response.json()
     identity = CloudIdentity.objects.create(
-        user=user, gcp_user_id=f"researcher.{user.username}", email=body["email-id"]
+        user=user, gcp_user_id=f"researcher_{user.username}", email=body["email-id"]
     )
     otp = body["one-time-password"]
     return otp, identity
@@ -85,14 +85,14 @@ def _create_workbench_kwargs(
         "region": region,
         "environment_type": environment_type,
         "instance_type": instance_type,
-        "dataset": _project_dataset(
+        "group_granting_data_access": _project_data_access(
             project
         ),  # FIXME: Dashes in the name are not accepted by the API
+        "persistent_disk": str(persistent_disk),
     }
     if environment_type == "jupyter":
         jupyter_kwargs = {
             "vm_image": "common-cpu-notebooks",
-            "persistent_disk": str(persistent_disk),
             "bucket_name": project.project_file_root(),
         }
         return {**common, **jupyter_kwargs}

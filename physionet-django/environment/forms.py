@@ -46,17 +46,15 @@ class CreateResearchEnvironmentForm(forms.Form):
     persistent_disk = forms.IntegerField(
         label="Persistent data disk size",
         validators=[MinValueValidator(0), MaxValueValidator(64000)],
-        widget=forms.TextInput(attrs={"class": "form-control"}),
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
         required=False,
     )
 
     def clean(self):
         cleaned_data = super().clean()
-        environment_type = cleaned_data.get("environment_type")
         persistent_disk = cleaned_data.get("persistent_disk")
 
-        if environment_type == self.AVAILABLE_ENVIRONMENT_TYPES[0][0]:  # Jupyter
-            if persistent_disk is None:
-                raise ValidationError(
-                    "Disk parameter is required for Jupyter environments."
-                )
+        if persistent_disk is None:
+            raise ValidationError(
+                "Disk parameter is required."
+            )

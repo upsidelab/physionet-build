@@ -71,7 +71,7 @@ class CreateCloudIdentityTestCase(TestCase):
 
         otp, identity = create_cloud_identity(self.user)
         self.assertEqual(otp, mock_otp)
-        self.assertEqual(identity.gcp_user_id, f"researcher.{self.user.username}")
+        self.assertEqual(identity.gcp_user_id, f"researcher_{self.user.username}")
         self.assertEqual(identity.email, mock_email)
         self.assertEqual(self.user.cloud_identity, identity)
 

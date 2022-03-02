@@ -22,7 +22,6 @@ class EnvironmentStatus(Enum):
     PROVISIONING = "workbench-setup-inprogress"
     PROVISIONING_FAILED = "workbench-setup-failed"
     RUNNING = "running"
-    SERVING = "serving"
     TERMINATED = "terminated"  # Paused
     DESTROYED = "destroyed"
     STOPPED = "stopped"
@@ -53,7 +52,7 @@ class ResearchEnvironment:
 
     @property
     def is_running(self):
-        return self.status in [EnvironmentStatus.RUNNING, EnvironmentStatus.SERVING]
+        return self.status == EnvironmentStatus.RUNNING
 
     @property
     def is_paused(self):
