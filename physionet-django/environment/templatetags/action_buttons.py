@@ -46,21 +46,21 @@ button_types = {
         "button_class": "btn-primary",
         "modal_title": "Pause",
         "modal_body": "Are you sure you want to pause this environment?",
-        "action_button_type": "pause"
+        "action_button_type": "pause",
     },
     "modal_destroy": {
         "button_text": "Destroy",
         "button_class": "btn-danger",
         "modal_title": "Destroy",
         "modal_body": "Are you sure you want to destroy this environment?",
-        "action_button_type": "destroy"
+        "action_button_type": "destroy",
     },
     "modal_start": {
         "button_text": "Start",
         "button_class": "btn-primary",
         "modal_title": "Start",
         "modal_body": "Are you sure you want to start this environment?",
-        "action_button_type": "start"
+        "action_button_type": "start",
     },
 }
 
@@ -73,17 +73,17 @@ def environment_modal_button(
     data = button_types[button_type]
     request_data = {"workbench_id": environment.id, "region": environment.region.value}
     result_data = {
-        'environment': environment,
-        'request_data': json.dumps(request_data),
-        'button_text': data['button_text'],
-        'button_class': data['button_class'],
-        'modal_title': data['modal_title'],
-        'modal_body': data['modal_body'],
-        'action_button_type': data['action_button_type'],
+        "environment": environment,
+        "request_data": json.dumps(request_data),
+        "button_text": data["button_text"],
+        "button_class": data["button_class"],
+        "modal_title": data["modal_title"],
+        "modal_body": data["modal_body"],
+        "action_button_type": data["action_button_type"],
     }
-    if button_type == 'modal_instance':
+    if button_type == "modal_instance":
         instance_types = [t.value for t in InstanceType]
-        result_data['instance_types'] = instance_types
+        result_data["instance_types"] = instance_types
 
     return result_data
 
@@ -97,13 +97,11 @@ def environment_action_button(
     request_data = {"workbench_id": environment.id, "region": environment.region.value}
 
     result_data = {
-        'button_class': data['button_class'],
-        'button_text': data['button_text'],
-        'button_type': button_type,
-        'url': reverse(data['url_name']),
-        'http_method': data['http_method'],
-        'request_data': json.dumps(request_data),
+        "button_class": data["button_class"],
+        "button_text": data["button_text"],
+        "button_type": button_type,
+        "url": reverse(data["url_name"]),
+        "http_method": data["http_method"],
+        "request_data": json.dumps(request_data),
     }
     return result_data
-
-
