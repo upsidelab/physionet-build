@@ -1,9 +1,9 @@
 <button
     type="button"
-    class="environment-action-button {{ class }}"
-    data-request-data="{{ request_data }}"
-    data-http-method="{{ http_method }}"
-    data-http-url="{% url url_name %}"
+    class="environment-action-button {{ button_class }}"
+    data-dismiss="modal"
+    onclick="send_request('{{ request_data }}', '{{ http_method }}', '{{ url }}', '{{ button_type }}')"
 >
-    {{ text }}
+    {{ button_text }}
 </button>
+

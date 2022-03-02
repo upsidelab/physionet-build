@@ -43,19 +43,21 @@
                 <div class="col-md-2">
                     {{ environment.status.value }}
                 </div>
-                <div class="col-md-4 text-right">
+                <div class="col-md-4">
                     {% if environment.is_running or environment.is_paused %}
-                        <div class="d-flex flex-wrap justify-content-start align-content-around">
+                        <div class="d-flex flex-wrap">
                             {% if environment.is_running %}
-                                <a href="{{ environment.url }}" target="_blank">
-                                    <button type="button" class="btn btn-sm btn-link m-1">Open</button>
-                                </a>
-                                {% environment_action_button environment=environment button_type="pause" text="Pause" %}
+                                <div class="d-inline-block">
+                                <button type="button" class="btn btn-link m-1">
+                                    <a href="{{ environment.url }}" target="_blank">Open</a>
+                                </button>
+                                </div>
+                                {% environment_modal_button environment=environment button_type="modal_pause" %}
                             {% else %}
-                                {% environment_action_button environment=environment button_type="start" text="Start" %}
+                                {% environment_modal_button environment=environment button_type="modal_start" %}
                             {% endif %}
-                            {% environment_instance_change_dropdown environment=environment %}
-                            {% environment_action_button environment=environment button_type="destroy" text="Destroy" %}
+                            {% environment_modal_button environment=environment button_type="modal_instance" %}
+                            {% environment_modal_button environment=environment button_type="modal_destroy" %}
                         </div>
                     {% endif %}
                 </div>
@@ -69,25 +71,29 @@
     (function() {
         const csrfToken = getCookie('csrftoken');
 
-        const simpleActionButtons = document.getElementsByClassName("environment-action-button");
-        Array.from(simpleActionButtons).forEach((button) => {
-            let allowSubmit = true;
-            const data = button.dataset.requestData;
+        function send_request(request_data, http_method, url, button_type) {
+            let data = request_data;
+            if (button_type === "update") {
+                const instance = document
+                    .getElementById('form-select')
+                    .find("option:selected")
+                    .text();
+                if (instance === "") return;
 
-            button.onclick = function() {
-                if (!allowSubmit) return;
-
-                fetch(button.dataset.httpUrl, {
-                    method: button.dataset.httpMethod,
-                    body: data,
-                    credentials: "same-origin",
-                    headers: {
-                        "X-CSRFToken": csrfToken,
-                        "Content-Type": "application/json",
-                    },
-                });
-            };
-        });
+                data = JSON.parse(data);
+                data["instance_type"] = instance;
+                data = JSON.stringify(data)
+            }
+            fetch(url, {
+                method: http_method,
+                body: data,
+                credentials: "same-origin",
+                headers: {
+                    "X-CSRFToken": csrfToken,
+                    "Content-Type": "application/json",
+                },
+            });
+        }
     })();
 </script>
 {% endblock %}
