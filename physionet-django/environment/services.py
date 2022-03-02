@@ -154,12 +154,14 @@ def get_environments_with_projects(
         error_message = response.json()["error"]
         raise GetAvailableEnvironmentsFailed(error_message)
     all_environments = deserialize_research_environments(response.json())
-    running_environments = [
-        environment for environment in all_environments if environment.is_running
+    active_environments = [
+        environment
+        for environment in all_environments
+        if environment.is_running or environment.is_paused
     ]
-    projects = _get_projects_for_environments(running_environments)
+    projects = _get_projects_for_environments(active_environments)
     environment_project_pairs = inner_join_iterators(  # TODO: Consider left join as this will preserve environments for deleted projects
-        _environment_dataset, running_environments, _project_dataset, projects
+        _environment_dataset, active_environments, _project_dataset, projects
     )
 
     return environment_project_pairs
