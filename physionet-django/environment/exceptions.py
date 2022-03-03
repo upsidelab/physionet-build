@@ -30,5 +30,9 @@ class GetAvailableEnvironmentsFailed(Exception):
     pass
 
 
+class GetUserInfoFailed(Exception):
+    pass
+
+
 class GetWorkspaceDetailsFailed(Exception):
     pass
