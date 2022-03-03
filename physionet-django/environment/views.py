@@ -26,7 +26,18 @@ from environment.models import Workflow
 @require_http_methods(["GET", "POST"])
 @login_required
 def identity_provisioning(request):
+    # assuming that if user has could_identity => user has cloud_identity in API
     if user_has_cloud_identity(request.user):
+        return redirect("billing_setup")
+
+    # user has no cloud identity, and now we check if he has cloud identity in API
+    user_info = services.get_user_info(request.user)
+    if user_info.get('user-status') == 'user-added-in-cloud-identity':
+        _identity = services.create_cloud_identity_object(
+            user=request.user,
+            gcp_user_id=user_info.get('user-id'),
+            email=user_info.get('email'),
+        )
         return redirect("billing_setup")
 
     if request.method == "POST":
@@ -100,8 +111,10 @@ def research_environments(request):
         )
     )
     context = {
-        "environment_project_pairs": environment_project_pairs,  # An environment may be running for an unavailable project
-        "available_project_environment_pairs": available_project_environment_pairs,  # Available projects with info whether it has an environment
+        "environment_project_pairs": environment_project_pairs,
+        # An environment may be running for an unavailable project
+        "available_project_environment_pairs": available_project_environment_pairs,
+        # Available projects with info whether it has an environment
         "cloud_identity": request.user.cloud_identity,
     }
     return render(
