@@ -26,17 +26,18 @@ from user.models import User
 from project.models import AccessPolicy, PublishedProject, DataAccess
 
 
-def _project_dataset(project: PublishedProject) -> str:
+def _project_data_group(project: PublishedProject) -> str:
     return project.dataaccesss.get(platform=5).location
 
 
-def _environment_dataset(environment: ResearchEnvironment) -> str:
-    return environment.dataset
+def _environment_data_group(environment: ResearchEnvironment) -> str:
+    return environment.group_granting_data_access
 
 
 def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
+    gcp_user_id = f"researcher_{user.username}"
     response = api.create_cloud_identity(
-        f"researcher.{user.username}", user.profile.first_names, user.profile.last_name
+        gcp_user_id, user.profile.first_names, user.profile.last_name
     )
     if not response.ok:
         error_message = response.json()["message"]
@@ -44,7 +45,7 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
 
     body = response.json()
     identity = CloudIdentity.objects.create(
-        user=user, gcp_user_id=f"researcher.{user.username}", email=body["email-id"]
+        user=user, gcp_user_id=gcp_user_id, email=body["email-id"]
     )
     otp = body["one-time-password"]
     return otp, identity
@@ -85,14 +86,14 @@ def _create_workbench_kwargs(
         "region": region,
         "environment_type": environment_type,
         "instance_type": instance_type,
-        "dataset": _project_dataset(
+        "group_granting_data_access": _project_data_group(
             project
         ),  # FIXME: Dashes in the name are not accepted by the API
+        "persistent_disk": str(persistent_disk),
     }
     if environment_type == "jupyter":
         jupyter_kwargs = {
             "vm_image": "common-cpu-notebooks",
-            "persistent_disk": str(persistent_disk),
             "bucket_name": project.project_file_root(),
         }
         return {**common, **jupyter_kwargs}
@@ -139,9 +140,9 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
 def _get_projects_for_environments(
     environments: Iterable[ResearchEnvironment],
 ) -> Iterable[PublishedProject]:
-    datasets = map(_environment_dataset, environments)
+    group_granting_data_accesses = map(_environment_data_group, environments)
     return PublishedProject.objects.filter(
-        dataaccesss__platform=5, dataaccesss__location__in=datasets
+        dataaccesss__platform=5, dataaccesss__location__in=group_granting_data_accesses
     )
 
 
@@ -161,7 +162,7 @@ def get_environments_with_projects(
     ]
     projects = _get_projects_for_environments(active_environments)
     environment_project_pairs = inner_join_iterators(  # TODO: Consider left join as this will preserve environments for deleted projects
-        _environment_dataset, active_environments, _project_dataset, projects
+        _environment_data_group, active_environments, _project_data_group, projects
     )
 
     return environment_project_pairs
@@ -173,9 +174,9 @@ def get_available_projects_with_environments(
 ) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
     available_projects = get_available_projects(user)
     return left_join_iterators(
-        _project_dataset,
+        _project_data_group,
         available_projects,
-        _environment_dataset,
+        _environment_data_group,
         environments,
     )
 

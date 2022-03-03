@@ -34,23 +34,3 @@
     </div>
 </div>
 {% endblock %}
-
-{% block local_js_bottom %}
-<script>
-  (function() {
-    const jupyterTypeRadioButton = document.querySelector("#id_environment_type input[value='jupyter']");
-    const rstudioTypeRadioButton = document.querySelector("#id_environment_type input[value='rstudio']");
-    const persistentDiskInput = document.getElementById("id_persistent_disk");
-
-    persistentDiskInput.disabled = !jupyterTypeRadioButton.checked;
-    jupyterTypeRadioButton.addEventListener("change", function() {
-      persistentDiskInput.disabled = false;
-      persistentDiskInput.value = null;
-    });
-    rstudioTypeRadioButton.addEventListener("change", function() {
-      persistentDiskInput.disabled = true;
-      persistentDiskInput.value = 100;
-    });
-  })();
-</script>
-{% endblock %}
