@@ -13,9 +13,7 @@ def deserialize_research_environments(data: dict) -> Iterable[ResearchEnvironmen
     return [
         ResearchEnvironment(
             id=workbench["id"],
-            dataset=workbench.get("dataset")
-            or workbench.get("group-granting-data-access"),
-            # FIXME Now we have to use both, dataset and group-granting-data-access in the future remove dataset
+            group_granting_data_access=workbench.get("group-granting-data-access"),
             url=workbench.get("url")
             or workbench.get("version-url"),  # RStudio sends version-url
             instance_type=InstanceType(workbench["machine-type"]),

@@ -42,7 +42,7 @@ class EnvironmentType(Enum):
 @dataclass
 class ResearchEnvironment:
     id: str
-    dataset: str
+    group_granting_data_access: str
     region: Region
     type: EnvironmentType
     instance_type: InstanceType

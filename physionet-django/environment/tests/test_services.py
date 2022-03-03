@@ -282,7 +282,7 @@ class GetAvailableEnvironmentsWithProjectsTestCase(TestCase):
 
         environment_project_pairs = get_environments_with_projects(self.user)
         self.assertEqual(len(environment_project_pairs), 1)
-        self.assertEqual(environment_project_pairs[0][0].dataset, "demopsn")
+        self.assertEqual(environment_project_pairs[0][0].group_granting_data_access, "demopsn")
         self.assertEqual(environment_project_pairs[0][1], demopsn_project)
 
     @patch("environment.api.get_workspace_list")

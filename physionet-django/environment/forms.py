@@ -45,16 +45,5 @@ class CreateResearchEnvironmentForm(forms.Form):
     )
     persistent_disk = forms.IntegerField(
         label="Persistent data disk size",
-        validators=[MinValueValidator(0), MaxValueValidator(64000)],
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
-        required=False,
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": 0, "max": 64000}),
     )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        persistent_disk = cleaned_data.get("persistent_disk")
-
-        if persistent_disk is None:
-            raise ValidationError(
-                "Disk parameter is required."
-            )
