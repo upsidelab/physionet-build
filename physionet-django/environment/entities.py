@@ -23,8 +23,10 @@ class EnvironmentStatus(Enum):
     PROVISIONING_FAILED = "workbench-setup-failed"
     RUNNING = "running"
     TERMINATED = "terminated"  # Paused
-    DESTROYED = "destroyed"
     STOPPED = "stopped"
+    DESTROYED = "destroyed"  # RStudio destroyed notebooks
+    WORKBENCH_DESTROYED = "workbench-destroy-done"  # Jupyter destroyed notebooks
+    # FIXME: Unify DESTROYED and WORKBENCH_DESTROYED
 
 
 class EnvironmentType(Enum):

@@ -49,3 +49,7 @@ input::placeholder {
 a[target='_blank']::after {
   content: none;
 }
+
+.card-header {
+  font-weight: bold;
+}

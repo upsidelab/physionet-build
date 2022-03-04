@@ -45,13 +45,11 @@
                 </div>
                 <div class="col-md-4">
                     {% if environment.is_running or environment.is_paused %}
-                        <div class="d-flex flex-wrap">
+                        <div class="d-flex flex-wrap align-content-stretch">
                             {% if environment.is_running %}
-                                <div class="d-inline-block">
-                                <button type="button" class="btn btn-link m-1">
+                                <button type="button" class="btn btn-link">
                                     <a href="{{ environment.url }}" target="_blank">Open</a>
                                 </button>
-                                </div>
                                 {% environment_modal_button environment=environment button_type="modal_pause" %}
                             {% else %}
                                 {% environment_modal_button environment=environment button_type="modal_start" %}
@@ -68,16 +66,13 @@
 
 {% block local_js_bottom %}
 <script>
-    (function() {
-        const csrfToken = getCookie('csrftoken');
+    const sendRequest = (function() {
+        const csrfToken = getCookie("csrftoken");
 
-        function send_request(request_data, http_method, url, button_type) {
+        return function(request_data, http_method, url, button_type) {
             let data = request_data;
             if (button_type === "update") {
-                const instance = document
-                    .getElementById('form-select')
-                    .find("option:selected")
-                    .text();
+                const instance = $("#form-select option:selected").text();
                 if (instance === "") return;
 
                 data = JSON.parse(data);

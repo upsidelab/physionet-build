@@ -18,21 +18,65 @@
 <div class="container">
   {% include "message_snippet.html" %}
   <div class="jumbotron">
-    <h1>Research Environments</h1>
+    <h2>Research Environments</h2>
   </div>
 
   <div class="card" >
     <div class="card-header">
-      <h2>Running Environments</h2>
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a
+            class="nav-link active"
+            id="environments-tab"
+            data-toggle="tab"
+            href="#environments"
+            role="tab"
+            aria-controls="environments"
+            aria-selected="true"
+          >
+            Running Environments
+            <span class="badge badge-pill badge-primary">
+              {{ environment_project_pairs|length }}
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            id="projects-tab"
+            data-toggle="tab"
+            href="#projects"
+            role="tab"
+            aria-controls="projects"
+            aria-selected="false"
+          >
+            Available Projects
+            <span class="badge badge-pill badge-secondary">
+              {{ available_project_environment_pairs|length }}
+            </span>
+          </a>
+        </li>
+      </ul>
     </div>
-    {% include "environment/_available_environments_list.html" %}
-  </div>
-  <br>
-  <div class="card" >
-    <div class="card-header">
-      <h2>Available Projects</h2>
-    </div>
-    {% include "environment/_available_projects_list.html" %}
+    <div class="card-body">
+      <div class="tab-content">
+        <div
+          class="tab-pane fade show active"
+          id="environments"
+          role="tabpanel"
+          aria-labelledby="environments-tab"
+        >
+          {% include "environment/_available_environments_list.html" %}
+        </div>
+        <div
+          class="tab-pane fade"
+          id="projects"
+          role="tabpanel"
+          aria-labelledby="projects-tab"
+        >
+          {% include "environment/_available_projects_list.html" %}
+        </div>
+      </div>
   </div>
 </div>
 {% endblock %}
