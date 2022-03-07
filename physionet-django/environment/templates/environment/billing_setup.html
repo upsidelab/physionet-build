@@ -21,17 +21,17 @@
           <h5 class="card-title">
             Your Cloud Identity was successfully created.
           </h5>
-          <div class="card" style="width: 24rem;">
+          <div class="card" style="width: 33rem;">
             <h6 class="card-header p-2">
               Credentials
             </h6>
             <div class="p-2">
-              <div class="card-text">
+              <div class="card-text" style="word-break: break-all;">
                 <div>
-                  E-Mail: {{ email }}
+                  <strong><i>E-Mail:</i></strong> {{ email }}
                 </div>
                 <div>
-                  One Time Password: {{ otp|default_if_none:"--" }}
+                    <strong><i>One Time Password:</i></strong> {{ otp|default_if_none:"--" }}
                 </div>
               </div>
             </div>
@@ -43,7 +43,7 @@
           <span >In order to do that:</span>
           <ol>
             <li>
-                <span class="font-italic">Visit <a href="https://console.cloud.google.com/billing">the Google Cloud Platform console</a> and follow the instructions there.</span>
+                <span class="font-italic">Visit <a href="https://console.cloud.google.com/billing" target="_blank">the Google Cloud Platform console</a> and follow the instructions there.</span>
             </li>
             <li>
                 <span class="font-italic">Copy the created billing account's ID.</span>

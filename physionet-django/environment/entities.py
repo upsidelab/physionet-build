@@ -55,7 +55,7 @@ class ResearchEnvironment:
 
     @property
     def is_running(self):
-        return self.status == EnvironmentStatus.RUNNING
+        return self.status in [EnvironmentStatus.RUNNING, EnvironmentStatus.UPDATING]
 
     @property
     def is_paused(self):

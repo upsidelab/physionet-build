@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Optional
 
 from environment.entities import (
     ResearchEnvironment,
@@ -9,13 +9,22 @@ from environment.entities import (
 )
 
 
+def _ensure_schema_in_url(
+    url: Optional[str], schema: str = "https://"
+) -> Optional[str]:
+    if url is None or url.startswith(schema):
+        return url
+    return f"{schema}{url}"
+
+
 def deserialize_research_environments(data: dict) -> Iterable[ResearchEnvironment]:
     return [
         ResearchEnvironment(
             id=workbench["id"],
             group_granting_data_access=workbench.get("group-granting-data-access"),
-            url=workbench.get("url")
-            or workbench.get("version-url"),  # RStudio sends version-url
+            url=_ensure_schema_in_url(
+                workbench.get("url") or workbench.get("version-url")
+            ),  # RStudio sends version-url
             instance_type=InstanceType(workbench["machine-type"]),
             region=Region(workbench["region"]),
             bucket_name=workbench.get("bucket-name"),
