@@ -22,6 +22,7 @@ class EnvironmentStatus(Enum):
     PROVISIONING = "workbench-setup-inprogress"
     PROVISIONING_FAILED = "workbench-setup-failed"
     RUNNING = "running"
+    UPDATING = "updating"
     TERMINATED = "terminated"  # Paused
     STOPPED = "stopped"
     DESTROYED = "destroyed"  # RStudio destroyed notebooks
