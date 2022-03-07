@@ -46,9 +46,6 @@ input::placeholder {
   opacity: 1;
 }
 
-a[target='_blank']::after {
-  content: none;
-}
 
 .card-header {
   font-weight: bold;

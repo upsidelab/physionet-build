@@ -18,7 +18,10 @@
 <div class="container">
   {% include "message_snippet.html" %}
   <div class="jumbotron">
-    <h2>Research Environments</h2>
+    <h1>Research Environments Home</h1>
+    <p class="lead">
+      Here you can manage the research environments for your projects.
+    </p>
   </div>
 
   <div class="card" >
@@ -79,4 +82,33 @@
       </div>
   </div>
 </div>
+{% endblock %}
+
+{% block local_js_bottom %}
+<script>
+    const sendRequest = (function() {
+        const csrfToken = getCookie("csrftoken");
+
+        return function(request_data, http_method, url, button_type) {
+            let data = request_data;
+            if (button_type === "update") {
+                const instance = $("#form-select option:selected").text();
+                if (instance === "") return;
+
+                data = JSON.parse(data);
+                data["instance_type"] = instance;
+                data = JSON.stringify(data)
+            }
+            fetch(url, {
+                method: http_method,
+                body: data,
+                credentials: "same-origin",
+                headers: {
+                    "X-CSRFToken": csrfToken,
+                    "Content-Type": "application/json",
+                },
+            });
+        }
+    })();
+</script>
 {% endblock %}
