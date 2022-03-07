@@ -16,7 +16,7 @@ def create_cloud_identity(
 @api_request
 def create_workspace(gcp_user_id: str, billing_id: str, region: str) -> Request:
     json = {"userid": gcp_user_id, "billingid": billing_id, "region": region}
-    return Request("POST", url="/workspace", json=json)
+    return Request("POST", url="/onetimeplatformsetup", json=json)
 
 
 @api_request

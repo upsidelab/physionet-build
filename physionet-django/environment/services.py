@@ -35,7 +35,7 @@ def _environment_data_group(environment: ResearchEnvironment) -> str:
 
 
 def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
-    gcp_user_id = f"researcher_{user.username}"
+    gcp_user_id = f"researcher-{user.username}"
     response = api.create_cloud_identity(
         gcp_user_id, user.profile.first_names, user.profile.last_name
     )
