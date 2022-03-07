@@ -318,7 +318,7 @@ class PublishForm(forms.Form):
         """
         Ensure that the environment group name is valid and not taken.
         """
-        data = self.cleaned_data['slug']
+        data = self.cleaned_data['environment_group_name']
         if exists_environment_group(data):
             raise forms.ValidationError('The group name is already taken by another project.')
 
