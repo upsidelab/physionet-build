@@ -20,7 +20,11 @@ from environment.entities import (
     InstanceType,
     Region,
 )
-from environment.utilities import left_join_iterators, inner_join_iterators
+from environment.utilities import (
+    left_join_iterators,
+    inner_join_iterators,
+    gcp_user_id_for_user,
+)
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
 
@@ -34,7 +38,7 @@ def _environment_data_group(environment: ResearchEnvironment) -> str:
 
 
 def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
-    gcp_user_id = f"researcher-{user.username}"
+    gcp_user_id = gcp_user_id_for_user(user)
     response = api.create_cloud_identity(
         gcp_user_id, user.profile.first_names, user.profile.last_name
     )
