@@ -3,6 +3,7 @@ import json
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_GET
 
 import environment.services as services
@@ -11,6 +12,7 @@ from environment.exceptions import BillingVerificationFailed
 from environment.decorators import (
     cloud_identity_required,
     billing_setup_required,
+    workspace_setup_required,
     require_DELETE,
     require_PATCH,
 )
@@ -73,6 +75,29 @@ def billing_setup(request):
 @login_required
 @cloud_identity_required
 @billing_setup_required
+def workspace_setup(request):
+    if request.user.cloud_identity.is_workspace_done:
+        return redirect("research_environments")
+
+    is_workspace_done = services.is_user_workspace_setup_done(request.user)
+    if not is_workspace_done:
+        context = {
+            "is_workspace_done_url": reverse("is_workspace_setup_done"),
+        }
+        return render(
+            request,
+            "environment/workspace_being_provisioned.html",
+            context,
+        )
+    services.mark_user_workspace_setup_as_done(request.user)
+    return redirect("research_environments")
+
+
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+@workspace_setup_required
 def research_environments(request):
     environment_project_pairs = services.get_environments_with_projects(request.user)
     environments = map(lambda pair: pair[0], environment_project_pairs)
@@ -112,7 +137,7 @@ def create_research_environment(request, project_slug, project_version):
                 environment_type=form.cleaned_data["environment_type"],
                 persistent_disk=form.cleaned_data.get("persistent_disk"),
             )
-            return redirect("research_environments")
+            return redirect("workspace_setup")
     else:
         form = CreateResearchEnvironmentForm()
 
@@ -175,3 +200,8 @@ def delete_environment(request):
         region=Region(data["region"]),
     )
     return JsonResponse({})
+
+
+def is_workspace_setup_done(request):
+    is_workspace_done = services.is_user_workspace_setup_done(request.user)
+    return JsonResponse({"is_done": is_workspace_done})

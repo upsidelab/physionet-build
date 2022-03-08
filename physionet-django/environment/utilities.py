@@ -18,6 +18,12 @@ def user_has_billing_setup(user: User) -> bool:
     return hasattr(user.cloud_identity, "billing_setup")
 
 
+def user_workspace_setup_done(user: User) -> bool:
+    if not user_has_cloud_identity(user):
+        return False
+    return user.cloud_identity.is_workspace_done
+
+
 def inner_join_iterators(
     key_left: Callable[[T], V],
     left: Iterator[T],

@@ -13,6 +13,7 @@ from environment.exceptions import (
     BillingVerificationFailed,
     EnvironmentCreationFailed,
     GetAvailableEnvironmentsFailed,
+    GetWorkspaceDetailsFailed,
 )
 from environment.deserializers import deserialize_research_environments
 from environment.entities import (
@@ -23,6 +24,9 @@ from environment.entities import (
 from environment.utilities import left_join_iterators, inner_join_iterators
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
+
+
+DEFAULT_REGION = "us-central1"
 
 
 def _project_data_group(project: PublishedProject) -> str:
@@ -55,7 +59,7 @@ def verify_billing_and_create_workspace(user: User, billing_id: str):
     response = api.create_workspace(
         gcp_user_id=gcp_user_id,
         billing_id=billing_id,
-        region="us-central1",  # FIXME: Temporary hardcoded
+        region=DEFAULT_REGION,
     )
     if not response.ok:
         error_message = response.json()["error"]
@@ -122,6 +126,28 @@ def create_research_environment(
         raise EnvironmentCreationFailed(error_message)
 
     return response
+
+
+def get_workspace_details(user: User, region: Region) -> dict:
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.get_workspace_details(
+        gcp_user_id=gcp_user_id,
+        region=region.value,
+    )
+    if not response.ok:
+        error_message = response.json()["error"]
+        raise GetWorkspaceDetailsFailed(error_message)
+
+    return response.json()
+
+
+def is_user_workspace_setup_done(user: User) -> bool:
+    workspace_details = get_workspace_details(user, Region(DEFAULT_REGION))
+    return True if workspace_details["workspace-setup-status"] == "workspace-setup-done" else False
+
+
+def mark_user_workspace_setup_as_done(user: User):
+    user.cloud_identity.is_workspace_done = True
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:

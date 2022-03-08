@@ -32,4 +32,6 @@ urlpatterns = [
         views.create_research_environment,
         name="create_research_environment",
     ),
+    path("environment/workspace-setup", views.workspace_setup, name="workspace_setup"),
+    path("environment/is-workspace-setup-done", views.is_workspace_setup_done, name="is_workspace_setup_done")
 ]

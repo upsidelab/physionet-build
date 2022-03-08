@@ -12,6 +12,7 @@ class CloudIdentity(models.Model):
     email = models.EmailField(
         max_length=255, unique=True, validators=[EmailValidator()]
     )
+    is_workspace_done = models.BooleanField(default=False)
 
 
 class BillingSetup(models.Model):

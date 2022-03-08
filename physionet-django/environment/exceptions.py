@@ -28,3 +28,7 @@ class BillingVerificationFailed(Exception):
 
 class GetAvailableEnvironmentsFailed(Exception):
     pass
+
+
+class GetWorkspaceDetailsFailed(Exception):
+    pass

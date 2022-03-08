@@ -20,6 +20,11 @@ def create_workspace(gcp_user_id: str, billing_id: str, region: str) -> Request:
 
 
 @api_request
+def get_workspace_details(gcp_user_id: str, region: str) -> Request:
+    return Request("GET", url=f"/workspace/{gcp_user_id}/{region}")
+
+
+@api_request
 def get_workspace_list(gcp_user_id: str) -> Request:
     return Request("GET", url=f"/workspace/list/{gcp_user_id}")
 
