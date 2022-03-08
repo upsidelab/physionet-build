@@ -1,4 +1,6 @@
+import random
 from typing import Iterator, Tuple, Optional, TypeVar, Callable
+from string import ascii_uppercase
 
 from user.models import User
 
@@ -6,6 +8,19 @@ from user.models import User
 T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
+
+
+def gcp_user_id_for_user(user: User, random_suffix_length: int = 3) -> str:
+    max_username_length = User._meta.get_field("username").max_length
+    max_truncated_username_length = max_username_length - random_suffix_length - 1
+    username = user.username
+    truncated_username = (
+        username[:max_truncated_username_length]
+        if len(username) > max_truncated_username_length
+        else username
+    )
+    random_suffix = "".join(random.choices(ascii_uppercase, k=random_suffix_length))
+    return f"{truncated_username}-{random_suffix}"
 
 
 def user_has_cloud_identity(user: User) -> bool:
