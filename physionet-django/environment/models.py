@@ -21,4 +21,3 @@ class BillingSetup(models.Model):
     billing_account_id = models.CharField(
         max_length=20, unique=True, validators=[gcp_billing_account_id_validator]
     )
-    # TODO: status?

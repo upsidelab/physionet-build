@@ -17,13 +17,12 @@ from environment.exceptions import (
 from environment.deserializers import deserialize_research_environments
 from environment.entities import (
     ResearchEnvironment,
-    EnvironmentStatus,
     InstanceType,
     Region,
 )
 from environment.utilities import left_join_iterators, inner_join_iterators
 from user.models import User
-from project.models import AccessPolicy, PublishedProject, DataAccess
+from project.models import AccessPolicy, PublishedProject
 
 
 def _project_data_group(project: PublishedProject) -> str:
