@@ -42,6 +42,13 @@ class EnvironmentType(Enum):
         return cls(maybe_string)
 
 
+class WorkspaceStatus(Enum):
+    DONE = "workspace-setup-done"
+    INPROGRESS = "workspace-setup-inprogress"
+    PENDING = "workspace-setup-pending"
+    RETRYING = "workspace-setup-retrying"
+
+
 @dataclass
 class ResearchEnvironment:
     id: str
@@ -60,3 +67,13 @@ class ResearchEnvironment:
     @property
     def is_paused(self):
         return self.status in [EnvironmentStatus.TERMINATED, EnvironmentStatus.STOPPED]
+
+
+@dataclass
+class ResearchWorkspace:
+    user_id: str
+    region: Region
+    gcp_project_id: str
+    gcp_billing_id: str
+    email_id: str
+    workspace_setup_status: WorkspaceStatus

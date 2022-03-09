@@ -1,44 +1,21 @@
-{% extends 'base.html' %}
+{% extends 'environment/base_environment_home.html' %}
 
-{% load static %}
-
-{% load project_templatetags %}
-
-{% block title %}Research environments{% endblock %}
-
-{% block local_css %}
-<link rel="stylesheet" type="text/css" href="{% static 'environment/css/environment-base.css' %}">
-{% endblock %}
-
-{% block local_js_top %}
-<script src="{% static 'custom/js/cookie.js' %}"></script>
-{% endblock %}
-
-{% block content %}
-<div class="container">
-  {% include "message_snippet.html" %}
-  <div class="jumbotron">
-    <h1>Research Environments Home</h1>
-    <p class="lead">
-      Here you can manage the research environments for your projects.
-    </p>
-  </div>
+{% block main_view %}
     <div class="card text-center" style="width: 30rem; margin: auto">
       <div class="card-body">
-        <h5 class="card-title">Please wait</h5>
-        <p class="card-text">Your workspace is being provisioned...</p>
+        <h5 class="card-title">Your workspace is being provisioned...</h5>
+        <p class="card-text">It might take about 7 minutes</p>
           <div class="loader">Loading...</div>
       </div>
     </div>
-</div>
 {% endblock %}
 
 {% block local_js_bottom %}
 <script>
     const csrfToken = getCookie("csrftoken");
-    let workspaceInterval = setInterval(check_workspace_status, 15000);
-    function check_workspace_status() {
-        fetch("{{ is_workspace_done_url }}",{
+    let workspaceInterval = setInterval(checkWorkspaceStatus, 30000);
+    function checkWorkspaceStatus() {
+        fetch("{% url "is_workspace_setup_done" %}",{
             method: 'GET',
             credentials: "same-origin",
             headers: {

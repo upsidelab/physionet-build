@@ -21,7 +21,7 @@ def user_has_billing_setup(user: User) -> bool:
 def user_workspace_setup_done(user: User) -> bool:
     if not user_has_cloud_identity(user):
         return False
-    return user.cloud_identity.is_workspace_done
+    return user.cloud_identity.initial_workspace_setup_done
 
 
 def inner_join_iterators(

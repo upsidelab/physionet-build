@@ -15,11 +15,13 @@ from environment.exceptions import (
     GetAvailableEnvironmentsFailed,
     GetWorkspaceDetailsFailed,
 )
-from environment.deserializers import deserialize_research_environments
+from environment.deserializers import deserialize_research_environments, deserialize_workspace_details
 from environment.entities import (
     ResearchEnvironment,
     InstanceType,
     Region,
+    WorkspaceStatus,
+    ResearchWorkspace,
 )
 from environment.utilities import left_join_iterators, inner_join_iterators
 from user.models import User
@@ -128,7 +130,7 @@ def create_research_environment(
     return response
 
 
-def get_workspace_details(user: User, region: Region) -> dict:
+def get_workspace_details(user: User, region: Region) -> ResearchWorkspace:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.get_workspace_details(
         gcp_user_id=gcp_user_id,
@@ -138,16 +140,17 @@ def get_workspace_details(user: User, region: Region) -> dict:
         error_message = response.json()["error"]
         raise GetWorkspaceDetailsFailed(error_message)
 
-    return response.json()
+    research_workspace = deserialize_workspace_details(response.json)
+    return research_workspace
 
 
 def is_user_workspace_setup_done(user: User) -> bool:
     workspace_details = get_workspace_details(user, Region(DEFAULT_REGION))
-    return True if workspace_details["workspace-setup-status"] == "workspace-setup-done" else False
+    return workspace_details.workspace_setup_status == WorkspaceStatus.DONE
 
 
 def mark_user_workspace_setup_as_done(user: User):
-    user.cloud_identity.is_workspace_done = True
+    user.cloud_identity.initial_workspace_setup_done = True
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:
