@@ -90,7 +90,7 @@ def _create_workbench_kwargs(
         "instance_type": instance_type,
         "group_granting_data_access": _project_data_group(
             project
-        ),  # FIXME: Dashes in the name are not accepted by the API
+        ),
         "persistent_disk": str(persistent_disk),
     }
     if environment_type == "jupyter":

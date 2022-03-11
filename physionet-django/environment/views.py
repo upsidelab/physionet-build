@@ -45,7 +45,6 @@ def billing_setup(request):
     if request.method == "POST":
         form = BillingAccountIdForm(request.POST)
         if form.is_valid():
-            # TODO: Billing setup has to be verified
             try:
                 services.verify_billing_and_create_workspace(
                     user=request.user,
