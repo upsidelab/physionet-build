@@ -15,7 +15,10 @@ from environment.exceptions import (
     GetAvailableEnvironmentsFailed,
     GetWorkspaceDetailsFailed,
 )
-from environment.deserializers import deserialize_research_environments, deserialize_workspace_details
+from environment.deserializers import (
+    deserialize_research_environments,
+    deserialize_workspace_details,
+)
 from environment.entities import (
     ResearchEnvironment,
     InstanceType,
@@ -140,7 +143,7 @@ def get_workspace_details(user: User, region: Region) -> ResearchWorkspace:
         error_message = response.json()["error"]
         raise GetWorkspaceDetailsFailed(error_message)
 
-    research_workspace = deserialize_workspace_details(response.json)
+    research_workspace = deserialize_workspace_details(response.json())
     return research_workspace
 
 
@@ -150,7 +153,9 @@ def is_user_workspace_setup_done(user: User) -> bool:
 
 
 def mark_user_workspace_setup_as_done(user: User):
-    user.cloud_identity.initial_workspace_setup_done = True
+    cloud_identity = user.cloud_identity
+    cloud_identity.initial_workspace_setup_done = True
+    cloud_identity.save()
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:

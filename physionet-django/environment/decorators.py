@@ -5,7 +5,11 @@ from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.http import require_http_methods
 
-from environment.utilities import user_has_cloud_identity, user_has_billing_setup, user_workspace_setup_done
+from environment.utilities import (
+    user_has_cloud_identity,
+    user_has_billing_setup,
+    user_workspace_setup_done,
+)
 from user.models import User
 
 

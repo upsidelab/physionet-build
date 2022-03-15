@@ -47,5 +47,5 @@ def deserialize_workspace_details(data: dict) -> ResearchWorkspace:
         gcp_project_id=data["gcp-project-id"],
         gcp_billing_id=data["gcp-billing-id"],
         email_id=data["email-id"],
-        workspace_setup_status=WorkspaceStatus(data["workspace-setup-status"])
+        workspace_setup_status=WorkspaceStatus(data["workspace-setup-status"]),
     )

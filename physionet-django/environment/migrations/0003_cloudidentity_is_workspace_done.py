@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('environment', '0002_billingsetup'),
+        ("environment", "0002_billingsetup"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='cloudidentity',
-            name='is_workspace_done',
+            model_name="cloudidentity",
+            name="is_workspace_done",
             field=models.BooleanField(default=False),
         ),
     ]

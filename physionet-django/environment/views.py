@@ -80,10 +80,7 @@ def workspace_setup(request):
 
     is_workspace_done = services.is_user_workspace_setup_done(request.user)
     if not is_workspace_done:
-        return render(
-            request,
-            "environment/workspace_being_provisioned.html"
-        )
+        return render(request, "environment/workspace_being_provisioned.html")
     services.mark_user_workspace_setup_as_done(request.user)
     return redirect("research_environments")
 
