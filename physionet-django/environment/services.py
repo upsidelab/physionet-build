@@ -13,12 +13,18 @@ from environment.exceptions import (
     BillingVerificationFailed,
     EnvironmentCreationFailed,
     GetAvailableEnvironmentsFailed,
+    GetWorkspaceDetailsFailed,
 )
-from environment.deserializers import deserialize_research_environments
+from environment.deserializers import (
+    deserialize_research_environments,
+    deserialize_workspace_details,
+)
 from environment.entities import (
     ResearchEnvironment,
     InstanceType,
     Region,
+    WorkspaceStatus,
+    ResearchWorkspace,
 )
 from environment.utilities import (
     left_join_iterators,
@@ -26,6 +32,9 @@ from environment.utilities import (
 )
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
+
+
+DEFAULT_REGION = "us-central1"
 
 
 def _project_data_group(project: PublishedProject) -> str:
@@ -58,7 +67,7 @@ def verify_billing_and_create_workspace(user: User, billing_id: str):
     response = api.create_workspace(
         gcp_user_id=gcp_user_id,
         billing_id=billing_id,
-        region="us-central1",  # FIXME: Temporary hardcoded
+        region=DEFAULT_REGION,
     )
     if not response.ok:
         error_message = response.json()["error"]
@@ -125,6 +134,31 @@ def create_research_environment(
         raise EnvironmentCreationFailed(error_message)
 
     return response
+
+
+def get_workspace_details(user: User, region: Region) -> ResearchWorkspace:
+    gcp_user_id = user.cloud_identity.gcp_user_id
+    response = api.get_workspace_details(
+        gcp_user_id=gcp_user_id,
+        region=region.value,
+    )
+    if not response.ok:
+        error_message = response.json()["error"]
+        raise GetWorkspaceDetailsFailed(error_message)
+
+    research_workspace = deserialize_workspace_details(response.json())
+    return research_workspace
+
+
+def is_user_workspace_setup_done(user: User) -> bool:
+    workspace_details = get_workspace_details(user, Region(DEFAULT_REGION))
+    return workspace_details.workspace_setup_status == WorkspaceStatus.DONE
+
+
+def mark_user_workspace_setup_as_done(user: User):
+    cloud_identity = user.cloud_identity
+    cloud_identity.initial_workspace_setup_done = True
+    cloud_identity.save()
 
 
 def get_available_projects(user: User) -> Iterable[PublishedProject]:

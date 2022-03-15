@@ -11,6 +11,7 @@ from environment.exceptions import BillingVerificationFailed
 from environment.decorators import (
     cloud_identity_required,
     billing_setup_required,
+    workspace_setup_required,
     require_DELETE,
     require_PATCH,
 )
@@ -72,6 +73,22 @@ def billing_setup(request):
 @login_required
 @cloud_identity_required
 @billing_setup_required
+def workspace_setup(request):
+    if request.user.cloud_identity.initial_workspace_setup_done:
+        return redirect("research_environments")
+
+    is_workspace_done = services.is_user_workspace_setup_done(request.user)
+    if not is_workspace_done:
+        return render(request, "environment/workspace_being_provisioned.html")
+    services.mark_user_workspace_setup_as_done(request.user)
+    return redirect("research_environments")
+
+
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+@workspace_setup_required
 def research_environments(request):
     environment_project_pairs = services.get_environments_with_projects(request.user)
     environments = map(lambda pair: pair[0], environment_project_pairs)
@@ -174,3 +191,12 @@ def delete_environment(request):
         region=Region(data["region"]),
     )
     return JsonResponse({})
+
+
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def is_workspace_setup_done(request):
+    is_workspace_done = services.is_user_workspace_setup_done(request.user)
+    return JsonResponse({"is_done": is_workspace_done})
