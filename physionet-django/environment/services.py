@@ -1,9 +1,10 @@
+import random  # FIXME: Temporary for testing
 from typing import Tuple, Iterable, Optional
 
 from django.db.models import Q
 
 import environment.api as api
-from environment.models import CloudIdentity, BillingSetup
+from environment.models import CloudIdentity, BillingSetup, Workflow
 from environment.exceptions import (
     IdentityProvisioningFailed,
     StopEnvironmentFailed,
@@ -32,6 +33,9 @@ from environment.utilities import (
 )
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
+
+
+uuid = str
 
 
 DEFAULT_REGION = "us-central1"
@@ -117,7 +121,7 @@ def create_research_environment(
     instance_type: str,
     environment_type: str,
     persistent_disk: Optional[int],
-):
+) -> uuid:
     kwargs = _create_workbench_kwargs(
         user,
         project,
@@ -131,7 +135,7 @@ def create_research_environment(
         error_message = response.json()["error"]
         raise EnvironmentCreationFailed(error_message)
 
-    return response
+    return response.json()["execution-id"]
 
 
 def get_workspace_details(user: User, region: Region) -> ResearchWorkspace:
@@ -213,7 +217,7 @@ def get_available_projects_with_environments(
     )
 
 
-def stop_running_environment(user: User, workbench_id: str, region: Region):
+def stop_running_environment(user: User, workbench_id: str, region: Region) -> uuid:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.stop_workbench(
         gcp_user_id=gcp_user_id,
@@ -223,10 +227,10 @@ def stop_running_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["error"]
         raise StopEnvironmentFailed(error_message)
-    return response
+    return response.json()["execution-id"]
 
 
-def start_stopped_environment(user: User, workbench_id: str, region: Region):
+def start_stopped_environment(user: User, workbench_id: str, region: Region) -> uuid:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.start_workbench(
         gcp_user_id=gcp_user_id,
@@ -236,7 +240,7 @@ def start_stopped_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["message"]
         raise StartEnvironmentFailed(error_message)
-    return response
+    return response.json()["execution-id"]
 
 
 def change_environment_instance_type(
@@ -244,7 +248,7 @@ def change_environment_instance_type(
     workbench_id: str,
     region: Region,
     new_instance_type: InstanceType,
-):
+) -> uuid:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.change_workbench_instance_type(
         gcp_user_id=gcp_user_id,
@@ -255,10 +259,10 @@ def change_environment_instance_type(
     if not response.ok:
         error_message = response.json()["message"]
         raise ChangeEnvironmentInstanceTypeFailed(error_message)
-    return response
+    return response.json()["execution-id"]
 
 
-def delete_environment(user: User, workbench_id: str, region: Region):
+def delete_environment(user: User, workbench_id: str, region: Region) -> uuid:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.delete_workbench(
         gcp_user_id=gcp_user_id,
@@ -268,4 +272,17 @@ def delete_environment(user: User, workbench_id: str, region: Region):
     if not response.ok:
         error_message = response.json()["message"]
         raise DeleteEnvironmentFailed(error_message)
-    return response
+    return response.json()["execution-id"]
+
+
+def persist_workflow(execution_id: str, project_id: int, type: int) -> Workflow:
+    return Workflow.objects.create(
+        execution_id=execution_id,
+        project_id=project_id,
+        type=type,
+        status=Workflow.INPROGRESS,
+    )
+
+
+def check_if_workflow_finished(user: User, execution_id: str) -> bool:
+    return random.choice([True, False])  # FIXME: Temporary for testing

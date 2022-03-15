@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import EmailValidator
 
 from environment.validators import gcp_billing_account_id_validator
+from environment.managers import WorkflowManager
 
 
 class CloudIdentity(models.Model):
@@ -22,3 +23,36 @@ class BillingSetup(models.Model):
     billing_account_id = models.CharField(
         max_length=20, unique=True, validators=[gcp_billing_account_id_validator]
     )
+
+
+class Workflow(models.Model):
+    objects = WorkflowManager()
+
+    project = models.ForeignKey(
+        "project.PublishedProject", related_name="workflows", on_delete=models.CASCADE
+    )
+    execution_id = models.UUIDField()
+
+    INPROGRESS = 0
+    SUCCESS = 1
+    FAILED = 2
+    STATUS_CHOICES = [
+        (INPROGRESS, "In Progress"),
+        (SUCCESS, "Succeeded"),
+        (FAILED, "Failed"),
+    ]
+    status = models.PositiveSmallIntegerField(choices=STATUS_CHOICES)
+
+    CREATE = 0
+    DESTROY = 1
+    START = 2
+    PAUSE = 3
+    CHANGE = 4
+    TYPE_CHOICES = [
+        (CREATE, "Create"),
+        (DESTROY, "Destroy"),
+        (START, "Start"),
+        (PAUSE, "Pause"),
+        (CHANGE, "Change"),
+    ]
+    type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)

@@ -20,6 +20,7 @@ from environment.utilities import (
     user_has_cloud_identity,
     user_has_billing_setup,
 )
+from environment.models import Workflow
 
 
 @require_http_methods(["GET", "POST"])
@@ -110,6 +111,7 @@ def research_environments(request):
     )
 
 
+@require_http_methods(["GET", "POST"])
 @login_required
 @cloud_identity_required
 @billing_setup_required
@@ -121,13 +123,16 @@ def create_research_environment(request, project_slug, project_version):
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
         if form.is_valid():
-            services.create_research_environment(
+            execution_id = services.create_research_environment(
                 user=request.user,
                 project=project,
                 region=form.cleaned_data["region"],
                 instance_type=form.cleaned_data["instance_type"],
                 environment_type=form.cleaned_data["environment_type"],
                 persistent_disk=form.cleaned_data.get("persistent_disk"),
+            )
+            services.persist_workflow(
+                execution_id=execution_id, project_id=project.pk, type=Workflow.CREATE
             )
             return redirect("research_environments")
     else:
@@ -143,10 +148,14 @@ def create_research_environment(request, project_slug, project_version):
 @billing_setup_required
 def stop_running_environment(request):
     data = json.loads(request.body)
-    services.stop_running_environment(
+    execution_id = services.stop_running_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
+        project_id=data["project_id"],
         region=Region(data["region"]),
+    )
+    services.persist_workflow(
+        execution_id=execution_id, project_id=data["project_id"], type=Workflow.PAUSE
     )
     return JsonResponse({})
 
@@ -157,10 +166,14 @@ def stop_running_environment(request):
 @billing_setup_required
 def start_stopped_environment(request):
     data = json.loads(request.body)
-    services.start_stopped_environment(
+    execution_id = services.start_stopped_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
+        project_id=data["project_id"],
         region=Region(data["region"]),
+    )
+    services.persist_workflow(
+        execution_id=execution_id, project_id=data["project_id"], type=Workflow.START
     )
     return JsonResponse({})
 
@@ -171,11 +184,15 @@ def start_stopped_environment(request):
 @billing_setup_required
 def change_environment_instance_type(request):
     data = json.loads(request.body)
-    services.change_environment_instance_type(
+    execution_id = services.change_environment_instance_type(
         user=request.user,
         workbench_id=data["workbench_id"],
+        project_id=data["project_id"],
         region=Region(data["region"]),
         new_instance_type=InstanceType(data["instance_type"]),
+    )
+    services.persist_workflow(
+        execution_id=execution_id, project_id=data["project_id"], type=Workflow.CHANGE
     )
     return JsonResponse({})
 
@@ -186,10 +203,14 @@ def change_environment_instance_type(request):
 @billing_setup_required
 def delete_environment(request):
     data = json.loads(request.body)
-    services.delete_environment(
+    execution_id = services.delete_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
+        project_id=data["project_id"],
         region=Region(data["region"]),
+    )
+    services.persist_workflow(
+        execution_id=execution_id, project_id=data["project_id"], type=Workflow.DESTROY
     )
     return JsonResponse({})
 
@@ -201,3 +222,16 @@ def delete_environment(request):
 def is_workspace_setup_done(request):
     is_workspace_done = services.is_user_workspace_setup_done(request.user)
     return JsonResponse({"is_done": is_workspace_done})
+
+
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def check_execution_status(request):
+    data = json.loads(request.body)
+    finished = services.check_if_execution_finished(
+        user=request.user,
+        execution_id=data["execution_id"],
+    )
+    return JsonResponse({"finished": finished})
