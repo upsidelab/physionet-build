@@ -45,14 +45,16 @@
                 </div>
                 <div class="col-md-4">
                     <div class="d-flex flex-wrap">
-                        {% if environment.is_running %}
-                            <a href="{{ environment.url }}" target="_blank" class="btn btn-sm btn-success m-1">Open</a>
-                            {% environment_modal_button environment=environment button_type="modal_pause" %}
-                        {% else %}
-                            {% environment_modal_button environment=environment button_type="modal_start" %}
+                        {% if environment.is_running or environment.is_paused %}
+                            {% if environment.is_running %}
+                                <a href="{{ environment.url }}" target="_blank" class="btn btn-sm btn-success m-1">Open</a>
+                                {% environment_modal_button environment=environment button_type="modal_pause" %}
+                            {% else %}
+                                {% environment_modal_button environment=environment button_type="modal_start" %}
+                            {% endif %}
+                            {% environment_modal_button environment=environment button_type="modal_instance" %}
+                            {% environment_modal_button environment=environment button_type="modal_destroy" %}
                         {% endif %}
-                        {% environment_modal_button environment=environment button_type="modal_instance" %}
-                        {% environment_modal_button environment=environment button_type="modal_destroy" %}
                     </div>
                 </div>
             </div>

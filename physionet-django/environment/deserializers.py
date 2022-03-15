@@ -31,9 +31,7 @@ def deserialize_research_environments(data: dict) -> Iterable[ResearchEnvironmen
             region=Region(workbench["region"]),
             bucket_name=workbench.get("bucket-name"),
             type=EnvironmentType.from_string_or_none(workbench["type"]),
-            status=EnvironmentStatus(
-                workbench["status"] or workbench["workbench-setup-status"]
-            ),
+            status=EnvironmentStatus(workbench["workbench-setup-status"]),
         )
         for workspace in data["workspace-list"]
         for workbench in workspace["workbench-list"]

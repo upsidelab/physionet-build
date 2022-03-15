@@ -97,9 +97,7 @@ def _create_workbench_kwargs(
         "region": region,
         "environment_type": environment_type,
         "instance_type": instance_type,
-        "group_granting_data_access": _project_data_group(
-            project
-        ),
+        "group_granting_data_access": _project_data_group(project),
         "persistent_disk": str(persistent_disk),
     }
     if environment_type == "jupyter":
@@ -151,8 +149,8 @@ def get_workspace_details(user: User, region: Region) -> ResearchWorkspace:
 
 
 def is_user_workspace_setup_done(user: User) -> bool:
-    workspace_details = get_workspace_details(user, Region(DEFAULT_REGION))
-    return workspace_details.workspace_setup_status == WorkspaceStatus.DONE
+    workspace = get_workspace_details(user, Region(DEFAULT_REGION))
+    return workspace.setup_finished
 
 
 def mark_user_workspace_setup_as_done(user: User):
@@ -194,7 +192,7 @@ def get_environments_with_projects(
     active_environments = [
         environment
         for environment in all_environments
-        if environment.is_running or environment.is_paused
+        if environment.is_active
     ]
     projects = _get_projects_for_environments(active_environments)
     environment_project_pairs = inner_join_iterators(  # TODO: Consider left join as this will preserve environments for deleted projects

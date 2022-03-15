@@ -19,7 +19,7 @@ class InstanceType(Enum):
 
 
 class EnvironmentStatus(Enum):
-    PROVISIONING = "workbench-setup-inprogress"
+    PROVISIONING = "inprogress"
     PROVISIONING_FAILED = "workbench-setup-failed"
     RUNNING = "running"
     UPDATING = "updating"
@@ -68,6 +68,14 @@ class ResearchEnvironment:
     def is_paused(self):
         return self.status in [EnvironmentStatus.TERMINATED, EnvironmentStatus.STOPPED]
 
+    @property
+    def is_being_provisioned(self):
+        return self.status == EnvironmentStatus.PROVISIONING
+
+    @property
+    def is_active(self):
+        return self.is_running or self.is_paused or self.is_being_provisioned
+
 
 @dataclass
 class ResearchWorkspace:
@@ -77,3 +85,7 @@ class ResearchWorkspace:
     gcp_billing_id: str
     email_id: str
     workspace_setup_status: WorkspaceStatus
+
+    @property
+    def setup_finished(self):
+        return self.workspace_setup_status == WorkspaceStatus.DONE
