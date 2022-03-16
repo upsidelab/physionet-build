@@ -35,6 +35,19 @@
             </span>
           </a>
         </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            id="cloud-identity-tab"
+            data-toggle="tab"
+            href="#cloud-identity"
+            role="tab"
+            aria-controls="cloud-identity"
+            aria-selected="false"
+          >
+            Cloud Identity
+          </a>
+        </li>
       </ul>
     </div>
     <div class="card-body">
@@ -54,6 +67,14 @@
           aria-labelledby="projects-tab"
         >
           {% include "environment/_available_projects_list.html" %}
+        </div>
+        <div
+          class="tab-pane fade"
+          id="cloud-identity"
+          role="tabpanel"
+          aria-labelledby="cloud-identity-tab"
+        >
+          {% include "environment/_cloud_identity_info.html" %}
         </div>
       </div>
     </div>

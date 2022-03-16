@@ -101,6 +101,7 @@ def research_environments(request):
     context = {
         "environment_project_pairs": environment_project_pairs,  # An environment may be running for an unavailable project
         "available_project_environment_pairs": available_project_environment_pairs,  # Available projects with info whether it has an environment
+        "cloud_identity": request.user.cloud_identity,
     }
     return render(
         request,
