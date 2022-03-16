@@ -6,6 +6,11 @@ from environment import views
 urlpatterns = [
     path("", views.research_environments, name="research_environments"),
     path(
+        "environments_card/",
+        views.research_environments_partial,
+        name="research_environments_partial",
+    ),
+    path(
         "identity-provisioning/",
         views.identity_provisioning,
         name="identity_provisioning",
@@ -37,5 +42,10 @@ urlpatterns = [
         "environment/create/<project_slug>/<project_version>",
         views.create_research_environment,
         name="create_research_environment",
+    ),
+    path(
+        "execution/check_status",
+        views.check_execution_status,
+        name="check_execution_status",
     ),
 ]

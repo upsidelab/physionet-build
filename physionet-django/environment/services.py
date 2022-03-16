@@ -1,4 +1,3 @@
-import random  # FIXME: Temporary for testing
 from typing import Tuple, Iterable, Optional
 
 from django.db.models import Q
@@ -24,7 +23,6 @@ from environment.entities import (
     ResearchEnvironment,
     InstanceType,
     Region,
-    WorkspaceStatus,
     ResearchWorkspace,
 )
 from environment.utilities import (
@@ -132,7 +130,9 @@ def create_research_environment(
     )
     response = api.create_workbench(**kwargs)
     if not response.ok:
-        error_message = response.json()["error"]
+        error_message = response.json()[
+            "error"
+        ]  # TODO: Check all uses of "error"/"message"
         raise EnvironmentCreationFailed(error_message)
 
     return response.json()["execution-id"]
@@ -172,7 +172,9 @@ def get_available_projects(user: User) -> Iterable[PublishedProject]:
         access_policy_filters = access_policy_filters | Q(
             access_policy=AccessPolicy.CREDENTIALED
         )
-    return PublishedProject.objects.filter(data_access_filters & access_policy_filters)
+    return PublishedProject.objects.prefetch_related("workflows").filter(
+        data_access_filters & access_policy_filters
+    )
 
 
 def _get_projects_for_environments(
@@ -284,5 +286,18 @@ def persist_workflow(execution_id: str, project_id: int, type: int) -> Workflow:
     )
 
 
-def check_if_workflow_finished(user: User, execution_id: str) -> bool:
-    return random.choice([True, False])  # FIXME: Temporary for testing
+xd = 0
+
+
+def check_if_execution_finished(execution_id: str) -> bool:
+    global xd
+    xd += 1
+    return xd > 4
+
+
+def mark_workflow_as_finished(execution_id: str):
+    workflow = Workflow.objects.get(execution_id=execution_id)
+    workflow.status = (
+        Workflow.SUCCESS
+    )  # TODO: Check failed/succeeded or change to "FINISHED"
+    workflow.save()

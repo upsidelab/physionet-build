@@ -23,7 +23,7 @@
             },
         })
         .then(response => response.json())
-        .then(data => data.is_done && location.reload());
+        .then(({ finished }) => finished && location.reload());
      }
 
     const thirty_seconds = 30000;

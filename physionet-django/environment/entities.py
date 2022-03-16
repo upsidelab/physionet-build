@@ -21,13 +21,17 @@ class InstanceType(Enum):
 class EnvironmentStatus(Enum):
     PROVISIONING = "inprogress"
     PROVISIONING_FAILED = "workbench-setup-failed"
+
     RUNNING = "running"
-    UPDATING = "updating"
-    TERMINATED = "terminated"  # Paused
+    STARTING = "running-inprogress"
+
+    UPDATING = "updating-inprogress"
+
     STOPPED = "stopped"
-    DESTROYED = "destroyed"  # RStudio destroyed notebooks
-    WORKBENCH_DESTROYED = "workbench-destroy-done"  # Jupyter destroyed notebooks
-    # FIXME: Unify DESTROYED and WORKBENCH_DESTROYED
+    STOPPING = "stopping-inprogress"
+
+    DESTROYING = "destroying-inprogress"
+    DESTROYED = "workbench-destroy-done"
 
 
 class EnvironmentType(Enum):
@@ -66,15 +70,21 @@ class ResearchEnvironment:
 
     @property
     def is_paused(self):
-        return self.status in [EnvironmentStatus.TERMINATED, EnvironmentStatus.STOPPED]
+        return self.status == EnvironmentStatus.STOPPED
 
     @property
-    def is_being_provisioned(self):
-        return self.status == EnvironmentStatus.PROVISIONING
+    def is_in_progress(self):
+        return self.status in [
+            EnvironmentStatus.PROVISIONING,
+            EnvironmentStatus.STARTING,
+            EnvironmentStatus.STOPPING,
+            EnvironmentStatus.UPDATING,
+            EnvironmentStatus.DESTROYING,
+        ]
 
     @property
     def is_active(self):
-        return self.is_running or self.is_paused or self.is_being_provisioned
+        return self.is_running or self.is_paused or self.is_in_progress
 
 
 @dataclass

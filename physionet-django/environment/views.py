@@ -111,6 +111,21 @@ def research_environments(request):
     )
 
 
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+@workspace_setup_required
+def research_environments_partial(request):
+    environment_project_pairs = services.get_environments_with_projects(request.user)
+    context = {"environment_project_pairs": environment_project_pairs}
+    return render(
+        request,
+        "environment/_available_environments_list.html",
+        context,
+    )
+
+
 @require_http_methods(["GET", "POST"])
 @login_required
 @cloud_identity_required
@@ -151,7 +166,6 @@ def stop_running_environment(request):
     execution_id = services.stop_running_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
-        project_id=data["project_id"],
         region=Region(data["region"]),
     )
     services.persist_workflow(
@@ -169,7 +183,6 @@ def start_stopped_environment(request):
     execution_id = services.start_stopped_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
-        project_id=data["project_id"],
         region=Region(data["region"]),
     )
     services.persist_workflow(
@@ -187,7 +200,6 @@ def change_environment_instance_type(request):
     execution_id = services.change_environment_instance_type(
         user=request.user,
         workbench_id=data["workbench_id"],
-        project_id=data["project_id"],
         region=Region(data["region"]),
         new_instance_type=InstanceType(data["instance_type"]),
     )
@@ -206,7 +218,6 @@ def delete_environment(request):
     execution_id = services.delete_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
-        project_id=data["project_id"],
         region=Region(data["region"]),
     )
     services.persist_workflow(
@@ -220,8 +231,8 @@ def delete_environment(request):
 @cloud_identity_required
 @billing_setup_required
 def is_workspace_setup_done(request):
-    is_workspace_done = services.is_user_workspace_setup_done(request.user)
-    return JsonResponse({"is_done": is_workspace_done})
+    workspace_setup_finished = services.is_user_workspace_setup_done(user=request.user)
+    return JsonResponse({"finished": workspace_setup_finished})
 
 
 @require_GET
@@ -229,9 +240,8 @@ def is_workspace_setup_done(request):
 @cloud_identity_required
 @billing_setup_required
 def check_execution_status(request):
-    data = json.loads(request.body)
-    finished = services.check_if_execution_finished(
-        user=request.user,
-        execution_id=data["execution_id"],
-    )
+    execution_id = request.GET["execution_id"]
+    finished = services.check_if_execution_finished(execution_id=execution_id)
+    if finished:
+        services.mark_workflow_as_finished(execution_id=execution_id)
     return JsonResponse({"finished": finished})

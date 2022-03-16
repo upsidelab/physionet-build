@@ -1,4 +1,17 @@
 {% extends 'environment/base_environment_home.html' %}
+
+{% block local_js_top %}
+  {{ block.super }}
+
+  <script>
+    function refreshEnvironmentsCard() {
+      fetch("{% url 'research_environments_partial' %}")
+        .then(response => response.text())
+        .then(html => $("#environments").html(html));
+    }
+  </script>
+{% endblock%}
+
 {% block main_view %}
     <div class="card" >
     <div class="card-header">
@@ -81,29 +94,32 @@
   </div>
 {% endblock %}
 
+{% block local_js_bottom %}
 <script>
-    const sendRequest = (function() {
-        const csrfToken = getCookie("csrftoken");
+  const sendRequest = (function() {
+    const csrfToken = getCookie("csrftoken");
 
-        return function(request_data, http_method, url, button_type) {
-            let data = request_data;
-            if (button_type === "update") {
-                const instance = $("#form-select option:selected").text();
-                if (instance === "") return;
+    return function(request_data, http_method, url, button_type) {
+        let data = request_data;
+        if (button_type === "update") {
+            const instance = $("#form-select option:selected").text();
+            if (instance === "") return;
 
-                data = JSON.parse(data);
-                data["instance_type"] = instance;
-                data = JSON.stringify(data)
-            }
-            fetch(url, {
-                method: http_method,
-                body: data,
-                credentials: "same-origin",
-                headers: {
-                    "X-CSRFToken": csrfToken,
-                    "Content-Type": "application/json",
-                },
-            });
+            data = JSON.parse(data);
+            data["instance_type"] = instance;
+            data = JSON.stringify(data);
         }
-    })();
+        fetch(url, {
+            method: http_method,
+            body: data,
+            credentials: "same-origin",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/json",
+            },
+        }).then(response => response.json())
+          .then(refreshEnvironmentsCard);
+      }
+  })();
 </script>
+{% endblock %}

@@ -49,10 +49,10 @@ class Workflow(models.Model):
     PAUSE = 3
     CHANGE = 4
     TYPE_CHOICES = [
-        (CREATE, "Create"),
-        (DESTROY, "Destroy"),
-        (START, "Start"),
-        (PAUSE, "Pause"),
-        (CHANGE, "Change"),
+        (CREATE, "Creating"),
+        (DESTROY, "Destroying"),
+        (START, "Starting"),
+        (PAUSE, "Pausing"),
+        (CHANGE, "Changing"),
     ]
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)

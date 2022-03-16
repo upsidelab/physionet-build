@@ -41,21 +41,55 @@
                     </small>
                 </div>
                 <div class="col-md-2">
-                    {{ environment.status.value|capfirst }}
+                    {% if project.workflows.any_in_progress %}
+                        {{ project.workflows.first.get_type_display }}
+                    {% else %}
+                        {{ environment.status.value|capfirst }}
+                    {% endif %}
                 </div>
                 <div class="col-md-4">
                     <div class="d-flex flex-wrap">
-                        {% if environment.is_running or environment.is_paused %}
-                            <a href="{{ environment.url }}" target="_blank" class="btn btn-sm btn-success m-1">Open</a>
-                            {% environment_modal_button environment=environment project=project button_type="modal_pause" %}
-                        {% else %}
-                            {% environment_modal_button environment=environment project=project button_type="modal_start" %}
+                        {% if project.workflows.any_in_progress %}
+                            <div class="loader" style="margin: 18px; font-size: 5px">Loading...</div>
+                        {% elif environment.is_running or environment.is_paused %}
+                            {% if environment.is_running %}
+                                <a href="{{ environment.url }}" target="_blank" class="btn btn-sm btn-success m-1">Open</a>
+                                {% environment_modal_button environment=environment project=project button_type="modal_pause" %}
+                            {% else %}
+                                {% environment_modal_button environment=environment project=project button_type="modal_start" %}
+                            {% endif %}
+                            {% environment_modal_button environment=environment project=project button_type="modal_instance" %}
+                            {% environment_modal_button environment=environment project=project button_type="modal_destroy" %}
                         {% endif %}
-                        {% environment_modal_button environment=environment project=project button_type="modal_instance" %}
-                        {% environment_modal_button environment=environment project=project button_type="modal_destroy" %}
                     </div>
                 </div>
             </div>
         </li>
     {% endfor %}
 </ul>
+
+<script>
+  function pollExecutionStatus(executionId) {
+    const pollUrl = `{% url "check_execution_status" %}?execution_id=${executionId}`;
+    fetch(pollUrl)
+      .then(response => response.json())
+      .then(({ finished }) => {
+        if (finished) {
+          refreshEnvironmentsCard();
+        } else {
+          scheduleExecutionPolling(executionId);
+        }
+      });
+  }
+
+  function scheduleExecutionPolling(executionId) {
+    console.log("SCHEDULING");
+    setTimeout(() => pollExecutionStatus(executionId), 80000);
+  }
+
+  {% for _, project in environment_project_pairs %}
+      {% for workflow in project.workflows.in_progress %}
+          scheduleExecutionPolling("{{ workflow.execution_id }}");
+      {% endfor %}
+  {% endfor %}
+</script>
