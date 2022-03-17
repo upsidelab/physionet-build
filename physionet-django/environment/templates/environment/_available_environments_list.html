@@ -42,7 +42,7 @@
                 </div>
                 <div class="col-md-2">
                     {% if project.workflows.any_in_progress %}
-                        {{ project.workflows.first.get_type_display }}
+                        {{ project.workflows.in_progress.first.get_type_display }}
                     {% else %}
                         {{ environment.status.value|capfirst }}
                     {% endif %}
