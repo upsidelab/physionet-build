@@ -69,26 +69,32 @@
 </ul>
 
 <script>
-  function pollExecutionStatus(executionId) {
-    const pollUrl = `{% url "check_execution_status" %}?execution_resource_name=${executionId}`;
-    fetch(pollUrl)
-      .then(response => response.json())
-      .then(({ finished }) => {
-        if (finished) {
-          refreshEnvironmentsCard();
-        } else {
-          scheduleExecutionPolling(executionId);
-        }
-      });
-  }
+    function refreshEnvironmentsCard() {
+        fetchNewEnvironmentsCard()
+        .then(html => $("#environments").html(html));
+    }
 
-  function scheduleExecutionPolling(executionId) {
-    setTimeout(() => pollExecutionStatus(executionId), 30000);
-  }
+    function pollExecutionStatus(executionId) {
+        const pollUrl = `{% url "check_execution_status" %}?execution_resource_name=${executionId}`;
+        fetch(pollUrl)
+        .then(response => response.json())
+        .then(({ finished }) => {
+            if (finished) {
+            refreshEnvironmentsCard();
+            } else {
+            scheduleExecutionPolling(executionId);
+            }
+        });
+    }
 
-  {% for _, project in environment_project_pairs %}
-      {% for workflow in project.workflows.in_progress %}
-          scheduleExecutionPolling("{{ workflow.execution_resource_name }}");
-      {% endfor %}
-  {% endfor %}
+    function scheduleExecutionPolling(executionId, immediate=false) {
+        const timeout = immediate ? 0 : 30000;
+        setTimeout(() => pollExecutionStatus(executionId), timeout);
+    }
+
+    {% for _, project in environment_project_pairs %}
+        {% for workflow in project.workflows.in_progress %}
+            scheduleExecutionPolling("{{ workflow.execution_resource_name }}", true);
+        {% endfor %}
+    {% endfor %}
 </script>

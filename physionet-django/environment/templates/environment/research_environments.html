@@ -4,10 +4,9 @@
   {{ block.super }}
 
   <script>
-    function refreshEnvironmentsCard() {
-      fetch("{% url 'research_environments_partial' %}")
+    function fetchNewEnvironmentsCard() {
+      return fetch("{% url 'research_environments_partial' %}")
         .then(response => response.text())
-        .then(html => $("#environments").html(html));
     }
   </script>
 {% endblock%}
@@ -100,6 +99,8 @@
     const csrfToken = getCookie("csrftoken");
 
     return function(request_data, http_method, url, button_type) {
+        $(".inside-modal-button").prop("disabled", true);
+
         let data = request_data;
         if (button_type === "update") {
             const instance = $("#form-select option:selected").text();
@@ -118,7 +119,13 @@
                 "Content-Type": "application/json",
             },
         }).then(response => response.json())
-          .then(refreshEnvironmentsCard);
+          .then(fetchNewEnvironmentsCard)
+          .then(html => {
+            $(".modal").on("hidden.bs.modal", (e) => {
+              $("#environments").html(html);
+            });
+            $(".modal").modal("hide");
+          })
       }
   })();
 </script>
