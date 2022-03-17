@@ -138,7 +138,7 @@ def create_research_environment(request, project_slug, project_version):
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
         if form.is_valid():
-            execution_id = services.create_research_environment(
+            execution_resource_name = services.create_research_environment(
                 user=request.user,
                 project=project,
                 region=form.cleaned_data["region"],
@@ -147,7 +147,9 @@ def create_research_environment(request, project_slug, project_version):
                 persistent_disk=form.cleaned_data.get("persistent_disk"),
             )
             services.persist_workflow(
-                execution_id=execution_id, project_id=project.pk, type=Workflow.CREATE
+                execution_resource_name=execution_resource_name,
+                project_id=project.pk,
+                type=Workflow.CREATE,
             )
             return redirect("research_environments")
     else:
@@ -163,13 +165,15 @@ def create_research_environment(request, project_slug, project_version):
 @billing_setup_required
 def stop_running_environment(request):
     data = json.loads(request.body)
-    execution_id = services.stop_running_environment(
+    execution_resource_name = services.stop_running_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
     )
     services.persist_workflow(
-        execution_id=execution_id, project_id=data["project_id"], type=Workflow.PAUSE
+        execution_resource_name=execution_resource_name,
+        project_id=data["project_id"],
+        type=Workflow.PAUSE,
     )
     return JsonResponse({})
 
@@ -180,13 +184,15 @@ def stop_running_environment(request):
 @billing_setup_required
 def start_stopped_environment(request):
     data = json.loads(request.body)
-    execution_id = services.start_stopped_environment(
+    execution_resource_name = services.start_stopped_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
     )
     services.persist_workflow(
-        execution_id=execution_id, project_id=data["project_id"], type=Workflow.START
+        execution_resource_name=execution_resource_name,
+        project_id=data["project_id"],
+        type=Workflow.START,
     )
     return JsonResponse({})
 
@@ -197,14 +203,16 @@ def start_stopped_environment(request):
 @billing_setup_required
 def change_environment_instance_type(request):
     data = json.loads(request.body)
-    execution_id = services.change_environment_instance_type(
+    execution_resource_name = services.change_environment_instance_type(
         user=request.user,
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
         new_instance_type=InstanceType(data["instance_type"]),
     )
     services.persist_workflow(
-        execution_id=execution_id, project_id=data["project_id"], type=Workflow.CHANGE
+        execution_resource_name=execution_resource_name,
+        project_id=data["project_id"],
+        type=Workflow.CHANGE,
     )
     return JsonResponse({})
 
@@ -215,13 +223,15 @@ def change_environment_instance_type(request):
 @billing_setup_required
 def delete_environment(request):
     data = json.loads(request.body)
-    execution_id = services.delete_environment(
+    execution_resource_name = services.delete_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
     )
     services.persist_workflow(
-        execution_id=execution_id, project_id=data["project_id"], type=Workflow.DESTROY
+        execution_resource_name=execution_resource_name,
+        project_id=data["project_id"],
+        type=Workflow.DESTROY,
     )
     return JsonResponse({})
 
@@ -240,8 +250,12 @@ def is_workspace_setup_done(request):
 @cloud_identity_required
 @billing_setup_required
 def check_execution_status(request):
-    execution_id = request.GET["execution_id"]
-    finished = services.check_if_execution_finished(execution_id=execution_id)
+    execution_resource_name = request.GET["execution_resource_name"]
+    finished = services.check_if_execution_finished(
+        execution_resource_name=execution_resource_name
+    )
     if finished:
-        services.mark_workflow_as_finished(execution_id=execution_id)
+        services.mark_workflow_as_finished(
+            execution_resource_name=execution_resource_name
+        )
     return JsonResponse({"finished": finished})

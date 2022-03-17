@@ -70,7 +70,7 @@
 
 <script>
   function pollExecutionStatus(executionId) {
-    const pollUrl = `{% url "check_execution_status" %}?execution_id=${executionId}`;
+    const pollUrl = `{% url "check_execution_status" %}?execution_resource_name=${executionId}`;
     fetch(pollUrl)
       .then(response => response.json())
       .then(({ finished }) => {
@@ -83,13 +83,12 @@
   }
 
   function scheduleExecutionPolling(executionId) {
-    console.log("SCHEDULING");
-    setTimeout(() => pollExecutionStatus(executionId), 80000);
+    setTimeout(() => pollExecutionStatus(executionId), 30000);
   }
 
   {% for _, project in environment_project_pairs %}
       {% for workflow in project.workflows.in_progress %}
-          scheduleExecutionPolling("{{ workflow.execution_id }}");
+          scheduleExecutionPolling("{{ workflow.execution_resource_name }}");
       {% endfor %}
   {% endfor %}
 </script>

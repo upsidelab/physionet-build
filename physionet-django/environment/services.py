@@ -1,5 +1,7 @@
-from typing import Tuple, Iterable, Optional
+from typing import Tuple, Iterable, Optional, Callable
 
+from google.cloud.workflows import executions_v1beta
+from google.cloud.workflows.executions_v1beta.types import executions
 from django.db.models import Q
 
 import environment.api as api
@@ -31,9 +33,6 @@ from environment.utilities import (
 )
 from user.models import User
 from project.models import AccessPolicy, PublishedProject
-
-
-uuid = str
 
 
 DEFAULT_REGION = "us-central1"
@@ -119,7 +118,7 @@ def create_research_environment(
     instance_type: str,
     environment_type: str,
     persistent_disk: Optional[int],
-) -> uuid:
+) -> str:
     kwargs = _create_workbench_kwargs(
         user,
         project,
@@ -135,7 +134,7 @@ def create_research_environment(
         ]  # TODO: Check all uses of "error"/"message"
         raise EnvironmentCreationFailed(error_message)
 
-    return response.json()["execution-id"]
+    return response.json()["execution-name"]
 
 
 def get_workspace_details(user: User, region: Region) -> ResearchWorkspace:
@@ -219,7 +218,7 @@ def get_available_projects_with_environments(
     )
 
 
-def stop_running_environment(user: User, workbench_id: str, region: Region) -> uuid:
+def stop_running_environment(user: User, workbench_id: str, region: Region) -> str:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.stop_workbench(
         gcp_user_id=gcp_user_id,
@@ -229,10 +228,10 @@ def stop_running_environment(user: User, workbench_id: str, region: Region) -> u
     if not response.ok:
         error_message = response.json()["error"]
         raise StopEnvironmentFailed(error_message)
-    return response.json()["execution-id"]
+    return response.json()["execution-name"]
 
 
-def start_stopped_environment(user: User, workbench_id: str, region: Region) -> uuid:
+def start_stopped_environment(user: User, workbench_id: str, region: Region) -> str:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.start_workbench(
         gcp_user_id=gcp_user_id,
@@ -242,7 +241,7 @@ def start_stopped_environment(user: User, workbench_id: str, region: Region) -> 
     if not response.ok:
         error_message = response.json()["message"]
         raise StartEnvironmentFailed(error_message)
-    return response.json()["execution-id"]
+    return response.json()["execution-name"]
 
 
 def change_environment_instance_type(
@@ -250,7 +249,7 @@ def change_environment_instance_type(
     workbench_id: str,
     region: Region,
     new_instance_type: InstanceType,
-) -> uuid:
+) -> str:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.change_workbench_instance_type(
         gcp_user_id=gcp_user_id,
@@ -261,10 +260,10 @@ def change_environment_instance_type(
     if not response.ok:
         error_message = response.json()["message"]
         raise ChangeEnvironmentInstanceTypeFailed(error_message)
-    return response.json()["execution-id"]
+    return response.json()["execution-name"]
 
 
-def delete_environment(user: User, workbench_id: str, region: Region) -> uuid:
+def delete_environment(user: User, workbench_id: str, region: Region) -> str:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.delete_workbench(
         gcp_user_id=gcp_user_id,
@@ -274,29 +273,35 @@ def delete_environment(user: User, workbench_id: str, region: Region) -> uuid:
     if not response.ok:
         error_message = response.json()["message"]
         raise DeleteEnvironmentFailed(error_message)
-    return response.json()["execution-id"]
+    return response.json()["execution-name"]
 
 
-def persist_workflow(execution_id: str, project_id: int, type: int) -> Workflow:
+def persist_workflow(
+    execution_resource_name: str, project_id: int, type: int
+) -> Workflow:
     return Workflow.objects.create(
-        execution_id=execution_id,
+        execution_resource_name=execution_resource_name,
         project_id=project_id,
         type=type,
         status=Workflow.INPROGRESS,
     )
 
 
-xd = 0
+def check_if_execution_finished_client_closure() -> Callable[[], str]:
+    client = executions_v1beta.ExecutionsClient()
+
+    def wrapper(execution_resource_name: str):
+        execution = client.get_execution(request={"name": execution_resource_name})
+        return execution.state != executions.Execution.State.ACTIVE
+
+    return wrapper
 
 
-def check_if_execution_finished(execution_id: str) -> bool:
-    global xd
-    xd += 1
-    return xd > 4
+check_if_execution_finished = check_if_execution_finished_client_closure()
 
 
-def mark_workflow_as_finished(execution_id: str):
-    workflow = Workflow.objects.get(execution_id=execution_id)
+def mark_workflow_as_finished(execution_resource_name: str):
+    workflow = Workflow.objects.get(execution_resource_name=execution_resource_name)
     workflow.status = (
         Workflow.SUCCESS
     )  # TODO: Check failed/succeeded or change to "FINISHED"
