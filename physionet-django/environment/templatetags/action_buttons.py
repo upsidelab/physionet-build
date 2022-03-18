@@ -83,6 +83,7 @@ def environment_modal_button(
         "button_class": data["button_class"],
         "modal_title": data["modal_title"],
         "modal_body": data["modal_body"],
+        "modal_id": f"{data['action_button_type']}-{environment.id}",
         "action_button_type": data["action_button_type"],
     }
     if button_type == "modal_instance":
