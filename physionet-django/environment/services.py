@@ -287,10 +287,10 @@ def persist_workflow(
     )
 
 
-def check_if_execution_finished_client_closure() -> Callable[[], str]:
+def check_if_execution_finished_client_closure() -> Callable[[str], bool]:
     client = executions_v1beta.ExecutionsClient()
 
-    def wrapper(execution_resource_name: str):
+    def wrapper(execution_resource_name: str) -> bool:
         execution = client.get_execution(request={"name": execution_resource_name})
         return execution.state != executions.Execution.State.ACTIVE
 
