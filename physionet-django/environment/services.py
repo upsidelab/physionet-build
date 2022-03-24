@@ -16,6 +16,7 @@ from environment.exceptions import (
     EnvironmentCreationFailed,
     GetAvailableEnvironmentsFailed,
     GetWorkspaceDetailsFailed,
+    GetUserInfoFailed,
 )
 from environment.deserializers import (
     deserialize_research_environments,
@@ -56,11 +57,21 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
         raise IdentityProvisioningFailed(error_message)
 
     body = response.json()
-    identity = CloudIdentity.objects.create(
-        user=user, gcp_user_id=gcp_user_id, email=body["email-id"]
-    )
+    identity = CloudIdentity.objects.create(user=user, gcp_user_id=gcp_user_id, email=body["email-id"])
     otp = body["one-time-password"]
     return otp, identity
+
+
+def get_user_info(user: User):
+    response = api.get_user_info(gcp_user_id=user.username)
+
+    if (
+        not response.ok
+    ):  # right now response form API is always ok (maybe except Runtime)
+        error_message = response.json()["message"]
+        raise GetUserInfoFailed(error_message)
+
+    return response.json()
 
 
 def verify_billing_and_create_workspace(user: User, billing_id: str):
