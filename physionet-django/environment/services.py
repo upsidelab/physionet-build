@@ -47,10 +47,10 @@ def _environment_data_group(environment: ResearchEnvironment) -> str:
     return environment.group_granting_data_access
 
 
-def create_cloud_identity_object(user: User, gcp_user_id: str, email: str) -> CloudIdentity:
-    return CloudIdentity.objects.create(
-        user=user, gcp_user_id=gcp_user_id, email=email
-    )
+def create_cloud_identity_object(
+    user: User, gcp_user_id: str, email: str
+) -> CloudIdentity:
+    return CloudIdentity.objects.create(user=user, gcp_user_id=gcp_user_id, email=email)
 
 
 def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
@@ -63,7 +63,9 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
         raise IdentityProvisioningFailed(error_message)
 
     body = response.json()
-    identity = create_cloud_identity_object(user=user, gcp_user_id=gcp_user_id, email=body["email-id"])
+    identity = create_cloud_identity_object(
+        user=user, gcp_user_id=gcp_user_id, email=body["email-id"]
+    )
     otp = body["one-time-password"]
     return otp, identity
 
@@ -71,7 +73,9 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
 def get_user_info(user: User):
     response = api.get_user_info(gcp_user_id=user.username)
 
-    if not response.ok:  # right now response form API is always ok (maybe except Runtime)
+    if (
+        not response.ok
+    ):  # right now response form API is always ok (maybe except Runtime)
         error_message = response.json()["message"]
         raise GetUserInfoFailed(error_message)
 

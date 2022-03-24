@@ -32,11 +32,11 @@ def identity_provisioning(request):
 
     # user has no cloud identity, and now we check if he has cloud identity in API
     user_info = services.get_user_info(request.user)
-    if user_info.get('user-status') == 'user-added-in-cloud-identity':
+    if user_info.get("user-status") == "user-added-in-cloud-identity":
         _identity = services.create_cloud_identity_object(
             user=request.user,
-            gcp_user_id=user_info.get('user-id'),
-            email=user_info.get('email'),
+            gcp_user_id=user_info.get("user-id"),
+            email=user_info.get("email"),
         )
         return redirect("billing_setup")
 
