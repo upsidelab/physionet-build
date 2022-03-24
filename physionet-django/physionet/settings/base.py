@@ -505,6 +505,7 @@ if STORAGE_TYPE == StorageTypes.GCP:
     STATICFILES_STORAGE = 'physionet.storage.StaticStorage'
     GCP_BUCKET_LOCATION = config('GCP_BUCKET_LOCATION')
     GS_PROJECT_ID = config('GCP_PROJECT_ID')
+    GCP_DATA_PROJECT_ID = config('GCP_DATA_PROJECT_ID', default=GS_PROJECT_ID)
 
 SITE_NAME = config('SITE_NAME')
 STRAPLINE = config('STRAPLINE')

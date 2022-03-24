@@ -237,6 +237,7 @@ def create_bucket(name):
     client = GoogleCloudStorage().client
     bucket = client.bucket(name)
     bucket.location = settings.GCP_BUCKET_LOCATION
+    bucket.project_id = settings.GCP_DATA_PROJECT_ID
     bucket.iam_configuration.uniform_bucket_level_access_enabled = True
     client.create_bucket(bucket)
 
