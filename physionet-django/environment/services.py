@@ -47,12 +47,6 @@ def _environment_data_group(environment: ResearchEnvironment) -> str:
     return environment.group_granting_data_access
 
 
-def create_cloud_identity_object(
-    user: User, gcp_user_id: str, email: str
-) -> CloudIdentity:
-    return CloudIdentity.objects.create(user=user, gcp_user_id=gcp_user_id, email=email)
-
-
 def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
     gcp_user_id = user.username
     response = api.create_cloud_identity(
@@ -63,9 +57,7 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
         raise IdentityProvisioningFailed(error_message)
 
     body = response.json()
-    identity = create_cloud_identity_object(
-        user=user, gcp_user_id=gcp_user_id, email=body["email-id"]
-    )
+    identity = CloudIdentity.objects.create(user=user, gcp_user_id=gcp_user_id, email=body["email-id"])
     otp = body["one-time-password"]
     return otp, identity
 

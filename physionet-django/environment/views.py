@@ -20,23 +20,21 @@ from environment.utilities import (
     user_has_cloud_identity,
     user_has_billing_setup,
 )
-from environment.models import Workflow
+from environment.models import Workflow, CloudIdentity
 
 
 @require_http_methods(["GET", "POST"])
 @login_required
 def identity_provisioning(request):
-    # assuming that if user has could_identity => user has cloud_identity in API
     if user_has_cloud_identity(request.user):
         return redirect("billing_setup")
 
-    # user has no cloud identity, and now we check if he has cloud identity in API
     user_info = services.get_user_info(request.user)
     if user_info.get("user-status") == "user-added-in-cloud-identity":
-        _identity = services.create_cloud_identity_object(
+        CloudIdentity.objects.create(
             user=request.user,
             gcp_user_id=user_info.get("user-id"),
-            email=user_info.get("email"),
+            email=user_info.get("email-id"),
         )
         return redirect("billing_setup")
 
