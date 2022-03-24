@@ -530,3 +530,12 @@ if ENABLE_RESEARCH_ENVIRONMENTS:
     INSTALLED_APPS.append('environment')
 
 LOG_TIMEDELTA = config('LOG_TIMEDELTA', cast=int, default='10')
+
+#  Platform wide citation config
+PLATFORM_WIDE_CITATION = {
+    'APA': config('PLATFORM_WIDE_CITATION_APA', default=None),
+    'MLA': config('PLATFORM_WIDE_CITATION_MLA', default=None),
+    'CHICAGO': config('PLATFORM_WIDE_CITATION_CHICAGO', default=None),
+    'HARVARD': config('PLATFORM_WIDE_CITATION_HARVARD', default=None),
+    'VANCOUVER': config('PLATFORM_WIDE_CITATION_VANCOUVER', default=None),
+}
