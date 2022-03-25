@@ -19,13 +19,19 @@ class InstanceType(Enum):
 
 
 class EnvironmentStatus(Enum):
-    PROVISIONING = "workbench-setup-inprogress"
+    PROVISIONING = "inprogress"
     PROVISIONING_FAILED = "workbench-setup-failed"
+
     RUNNING = "running"
-    SERVING = "serving"
-    TERMINATED = "terminated"  # Paused
-    DESTROYED = "destroyed"
+    STARTING = "running-inprogress"
+
+    UPDATING = "updating-inprogress"
+
     STOPPED = "stopped"
+    STOPPING = "stopping-inprogress"
+
+    DESTROYING = "destroying-inprogress"
+    DESTROYED = "workbench-destroy-done"
 
 
 class EnvironmentType(Enum):
@@ -40,10 +46,17 @@ class EnvironmentType(Enum):
         return cls(maybe_string)
 
 
+class WorkspaceStatus(Enum):
+    DONE = "workspace-setup-done"
+    INPROGRESS = "workspace-setup-inprogress"
+    PENDING = "workspace-setup-pending"
+    RETRYING = "workspace-setup-retrying"
+
+
 @dataclass
 class ResearchEnvironment:
     id: str
-    dataset: str
+    group_granting_data_access: str
     region: Region
     type: EnvironmentType
     instance_type: InstanceType
@@ -53,8 +66,36 @@ class ResearchEnvironment:
 
     @property
     def is_running(self):
-        return self.status in [EnvironmentStatus.RUNNING, EnvironmentStatus.SERVING]
+        return self.status in [EnvironmentStatus.RUNNING, EnvironmentStatus.UPDATING]
 
     @property
     def is_paused(self):
-        return self.status in [EnvironmentStatus.TERMINATED, EnvironmentStatus.STOPPED]
+        return self.status == EnvironmentStatus.STOPPED
+
+    @property
+    def is_in_progress(self):
+        return self.status in [
+            EnvironmentStatus.PROVISIONING,
+            EnvironmentStatus.STARTING,
+            EnvironmentStatus.STOPPING,
+            EnvironmentStatus.UPDATING,
+            EnvironmentStatus.DESTROYING,
+        ]
+
+    @property
+    def is_active(self):
+        return self.is_running or self.is_paused or self.is_in_progress
+
+
+@dataclass
+class ResearchWorkspace:
+    user_id: str
+    region: Region
+    gcp_project_id: str
+    gcp_billing_id: str
+    email_id: str
+    workspace_setup_status: WorkspaceStatus
+
+    @property
+    def setup_finished(self):
+        return self.workspace_setup_status == WorkspaceStatus.DONE

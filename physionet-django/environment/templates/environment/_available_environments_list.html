@@ -29,71 +29,72 @@
         <li class="list-group-item">
             <div class="row">
                 <div class="col-md-3">
-                    <strong>
+                    <a href="{% url 'published_project' project.slug project.version %}" target="_blank">
                         {{ project }}
-                    </strong>
+                    </a>
                 </div>
                 <div class="col-md-3">
                     <small>
-                        Instance type: {{ environment.instance_type.value }}<br>
-                        Region: {{ environment.region.value }}<br>
-                        Environment type: {{ environment.type.value }}
+                        <i>Environment type:</i> {{ environment.type.value|capfirst }}<br>
+                        <i>Instance type:</i> {{ environment.instance_type.value }}<br>
+                        <i>Region:</i> {{ environment.region.value }}
                     </small>
                 </div>
                 <div class="col-md-2">
-                    {{ environment.status.value }}
+                    {% if project.workflows.any_in_progress %}
+                        {{ project.workflows.in_progress.first.get_type_display }}
+                    {% else %}
+                        {{ environment.status.value|capfirst }}
+                    {% endif %}
                 </div>
                 <div class="col-md-4">
-                    {% if environment.is_running or environment.is_paused %}
-                        <div class="d-flex flex-wrap">
+                    <div class="d-flex flex-wrap">
+                        {% if project.workflows.any_in_progress %}
+                            <div class="loader" style="margin: 18px; font-size: 5px">Loading...</div>
+                        {% elif environment.is_running or environment.is_paused %}
                             {% if environment.is_running %}
-                                <div class="d-inline-block">
-                                <button type="button" class="btn btn-link m-1">
-                                    <a href="{{ environment.url }}" target="_blank">Open</a>
-                                </button>
-                                </div>
-                                {% environment_modal_button environment=environment button_type="modal_pause" %}
+                                <a href="{{ environment.url }}" target="_blank" class="btn btn-sm btn-success m-1">Open</a>
+                                {% environment_modal_button environment=environment project=project button_type="modal_pause" %}
                             {% else %}
-                                {% environment_modal_button environment=environment button_type="modal_start" %}
+                                {% environment_modal_button environment=environment project=project button_type="modal_start" %}
                             {% endif %}
-                            {% environment_modal_button environment=environment button_type="modal_instance" %}
-                            {% environment_modal_button environment=environment button_type="modal_destroy" %}
-                        </div>
-                    {% endif %}
+                            {% environment_modal_button environment=environment project=project button_type="modal_instance" %}
+                            {% environment_modal_button environment=environment project=project button_type="modal_destroy" %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </li>
     {% endfor %}
 </ul>
 
-{% block local_js_bottom %}
 <script>
-    (function() {
-        const csrfToken = getCookie('csrftoken');
+    function refreshEnvironmentsCard() {
+        fetchNewEnvironmentsCard()
+        .then(html => $("#environments").html(html));
+    }
 
-        function send_request(request_data, http_method, url, button_type) {
-            let data = request_data;
-            if (button_type === "update") {
-                const instance = document
-                    .getElementById('form-select')
-                    .find("option:selected")
-                    .text();
-                if (instance === "") return;
-
-                data = JSON.parse(data);
-                data["instance_type"] = instance;
-                data = JSON.stringify(data)
+    function pollExecutionStatus(executionId) {
+        const pollUrl = `{% url "check_execution_status" %}?execution_resource_name=${executionId}`;
+        fetch(pollUrl)
+        .then(response => response.json())
+        .then(({ finished }) => {
+            if (finished) {
+            refreshEnvironmentsCard();
+            } else {
+            scheduleExecutionPolling(executionId);
             }
-            fetch(url, {
-                method: http_method,
-                body: data,
-                credentials: "same-origin",
-                headers: {
-                    "X-CSRFToken": csrfToken,
-                    "Content-Type": "application/json",
-                },
-            });
-        }
-    })();
+        });
+    }
+
+    function scheduleExecutionPolling(executionId, immediate=false) {
+        const timeout = immediate ? 0 : 30000;
+        setTimeout(() => pollExecutionStatus(executionId), timeout);
+    }
+
+    {% for _, project in environment_project_pairs %}
+        {% for workflow in project.workflows.in_progress %}
+            scheduleExecutionPolling("{{ workflow.execution_resource_name }}", true);
+        {% endfor %}
+    {% endfor %}
 </script>
-{% endblock %}

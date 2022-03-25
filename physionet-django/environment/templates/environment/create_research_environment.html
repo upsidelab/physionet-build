@@ -7,7 +7,7 @@
 {% block title %}Create Research Environment{% endblock %}
 
 {% block local_css %}
-<link rel="stylesheet" type="text/css" href="{% static 'project/css/project-home.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'environment/css/environment-base.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'environment/css/create_research_environment.css' %}">
 {% endblock %}
 
@@ -33,24 +33,4 @@
       </div>
     </div>
 </div>
-{% endblock %}
-
-{% block local_js_bottom %}
-<script>
-  (function() {
-    const jupyterTypeRadioButton = document.querySelector("#id_environment_type input[value='jupyter']");
-    const rstudioTypeRadioButton = document.querySelector("#id_environment_type input[value='rstudio']");
-    const persistentDiskInput = document.getElementById("id_persistent_disk");
-
-    persistentDiskInput.disabled = !jupyterTypeRadioButton.checked;
-    jupyterTypeRadioButton.addEventListener("change", function() {
-      persistentDiskInput.disabled = false;
-      persistentDiskInput.value = null;
-    });
-    rstudioTypeRadioButton.addEventListener("change", function() {
-      persistentDiskInput.disabled = true;
-      persistentDiskInput.value = 100;
-    });
-  })();
-</script>
 {% endblock %}

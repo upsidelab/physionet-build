@@ -2,8 +2,12 @@ import json
 
 from django import template
 from django.urls import reverse
+from django.db.models import Model
 
 from environment.entities import ResearchEnvironment, InstanceType
+
+
+PublishedProject = Model
 
 
 register = template.Library()
@@ -68,17 +72,18 @@ button_types = {
 @register.inclusion_tag("tag/environment_modal_button.html")
 def environment_modal_button(
     environment: ResearchEnvironment,
+    project: PublishedProject,
     button_type: str,
 ) -> dict:
     data = button_types[button_type]
-    request_data = {"workbench_id": environment.id, "region": environment.region.value}
     result_data = {
         "environment": environment,
-        "request_data": json.dumps(request_data),
+        "project": project,
         "button_text": data["button_text"],
         "button_class": data["button_class"],
         "modal_title": data["modal_title"],
         "modal_body": data["modal_body"],
+        "modal_id": f"{data['action_button_type']}-{environment.id}",
         "action_button_type": data["action_button_type"],
     }
     if button_type == "modal_instance":
@@ -91,10 +96,15 @@ def environment_modal_button(
 @register.inclusion_tag("tag/environment_action_button.html")
 def environment_action_button(
     environment: ResearchEnvironment,
+    project: PublishedProject,
     button_type: str,
 ) -> dict:
     data = button_types[button_type]
-    request_data = {"workbench_id": environment.id, "region": environment.region.value}
+    request_data = {
+        "workbench_id": environment.id,
+        "project_id": project.pk,
+        "region": environment.region.value,
+    }
 
     result_data = {
         "button_class": data["button_class"],

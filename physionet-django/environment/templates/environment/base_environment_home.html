@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load project_templatetags %}
+
+{% block title %}Research environments{% endblock %}
+
+{% block local_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'environment/css/environment-base.css' %}">
+{% endblock %}
+
+{% block local_js_top %}
+<script src="{% static 'custom/js/cookie.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+      {% include "message_snippet.html" %}
+        <div class="jumbotron">
+          <h1>Research Environments Home</h1>
+          <p class="lead">
+            Here you can manage the research environments for your projects.
+          </p>
+        </div>
+
+        {% block main_view %}
+        {% endblock %}
+    </div>
+{% endblock %}
+
+{% block local_js_bottom %}{% endblock %}

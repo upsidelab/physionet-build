@@ -11,6 +11,7 @@ from environment.exceptions import BillingVerificationFailed
 from environment.decorators import (
     cloud_identity_required,
     billing_setup_required,
+    workspace_setup_required,
     require_DELETE,
     require_PATCH,
 )
@@ -19,12 +20,22 @@ from environment.utilities import (
     user_has_cloud_identity,
     user_has_billing_setup,
 )
+from environment.models import Workflow, CloudIdentity
 
 
 @require_http_methods(["GET", "POST"])
 @login_required
 def identity_provisioning(request):
     if user_has_cloud_identity(request.user):
+        return redirect("billing_setup")
+
+    user_info = services.get_user_info(request.user)
+    if user_info.get("user-status") == "user-added-in-cloud-identity":
+        CloudIdentity.objects.create(
+            user=request.user,
+            gcp_user_id=user_info.get("user-id"),
+            email=user_info.get("email-id"),
+        )
         return redirect("billing_setup")
 
     if request.method == "POST":
@@ -45,7 +56,6 @@ def billing_setup(request):
     if request.method == "POST":
         form = BillingAccountIdForm(request.POST)
         if form.is_valid():
-            # TODO: Billing setup has to be verified
             try:
                 services.verify_billing_and_create_workspace(
                     user=request.user,
@@ -73,6 +83,22 @@ def billing_setup(request):
 @login_required
 @cloud_identity_required
 @billing_setup_required
+def workspace_setup(request):
+    if request.user.cloud_identity.initial_workspace_setup_done:
+        return redirect("research_environments")
+
+    is_workspace_done = services.is_user_workspace_setup_done(request.user)
+    if not is_workspace_done:
+        return render(request, "environment/workspace_being_provisioned.html")
+    services.mark_user_workspace_setup_as_done(request.user)
+    return redirect("research_environments")
+
+
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+@workspace_setup_required
 def research_environments(request):
     environment_project_pairs = services.get_environments_with_projects(request.user)
     environments = map(lambda pair: pair[0], environment_project_pairs)
@@ -83,8 +109,11 @@ def research_environments(request):
         )
     )
     context = {
-        "environment_project_pairs": environment_project_pairs,  # An environment may be running for an unavailable project
-        "available_project_environment_pairs": available_project_environment_pairs,  # Available projects with info whether it has an environment
+        "environment_project_pairs": environment_project_pairs,
+        # An environment may be running for an unavailable project
+        "available_project_environment_pairs": available_project_environment_pairs,
+        # Available projects with info whether it has an environment
+        "cloud_identity": request.user.cloud_identity,
     }
     return render(
         request,
@@ -93,6 +122,22 @@ def research_environments(request):
     )
 
 
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+@workspace_setup_required
+def research_environments_partial(request):
+    environment_project_pairs = services.get_environments_with_projects(request.user)
+    context = {"environment_project_pairs": environment_project_pairs}
+    return render(
+        request,
+        "environment/_available_environments_list.html",
+        context,
+    )
+
+
+@require_http_methods(["GET", "POST"])
 @login_required
 @cloud_identity_required
 @billing_setup_required
@@ -104,13 +149,18 @@ def create_research_environment(request, project_slug, project_version):
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
         if form.is_valid():
-            services.create_research_environment(
+            execution_resource_name = services.create_research_environment(
                 user=request.user,
                 project=project,
                 region=form.cleaned_data["region"],
                 instance_type=form.cleaned_data["instance_type"],
                 environment_type=form.cleaned_data["environment_type"],
                 persistent_disk=form.cleaned_data.get("persistent_disk"),
+            )
+            services.persist_workflow(
+                execution_resource_name=execution_resource_name,
+                project_id=project.pk,
+                type=Workflow.CREATE,
             )
             return redirect("research_environments")
     else:
@@ -126,10 +176,15 @@ def create_research_environment(request, project_slug, project_version):
 @billing_setup_required
 def stop_running_environment(request):
     data = json.loads(request.body)
-    services.stop_running_environment(
+    execution_resource_name = services.stop_running_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
+    )
+    services.persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=data["project_id"],
+        type=Workflow.PAUSE,
     )
     return JsonResponse({})
 
@@ -140,10 +195,15 @@ def stop_running_environment(request):
 @billing_setup_required
 def start_stopped_environment(request):
     data = json.loads(request.body)
-    services.start_stopped_environment(
+    execution_resource_name = services.start_stopped_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
+    )
+    services.persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=data["project_id"],
+        type=Workflow.START,
     )
     return JsonResponse({})
 
@@ -154,11 +214,16 @@ def start_stopped_environment(request):
 @billing_setup_required
 def change_environment_instance_type(request):
     data = json.loads(request.body)
-    services.change_environment_instance_type(
+    execution_resource_name = services.change_environment_instance_type(
         user=request.user,
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
         new_instance_type=InstanceType(data["instance_type"]),
+    )
+    services.persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=data["project_id"],
+        type=Workflow.CHANGE,
     )
     return JsonResponse({})
 
@@ -169,9 +234,39 @@ def change_environment_instance_type(request):
 @billing_setup_required
 def delete_environment(request):
     data = json.loads(request.body)
-    services.delete_environment(
+    execution_resource_name = services.delete_environment(
         user=request.user,
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
     )
+    services.persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=data["project_id"],
+        type=Workflow.DESTROY,
+    )
     return JsonResponse({})
+
+
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def is_workspace_setup_done(request):
+    workspace_setup_finished = services.is_user_workspace_setup_done(user=request.user)
+    return JsonResponse({"finished": workspace_setup_finished})
+
+
+@require_GET
+@login_required
+@cloud_identity_required
+@billing_setup_required
+def check_execution_status(request):
+    execution_resource_name = request.GET["execution_resource_name"]
+    finished = services.check_if_execution_finished(
+        execution_resource_name=execution_resource_name
+    )
+    if finished:
+        services.mark_workflow_as_finished(
+            execution_resource_name=execution_resource_name
+        )
+    return JsonResponse({"finished": finished})

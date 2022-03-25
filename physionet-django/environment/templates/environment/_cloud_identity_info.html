@@ -1,0 +1,20 @@
+<div class="p-1">
+  <h5>
+    Credentials
+  </h5>
+  <hr />
+  <div>
+    <strong><i>User ID:</i></strong> {{ cloud_identity.gcp_user_id }}
+  </div>
+  <div>
+    <strong><i>E-Mail:</i></strong> {{ cloud_identity.email }}
+  </div>
+
+  <h5 class="pt-5">
+    Billing
+  </h5>
+  <hr />
+  <div>
+    <strong><i>Billing Account ID:</i></strong> {{ cloud_identity.billing_setup.billing_account_id }}
+  </div>
+</div>

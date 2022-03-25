@@ -1,38 +1,132 @@
-{% extends 'base.html' %}
-
-{% load static %}
-
-{% load project_templatetags %}
-
-{% block title %}Research environments{% endblock %}
-
-{% block local_css %}
-<link rel="stylesheet" type="text/css" href="{% static 'environment/css/environment-base.css' %}">
-{% endblock %}
+{% extends 'environment/base_environment_home.html' %}
 
 {% block local_js_top %}
-<script src="{% static 'custom/js/cookie.js' %}"></script>
+  {{ block.super }}
+
+  <script>
+    function fetchNewEnvironmentsCard() {
+      return fetch("{% url 'research_environments_partial' %}")
+        .then(response => response.text())
+    }
+  </script>
+{% endblock%}
+
+{% block main_view %}
+    <div class="card" >
+    <div class="card-header">
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a
+            class="nav-link active"
+            id="environments-tab"
+            data-toggle="tab"
+            href="#environments"
+            role="tab"
+            aria-controls="environments"
+            aria-selected="true"
+          >
+            Running Environments
+            <span class="badge badge-pill badge-primary">
+              {{ environment_project_pairs|length }}
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            id="projects-tab"
+            data-toggle="tab"
+            href="#projects"
+            role="tab"
+            aria-controls="projects"
+            aria-selected="false"
+          >
+            Available Projects
+            <span class="badge badge-pill badge-secondary">
+              {{ available_project_environment_pairs|length }}
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            id="cloud-identity-tab"
+            data-toggle="tab"
+            href="#cloud-identity"
+            role="tab"
+            aria-controls="cloud-identity"
+            aria-selected="false"
+          >
+            Cloud Identity
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="card-body">
+      <div class="tab-content">
+        <div
+          class="tab-pane fade show active"
+          id="environments"
+          role="tabpanel"
+          aria-labelledby="environments-tab"
+        >
+          {% include "environment/_available_environments_list.html" %}
+        </div>
+        <div
+          class="tab-pane fade"
+          id="projects"
+          role="tabpanel"
+          aria-labelledby="projects-tab"
+        >
+          {% include "environment/_available_projects_list.html" %}
+        </div>
+        <div
+          class="tab-pane fade"
+          id="cloud-identity"
+          role="tabpanel"
+          aria-labelledby="cloud-identity-tab"
+        >
+          {% include "environment/_cloud_identity_info.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
-{% block content %}
-<div class="container">
-  {% include "message_snippet.html" %}
-  <div class="jumbotron">
-    <h1>Research Environments</h1>
-  </div>
+{% block local_js_bottom %}
+<script>
+  const sendRequest = (function() {
+    const csrfToken = getCookie("csrftoken");
 
-  <div class="card" >
-    <div class="card-header">
-      <h2>Running Environments</h2>
-    </div>
-    {% include "environment/_available_environments_list.html" %}
-  </div>
-  <br>
-  <div class="card" >
-    <div class="card-header">
-      <h2>Available Projects</h2>
-    </div>
-    {% include "environment/_available_projects_list.html" %}
-  </div>
-</div>
+    return function(request_data, http_method, url, button_type) {
+        $(".inside-modal-button").prop("disabled", true);
+
+        let data = request_data;
+        if (button_type === "update") {
+            const instance = $("#form-select option:selected").text();
+            if (instance === "") return;
+
+            data = JSON.parse(data);
+            data["instance_type"] = instance;
+            data = JSON.stringify(data);
+        }
+        fetch(url, {
+            method: http_method,
+            body: data,
+            credentials: "same-origin",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/json",
+            },
+        }).then(response => response.json())
+          .then(fetchNewEnvironmentsCard)
+          .then(html => {
+            $(".modal").on("hidden.bs.modal", (e) => {
+              $("#environments").html(html);
+            });
+            $(".modal").modal("hide");
+          })
+      }
+  })();
+</script>
 {% endblock %}
