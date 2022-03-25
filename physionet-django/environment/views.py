@@ -20,7 +20,7 @@ from environment.utilities import (
     user_has_cloud_identity,
     user_has_billing_setup,
 )
-from environment.models import Workflow, CloudIdentity
+from environment.models import CloudIdentity
 
 
 @require_http_methods(["GET", "POST"])
@@ -149,18 +149,13 @@ def create_research_environment(request, project_slug, project_version):
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
         if form.is_valid():
-            execution_resource_name = services.create_research_environment(
+            services.create_research_environment(
                 user=request.user,
                 project=project,
                 region=form.cleaned_data["region"],
                 instance_type=form.cleaned_data["instance_type"],
                 environment_type=form.cleaned_data["environment_type"],
                 persistent_disk=form.cleaned_data.get("persistent_disk"),
-            )
-            services.persist_workflow(
-                execution_resource_name=execution_resource_name,
-                project_id=project.pk,
-                type=Workflow.CREATE,
             )
             return redirect("research_environments")
     else:
@@ -176,15 +171,11 @@ def create_research_environment(request, project_slug, project_version):
 @billing_setup_required
 def stop_running_environment(request):
     data = json.loads(request.body)
-    execution_resource_name = services.stop_running_environment(
+    services.stop_running_environment(
         user=request.user,
+        project_id=data["project_id"],
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
-    )
-    services.persist_workflow(
-        execution_resource_name=execution_resource_name,
-        project_id=data["project_id"],
-        type=Workflow.PAUSE,
     )
     return JsonResponse({})
 
@@ -195,15 +186,11 @@ def stop_running_environment(request):
 @billing_setup_required
 def start_stopped_environment(request):
     data = json.loads(request.body)
-    execution_resource_name = services.start_stopped_environment(
+    services.start_stopped_environment(
         user=request.user,
+        project_id=data["project_id"],
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
-    )
-    services.persist_workflow(
-        execution_resource_name=execution_resource_name,
-        project_id=data["project_id"],
-        type=Workflow.START,
     )
     return JsonResponse({})
 
@@ -214,16 +201,12 @@ def start_stopped_environment(request):
 @billing_setup_required
 def change_environment_instance_type(request):
     data = json.loads(request.body)
-    execution_resource_name = services.change_environment_instance_type(
+    services.change_environment_instance_type(
         user=request.user,
+        project_id=data["project_id"],
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
         new_instance_type=InstanceType(data["instance_type"]),
-    )
-    services.persist_workflow(
-        execution_resource_name=execution_resource_name,
-        project_id=data["project_id"],
-        type=Workflow.CHANGE,
     )
     return JsonResponse({})
 
@@ -234,15 +217,11 @@ def change_environment_instance_type(request):
 @billing_setup_required
 def delete_environment(request):
     data = json.loads(request.body)
-    execution_resource_name = services.delete_environment(
+    services.delete_environment(
         user=request.user,
+        project_id=data["project_id"],
         workbench_id=data["workbench_id"],
         region=Region(data["region"]),
-    )
-    services.persist_workflow(
-        execution_resource_name=execution_resource_name,
-        project_id=data["project_id"],
-        type=Workflow.DESTROY,
     )
     return JsonResponse({})
 
