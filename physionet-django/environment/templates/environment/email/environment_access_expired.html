@@ -1,0 +1,14 @@
+{% load i18n %}{% autoescape off %}{% filter wordwrap:70 %}
+
+Based on the recommendations of our editors, we are delighted to accept your project entitled "{{ project.title }}" for publication on {{ SITE_NAME }}.
+
+Affected environments:
+{% for project in projects %}
+    - {{ project }}
+{% endfor %}
+
+The environments will get automatically destroyed in 2 weeks.
+
+{{ signature }}
+
+{% endfilter %}{% endautoescape %}

@@ -1,8 +1,11 @@
 from typing import Tuple, Iterable, Optional, Callable
 
+from django.db.models import Q, Model
+from django.core.mail import send_mail
+from django.template import loader
+from django.conf import settings
 from google.cloud.workflows import executions_v1beta
 from google.cloud.workflows.executions_v1beta.types import executions
-from django.db.models import Q
 
 import environment.api as api
 from environment.models import CloudIdentity, BillingSetup, Workflow
@@ -32,9 +35,11 @@ from environment.utilities import (
     left_join_iterators,
     inner_join_iterators,
 )
-from user.models import User
+from environment.utilities import left_join_iterators, inner_join_iterators
 from project.models import AccessPolicy, PublishedProject
 
+
+User = Model
 
 DEFAULT_REGION = "us-central1"
 
@@ -57,7 +62,9 @@ def create_cloud_identity(user: User) -> Tuple[str, CloudIdentity]:
         raise IdentityProvisioningFailed(error_message)
 
     body = response.json()
-    identity = CloudIdentity.objects.create(user=user, gcp_user_id=gcp_user_id, email=body["email-id"])
+    identity = CloudIdentity.objects.create(
+        user=user, gcp_user_id=gcp_user_id, email=body["email-id"]
+    )
     otp = body["one-time-password"]
     return otp, identity
 
@@ -145,7 +152,14 @@ def create_research_environment(
         ]  # TODO: Check all uses of "error"/"message"
         raise EnvironmentCreationFailed(error_message)
 
-    return response.json()["execution-name"]
+    execution_resource_name = response.json()["execution-name"]
+    persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=project.pk,
+        type=Workflow.CREATE,
+    )
+
+    return response.json()
 
 
 def get_workspace_details(user: User, region: Region) -> ResearchWorkspace:
@@ -229,7 +243,20 @@ def get_available_projects_with_environments(
     )
 
 
-def stop_running_environment(user: User, workbench_id: str, region: Region) -> str:
+def get_environment_project_pairs_with_expired_access(
+    user: User,
+) -> Iterable[Tuple[ResearchEnvironment, PublishedProject]]:
+    all_environment_project_pairs = get_environments_with_projects(user)
+    return [
+        (environment, project)
+        for environment, project in all_environment_project_pairs
+        if not project.has_access(user)
+    ]
+
+
+def stop_running_environment(
+    user: User, project_id: str, workbench_id: str, region: Region
+) -> str:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.stop_workbench(
         gcp_user_id=gcp_user_id,
@@ -239,10 +266,20 @@ def stop_running_environment(user: User, workbench_id: str, region: Region) -> s
     if not response.ok:
         error_message = response.json()["error"]
         raise StopEnvironmentFailed(error_message)
-    return response.json()["execution-name"]
+
+    execution_resource_name = response.json()["execution-name"]
+    persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=project_id,
+        type=Workflow.PAUSE,
+    )
+
+    return response.json()
 
 
-def start_stopped_environment(user: User, workbench_id: str, region: Region) -> str:
+def start_stopped_environment(
+    user: User, project_id: str, workbench_id: str, region: Region
+) -> str:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.start_workbench(
         gcp_user_id=gcp_user_id,
@@ -252,11 +289,20 @@ def start_stopped_environment(user: User, workbench_id: str, region: Region) -> 
     if not response.ok:
         error_message = response.json()["message"]
         raise StartEnvironmentFailed(error_message)
-    return response.json()["execution-name"]
+
+    execution_resource_name = response.json()["execution-name"]
+    persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=project_id,
+        type=Workflow.START,
+    )
+
+    return response.json()
 
 
 def change_environment_instance_type(
     user: User,
+    project_id: str,
     workbench_id: str,
     region: Region,
     new_instance_type: InstanceType,
@@ -271,10 +317,20 @@ def change_environment_instance_type(
     if not response.ok:
         error_message = response.json()["message"]
         raise ChangeEnvironmentInstanceTypeFailed(error_message)
-    return response.json()["execution-name"]
+
+    execution_resource_name = response.json()["execution-name"]
+    persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=project_id,
+        type=Workflow.CHANGE,
+    )
+
+    return response.json()
 
 
-def delete_environment(user: User, workbench_id: str, region: Region) -> str:
+def delete_environment(
+    user: User, project_id: str, workbench_id: str, region: Region
+) -> str:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.delete_workbench(
         gcp_user_id=gcp_user_id,
@@ -284,7 +340,31 @@ def delete_environment(user: User, workbench_id: str, region: Region) -> str:
     if not response.ok:
         error_message = response.json()["message"]
         raise DeleteEnvironmentFailed(error_message)
-    return response.json()["execution-name"]
+
+    execution_resource_name = response.json()["execution-name"]
+    persist_workflow(
+        execution_resource_name=execution_resource_name,
+        project_id=project_id,
+        type=Workflow.DESTROY,
+    )
+
+    return response.json()
+
+
+def send_environment_access_expired_email(
+    user: User, projects: Iterable[PublishedProject]
+):
+    subject = f"{settings.SITE_NAME} Environment Access Expired"
+    email_context = {
+        "signature": settings.EMAIL_SIGNATURE,
+        "projects": projects,
+    }
+    body = loader.render_to_string(
+        "environment/email/environment_access_expired.html", email_context
+    )
+    send_mail(
+        subject, body, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False
+    )
 
 
 def persist_workflow(

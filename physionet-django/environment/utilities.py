@@ -2,12 +2,14 @@ import random
 from typing import Iterator, Tuple, Optional, TypeVar, Callable
 from string import ascii_uppercase
 
-from user.models import User
+from django.db.models import Model
 
 
 T = TypeVar("T")
 U = TypeVar("U")
 V = TypeVar("V")
+
+User = Model
 
 
 def user_has_cloud_identity(user: User) -> bool:
