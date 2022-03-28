@@ -13,7 +13,7 @@
             </div>
         </div>
     </li>    
-    {% for project, environment in available_project_environment_pairs %}
+    {% for project, environment, workflows in available_project_environment_workflow_triplets %}
         <li class="list-group-item">
             <div class="row">
                 <div class="col-md-8">
@@ -22,7 +22,7 @@
                     </a>
                 </div>
                 <div class="col-md-4">
-                {% if environment is None and not project.workflows.in_progress.exists %}
+                {% if environment is None and not workflows.exists %}
                     <a class="btn btn-sm btn-primary" href="{% url 'create_research_environment' project_slug=project.slug project_version=project.version %}">
                         Launch Research Environment
                     </a>

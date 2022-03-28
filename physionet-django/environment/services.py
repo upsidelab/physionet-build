@@ -150,6 +150,7 @@ def create_research_environment(
 
     execution_resource_name = response.json()["execution-name"]
     persist_workflow(
+        user=user,
         execution_resource_name=execution_resource_name,
         project_id=project.pk,
         type=Workflow.CREATE,
@@ -211,7 +212,7 @@ def _get_projects_for_environments(
 
 def get_environments_with_projects(
     user: User,
-) -> Iterable[Tuple[ResearchEnvironment, PublishedProject]]:
+) -> Iterable[Tuple[ResearchEnvironment, PublishedProject, Iterable[Workflow]]]:
     gcp_user_id = user.cloud_identity.gcp_user_id
     response = api.get_workspace_list(gcp_user_id)
     if not response.ok:
@@ -222,35 +223,43 @@ def get_environments_with_projects(
         environment for environment in all_environments if environment.is_active
     ]
     projects = _get_projects_for_environments(active_environments)
-    environment_project_pairs = inner_join_iterators(  # TODO: Consider left join as this will preserve environments for deleted projects
+    environment_project_pairs = inner_join_iterators(
         _environment_data_group, active_environments, _project_data_group, projects
     )
-
-    return environment_project_pairs
+    return [
+        (environment, project, project.workflows.in_progress().filter(user=user))
+        for environment, project in environment_project_pairs
+    ]
 
 
 def get_available_projects_with_environments(
     user: User,
     environments: Iterable[ResearchEnvironment],
-) -> Iterable[Tuple[PublishedProject, Optional[ResearchEnvironment]]]:
+) -> Iterable[
+    Tuple[PublishedProject, Optional[ResearchEnvironment], Iterable[Workflow]]
+]:
     available_projects = get_available_projects(user)
-    return left_join_iterators(
+    project_environment_pairs = left_join_iterators(
         _project_data_group,
         available_projects,
         _environment_data_group,
         environments,
     )
+    return [
+        (project, environment, project.workflows.in_progress().filter(user=user))
+        for project, environment in project_environment_pairs
+    ]
 
 
 def get_projects_with_environment_being_created(
-    project_environment_pairs: Iterable[
-        Tuple[PublishedProject, Optional[ResearchEnvironment]]
+    project_environment_workflow_triplets: Iterable[
+        Tuple[PublishedProject, Optional[ResearchEnvironment], Iterable[Workflow]]
     ],
-) -> Iterable[Tuple[None, ResearchEnvironment]]:
+) -> Iterable[Tuple[None, PublishedProject, Iterable[Workflow]]]:
     return [
-        (environment, project)
-        for project, environment in project_environment_pairs
-        if environment is None and project.workflows.in_progress().exists()
+        (environment, project, workflows)
+        for project, environment, workflows in project_environment_workflow_triplets
+        if environment is None and project.workflows.exists()
     ]
 
 
@@ -280,6 +289,7 @@ def stop_running_environment(
 
     execution_resource_name = response.json()["execution-name"]
     persist_workflow(
+        user=user,
         execution_resource_name=execution_resource_name,
         project_id=project_id,
         type=Workflow.PAUSE,
@@ -303,6 +313,7 @@ def start_stopped_environment(
 
     execution_resource_name = response.json()["execution-name"]
     persist_workflow(
+        user=user,
         execution_resource_name=execution_resource_name,
         project_id=project_id,
         type=Workflow.START,
@@ -331,6 +342,7 @@ def change_environment_instance_type(
 
     execution_resource_name = response.json()["execution-name"]
     persist_workflow(
+        user=user,
         execution_resource_name=execution_resource_name,
         project_id=project_id,
         type=Workflow.CHANGE,
@@ -354,6 +366,7 @@ def delete_environment(
 
     execution_resource_name = response.json()["execution-name"]
     persist_workflow(
+        user=user,
         execution_resource_name=execution_resource_name,
         project_id=project_id,
         type=Workflow.DESTROY,
@@ -379,9 +392,10 @@ def send_environment_access_expired_email(
 
 
 def persist_workflow(
-    execution_resource_name: str, project_id: int, type: int
+    user: User, execution_resource_name: str, project_id: int, type: int
 ) -> Workflow:
     return Workflow.objects.create(
+        user=user,
         execution_resource_name=execution_resource_name,
         project_id=project_id,
         type=type,

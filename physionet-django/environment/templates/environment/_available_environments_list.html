@@ -25,7 +25,7 @@
             </div>
         </div>
     </li>    
-    {% for environment, project in environment_project_pairs %}
+    {% for environment, project, workflows in environment_project_workflow_triplets %}
         <li class="list-group-item">
             <div class="row">
                 <div class="col-md-3">
@@ -41,15 +41,15 @@
                     </small>
                 </div>
                 <div class="col-md-2">
-                    {% if project.workflows.in_progress.exists %}
-                        {{ project.workflows.in_progress.first.get_type_display }}
+                    {% if workflows.exists %}
+                        {{ workflows.first.get_type_display }}
                     {% else %}
                         {{ environment.status.value|capfirst }}
                     {% endif %}
                 </div>
                 <div class="col-md-4">
                     <div class="d-flex flex-wrap">
-                        {% if project.workflows.in_progress.exists %}
+                        {% if workflows.exists %}
                             <div class="loader" style="margin: 18px; font-size: 5px">Loading...</div>
                         {% elif environment.is_running or environment.is_paused %}
                             {% if environment.is_running %}
@@ -92,8 +92,14 @@
         setTimeout(() => pollExecutionStatus(executionId), timeout);
     }
 
-    {% for _, project in environment_project_pairs %}
-        {% for workflow in project.workflows.in_progress %}
+    {% for environment, project, workflows in environment_project_workflow_triplets %}
+        {% for workflow in workflows %}
+            scheduleExecutionPolling("{{ workflow.execution_resource_name }}", true);
+        {% endfor %}
+    {% endfor %}
+
+    {% for environment, project, workflows in available_project_environment_workflow_triplets %}
+        {% for workflow in workflows %}
             scheduleExecutionPolling("{{ workflow.execution_resource_name }}", true);
         {% endfor %}
     {% endfor %}

@@ -31,6 +31,9 @@ class Workflow(models.Model):
     project = models.ForeignKey(
         "project.PublishedProject", related_name="workflows", on_delete=models.CASCADE
     )
+    user = models.ForeignKey(
+        "user.User", related_name="workflows", on_delete=models.CASCADE
+    )
     execution_resource_name = models.CharField(max_length=256, unique=True)
 
     INPROGRESS = 0

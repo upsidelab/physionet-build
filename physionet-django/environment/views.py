@@ -100,9 +100,11 @@ def workspace_setup(request):
 @billing_setup_required
 @workspace_setup_required
 def research_environments(request):
-    environment_project_pairs = services.get_environments_with_projects(request.user)
-    environments = map(lambda pair: pair[0], environment_project_pairs)
-    available_project_environment_pairs = (
+    environment_project_workflow_triplets = services.get_environments_with_projects(
+        request.user
+    )
+    environments = map(lambda pair: pair[0], environment_project_workflow_triplets)
+    available_project_environment_workflow_triplets = (
         services.get_available_projects_with_environments(
             request.user,
             environments,
@@ -110,16 +112,16 @@ def research_environments(request):
     )
     projects_with_environments_being_created = (
         services.get_projects_with_environment_being_created(
-            available_project_environment_pairs
+            available_project_environment_workflow_triplets
         )
     )
     environment_projects_pairs_with_creating = (
-        projects_with_environments_being_created + environment_project_pairs
+        projects_with_environments_being_created + environment_project_workflow_triplets
     )
 
     context = {
-        "environment_project_pairs": environment_projects_pairs_with_creating,
-        "available_project_environment_pairs": available_project_environment_pairs,
+        "environment_project_workflow_triplets": environment_projects_pairs_with_creating,
+        "available_project_environment_workflow_triplets": available_project_environment_workflow_triplets,
         "cloud_identity": request.user.cloud_identity,
     }
 
@@ -136,8 +138,12 @@ def research_environments(request):
 @billing_setup_required
 @workspace_setup_required
 def research_environments_partial(request):
-    environment_project_pairs = services.get_environments_with_projects(request.user)
-    context = {"environment_project_pairs": environment_project_pairs}
+    environment_project_workflow_triplets = services.get_environments_with_projects(
+        request.user
+    )
+    context = {
+        "environment_project_workflow_triplets": environment_project_workflow_triplets
+    }
     return render(
         request,
         "environment/_available_environments_list.html",
