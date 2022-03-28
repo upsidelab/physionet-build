@@ -31,10 +31,6 @@ from environment.entities import (
     Region,
     ResearchWorkspace,
 )
-from environment.utilities import (
-    left_join_iterators,
-    inner_join_iterators,
-)
 from environment.utilities import left_join_iterators, inner_join_iterators
 from project.models import AccessPolicy, PublishedProject
 
@@ -177,8 +173,11 @@ def get_workspace_details(user: User, region: Region) -> ResearchWorkspace:
 
 
 def is_user_workspace_setup_done(user: User) -> bool:
-    workspace = get_workspace_details(user, Region(DEFAULT_REGION))
-    return workspace.setup_finished
+    try:
+        workspace = get_workspace_details(user, Region(DEFAULT_REGION))
+        return workspace.setup_finished
+    except GetWorkspaceDetailsFailed:
+        return False
 
 
 def mark_user_workspace_setup_as_done(user: User):
