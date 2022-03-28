@@ -4,9 +4,10 @@
   {{ block.super }}
 
   <script>
-    function fetchNewEnvironmentsCard() {
-      return fetch("{% url 'research_environments_partial' %}")
-        .then(response => response.text())
+    function fetchNewEnvironmentsCard(executionId) {
+      const baseUrl = "{% url 'research_environments_partial' %}";
+      const fetchUrl = executionId ? `${baseUrl}?execution_resource_name=${executionId}` : baseUrl;
+      return fetch(fetchUrl).then(response => response.text())
     }
   </script>
 {% endblock%}
@@ -119,7 +120,7 @@
                 "Content-Type": "application/json",
             },
         }).then(response => response.json())
-          .then(fetchNewEnvironmentsCard)
+          .then(json => fetchNewEnvironmentsCard())
           .then(html => {
             $(".modal").on("hidden.bs.modal", (e) => {
               $("#environments").html(html);

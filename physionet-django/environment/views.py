@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_GET
+from google.cloud.workflows.executions_v1beta.types.executions import Execution
 
 import environment.services as services
 from environment.forms import BillingAccountIdForm, CreateResearchEnvironmentForm
@@ -20,7 +21,7 @@ from environment.utilities import (
     user_has_cloud_identity,
     user_has_billing_setup,
 )
-from environment.models import CloudIdentity
+from environment.models import CloudIdentity, Workflow
 
 
 @require_http_methods(["GET", "POST"])
@@ -141,9 +142,21 @@ def research_environments_partial(request):
     environment_project_workflow_triplets = services.get_environments_with_projects(
         request.user
     )
+
     context = {
-        "environment_project_workflow_triplets": environment_project_workflow_triplets
+        "environment_project_workflow_triplets": environment_project_workflow_triplets,
     }
+
+    execution_resource_name = request.GET.get("execution_resource_name")
+    if execution_resource_name:
+        workflow = Workflow.objects.get(execution_resource_name=execution_resource_name)
+        workflow_state_context = {
+            "recent_workflow": workflow,
+            "recent_workflow_failed": workflow.status == Workflow.FAILED,
+            "recent_workflow_succeeded": workflow.status == Workflow.SUCCESS,
+        }
+        context = {**context, **workflow_state_context}
+
     return render(
         request,
         "environment/_available_environments_list.html",
@@ -255,11 +268,13 @@ def is_workspace_setup_done(request):
 @billing_setup_required
 def check_execution_status(request):
     execution_resource_name = request.GET["execution_resource_name"]
-    finished = services.check_if_execution_finished(
+    execution_state = services.get_execution_state(
         execution_resource_name=execution_resource_name
     )
+    finished = execution_state != Execution.State.ACTIVE
     if finished:
         services.mark_workflow_as_finished(
-            execution_resource_name=execution_resource_name
+            execution_resource_name=execution_resource_name,
+            execution_state=execution_state,
         )
     return JsonResponse({"finished": finished})

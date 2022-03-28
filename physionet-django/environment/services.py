@@ -403,22 +403,26 @@ def persist_workflow(
     )
 
 
-def check_if_execution_finished_client_closure() -> Callable[[str], bool]:
+def get_execution_state_closure() -> Callable[[str], executions.Execution.State]:
     client = executions_v1beta.ExecutionsClient()
 
     def wrapper(execution_resource_name: str) -> bool:
         execution = client.get_execution(request={"name": execution_resource_name})
-        return execution.state != executions.Execution.State.ACTIVE
+        return execution.state
 
     return wrapper
 
 
-check_if_execution_finished = check_if_execution_finished_client_closure()
+get_execution_state = get_execution_state_closure()
 
 
-def mark_workflow_as_finished(execution_resource_name: str):
+def mark_workflow_as_finished(
+    execution_resource_name: str, execution_state: executions.Execution.State
+):
     workflow = Workflow.objects.get(execution_resource_name=execution_resource_name)
-    workflow.status = (
-        Workflow.SUCCESS
-    )  # TODO: Check failed/succeeded or change to "FINISHED"
+    if execution_state == executions.Execution.State.SUCCEEDED:
+        workflow.status = Workflow.SUCCESS
+    else:
+        workflow.status = Workflow.FAILED
+
     workflow.save()

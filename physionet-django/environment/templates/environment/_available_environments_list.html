@@ -1,5 +1,17 @@
 {% load action_buttons %}
 
+{% if recent_workflow %}
+    {% if recent_workflow_failed %}
+        <div class="alert alert-danger" role="alert">
+            {{ recent_workflow.get_type_display }} {{ recent_workflow.project }} failed! Try again later.
+        </div>
+    {% elif recent_workflow_succeeded %}
+        <div class="alert alert-success" role="alert">
+            {{ recent_workflow.get_type_display }} {{ recent_workflow.project }} finished!
+        </div>
+    {% endif %}
+{% endif %}
+
 <ul class="list-group list-group-flush">
     <li class="list-group-item">
         <div class="row">
@@ -69,8 +81,8 @@
 </ul>
 
 <script>
-    function refreshEnvironmentsCard() {
-        fetchNewEnvironmentsCard()
+    function refreshEnvironmentsCard(executionId) {
+        fetchNewEnvironmentsCard(executionId)
         .then(html => $("#environments").html(html));
     }
 
@@ -80,9 +92,9 @@
         .then(response => response.json())
         .then(({ finished }) => {
             if (finished) {
-            refreshEnvironmentsCard();
+                refreshEnvironmentsCard(executionId);
             } else {
-            scheduleExecutionPolling(executionId);
+                scheduleExecutionPolling(executionId);
             }
         });
     }
@@ -93,12 +105,6 @@
     }
 
     {% for environment, project, workflows in environment_project_workflow_triplets %}
-        {% for workflow in workflows %}
-            scheduleExecutionPolling("{{ workflow.execution_resource_name }}", true);
-        {% endfor %}
-    {% endfor %}
-
-    {% for environment, project, workflows in available_project_environment_workflow_triplets %}
         {% for workflow in workflows %}
             scheduleExecutionPolling("{{ workflow.execution_resource_name }}", true);
         {% endfor %}
