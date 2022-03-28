@@ -418,8 +418,8 @@ class User(AbstractBaseUser):
     def file_root(self, relative=False):
         "Where the user's files are stored"
         if relative:
-            return os.path.join(User.RELATIVE_FILE_ROOT, self.username)
-        return os.path.join(User.FILE_ROOT, self.username)
+            return os.path.join(User.RELATIVE_FILE_ROOT, self.username, '')  # Ensure trailing slash
+        return os.path.join(User.FILE_ROOT, self.username, '')
 
 
 class UserLogin(models.Model):
