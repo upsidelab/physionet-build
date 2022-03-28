@@ -243,6 +243,18 @@ def get_available_projects_with_environments(
     )
 
 
+def get_projects_with_environment_being_created(
+    project_environment_pairs: Iterable[
+        Tuple[PublishedProject, Optional[ResearchEnvironment]]
+    ],
+) -> Iterable[Tuple[None, ResearchEnvironment]]:
+    return [
+        (environment, project)
+        for project, environment in project_environment_pairs
+        if environment is None and project.workflows.in_progress().exists()
+    ]
+
+
 def get_environment_project_pairs_with_expired_access(
     user: User,
 ) -> Iterable[Tuple[ResearchEnvironment, PublishedProject]]:

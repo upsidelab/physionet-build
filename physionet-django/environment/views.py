@@ -108,13 +108,21 @@ def research_environments(request):
             environments,
         )
     )
+    projects_with_environments_being_created = (
+        services.get_projects_with_environment_being_created(
+            available_project_environment_pairs
+        )
+    )
+    environment_projects_pairs_with_creating = (
+        projects_with_environments_being_created + environment_project_pairs
+    )
+
     context = {
-        "environment_project_pairs": environment_project_pairs,
-        # An environment may be running for an unavailable project
+        "environment_project_pairs": environment_projects_pairs_with_creating,
         "available_project_environment_pairs": available_project_environment_pairs,
-        # Available projects with info whether it has an environment
         "cloud_identity": request.user.cloud_identity,
     }
+
     return render(
         request,
         "environment/research_environments.html",

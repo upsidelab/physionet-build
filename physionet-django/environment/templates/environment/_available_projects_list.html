@@ -22,7 +22,7 @@
                     </a>
                 </div>
                 <div class="col-md-4">
-                {% if environment is None %}
+                {% if environment is None and not project.workflows.in_progress.exists %}
                     <a class="btn btn-sm btn-primary" href="{% url 'create_research_environment' project_slug=project.slug project_version=project.version %}">
                         Launch Research Environment
                     </a>

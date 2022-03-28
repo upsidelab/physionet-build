@@ -41,7 +41,7 @@
                     </small>
                 </div>
                 <div class="col-md-2">
-                    {% if project.workflows.any_in_progress %}
+                    {% if project.workflows.in_progress.exists %}
                         {{ project.workflows.in_progress.first.get_type_display }}
                     {% else %}
                         {{ environment.status.value|capfirst }}
@@ -49,7 +49,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="d-flex flex-wrap">
-                        {% if project.workflows.any_in_progress %}
+                        {% if project.workflows.in_progress.exists %}
                             <div class="loader" style="margin: 18px; font-size: 5px">Loading...</div>
                         {% elif environment.is_running or environment.is_paused %}
                             {% if environment.is_running %}
