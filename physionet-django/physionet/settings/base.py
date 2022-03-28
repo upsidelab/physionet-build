@@ -526,3 +526,5 @@ PLATFORM_WIDE_CITATION = {
     'HARVARD': config('PLATFORM_WIDE_CITATION_HARVARD', default=None),
     'VANCOUVER': config('PLATFORM_WIDE_CITATION_VANCOUVER', default=None),
 }
+
+SOURCE_CODE_REPOSITORY_LINK = config('CODE_REPOSITORY_LINK', default='https://github.com/MIT-LCP/physionet-build')
