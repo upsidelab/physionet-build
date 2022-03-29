@@ -259,7 +259,7 @@ def get_projects_with_environment_being_created(
     return [
         (environment, project, workflows)
         for project, environment, workflows in project_environment_workflow_triplets
-        if environment is None and project.workflows.exists()
+        if environment is None and workflows.exists()
     ]
 
 
