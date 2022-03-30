@@ -1,5 +1,6 @@
 import json
 
+from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -172,23 +173,29 @@ def create_research_environment(request, project_slug, project_version):
     project = services.get_available_projects(request.user).get(
         slug=project_slug, version=project_version
     )
-
     if request.method == "POST":
         form = CreateResearchEnvironmentForm(request.POST)
         if form.is_valid():
-            services.create_research_environment(
-                user=request.user,
-                project=project,
-                region=form.cleaned_data["region"],
-                instance_type=form.cleaned_data["instance_type"],
-                environment_type=form.cleaned_data["environment_type"],
-                persistent_disk=form.cleaned_data.get("persistent_disk"),
-            )
-            return redirect("research_environments")
+            cpu_usage = services.cpu_usage(value=InstanceType(form.cleaned_data["instance_type"]).to_number(),
+                                           user=request.user)
+            if cpu_usage <= services.MAX_CPU_USAGE:
+                services.create_research_environment(
+                    user=request.user,
+                    project=project,
+                    region=form.cleaned_data["region"],
+                    instance_type=form.cleaned_data["instance_type"],
+                    environment_type=form.cleaned_data["environment_type"],
+                    persistent_disk=form.cleaned_data.get("persistent_disk"),
+                )
+                return redirect("research_environments")
+            else:
+                messages.error(request, f'Quota exceeded, you would use {cpu_usage} overall and the limit is {services.MAX_CPU_USAGE}')
     else:
         form = CreateResearchEnvironmentForm()
 
-    context = {"form": form, "project": project}
+    exceeded_quotas = services.exceeded_quotas(request.user)
+    context = {"form": form, "project": project, "exceeded_quotas": exceeded_quotas}
+
     return render(request, "environment/create_research_environment.html", context)
 
 
