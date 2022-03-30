@@ -22,14 +22,25 @@
         <h3 class="card-title">
             Project: <span class="font-italic">{{ project.title }}</span>
         </h3>
-
-        <form action="{% url 'create_research_environment' project_slug=project.slug project_version=project.version %}" method="post" style="width: 24rem;">
-            {% csrf_token %}
-            {{ form }}
-            <button class="btn btn-primary mt-3" type="submit">
-                Create environment
-            </button>
-        </form>
+        {% if exceeded_quotas|length > 0 %}
+            <div>
+                <p style="color:red"> You are not allowed to create another environment due to quotas:</p>
+                <ul>
+                    {% for quota in exceeded_quotas %}
+                        <li>{{ quota }}</li>
+                    {% endfor %}
+                </ul>
+                <a href="{% url 'research_environments' %}"><button class="btn btn-primary">Return</button></a>
+            </div>
+        {% else %}
+            <form action="{% url 'create_research_environment' project_slug=project.slug project_version=project.version %}" method="post" style="width: 24rem;">
+                {% csrf_token %}
+                {{ form }}
+                <button class="btn btn-primary mt-3" type="submit">
+                    Create environment
+                </button>
+            </form>
+        {% endif %}
       </div>
     </div>
 </div>

@@ -3,6 +3,15 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+instance_to_number_dict = {
+    "n1-standard-1": 1,
+    "n1-standard-2": 2,
+    "n1-standard-4": 4,
+    "n1-standard-8": 8,
+    "n1-standard-16": 16
+}
+
+
 class Region(Enum):
     US_CENTRAL = "us-central1"
     NORTHAMERICA_NORTHEAST = "northamerica-northeast1"
@@ -16,6 +25,9 @@ class InstanceType(Enum):
     N1_STANDARD_4 = "n1-standard-4"
     N1_STANDARD_8 = "n1-standard-8"
     N1_STANDARD_16 = "n1-standard-16"
+
+    def to_number(self) -> int:
+        return instance_to_number_dict[self.value]
 
 
 class EnvironmentStatus(Enum):
