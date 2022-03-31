@@ -42,7 +42,7 @@ class CreateResearchEnvironmentForm(forms.Form):
         widget=forms.RadioSelect(attrs={"class": "environment-type"}),
     )
     persistent_disk = forms.IntegerField(
-        label="Persistent data disk size",
+        label="Persistent data disk size [GB]",
         widget=forms.NumberInput(
             attrs={"class": "form-control", "min": 0, "max": 64000}
         ),

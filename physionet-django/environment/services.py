@@ -131,7 +131,7 @@ def create_research_environment(
     region: str,
     instance_type: str,
     environment_type: str,
-    persistent_disk: Optional[int],
+    persistent_disk: int,
 ) -> str:
     kwargs = _create_workbench_kwargs(
         user,
