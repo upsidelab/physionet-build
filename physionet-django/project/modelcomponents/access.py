@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils import timezone
 from django.utils.crypto import get_random_string
+from django.conf import settings
 from project.modelcomponents.fields import SafeHTMLField
 from project.validators import validate_version
 
@@ -144,18 +145,30 @@ class DataAccessRequestReviewer(models.Model):
         self.save()
 
 
+class DataAccessManager(models.Manager):
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if settings.ENABLE_RESEARCH_ENVIRONMENTS:
+            return queryset
+        # Don't show research environment access if it's not enabled
+        return queryset.exclude(platform=5)
+
+
 class DataAccess(models.Model):
     """
     Store all the information for different types of file access.
     platform = local, AWS or GCP
     location = the platform specific identifier referencing the data
     """
+    objects = DataAccessManager()
+
     PLATFORM_ACCESS = (
         (0, 'local'),
         (1, 'aws-open-data'),
         (2, 'aws-s3'),
         (3, 'gcp-bucket'),
         (4, 'gcp-bigquery'),
+        (5, 'gcp-research-environment'),
     )
 
     project = models.ForeignKey('project.PublishedProject',
@@ -165,6 +178,13 @@ class DataAccess(models.Model):
 
     class Meta:
         default_permissions = ()
+
+    @classmethod
+    def platform_access_choices(cls):
+        if settings.ENABLE_RESEARCH_ENVIRONMENTS:
+            return cls.PLATFORM_ACCESS
+        # Don't show research environment access if it's not enabled
+        return [choice for choice in cls.PLATFORM_ACCESS if choice[1] != 'gcp-research-environment']
 
 
 class AnonymousAccess(models.Model):

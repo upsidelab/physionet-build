@@ -14,6 +14,7 @@ from project.models import AccessPolicy
 from project.projectfiles import ProjectFiles
 from project.utility import StorageInfo, clear_directory, get_tree_size
 from project.validators import MAX_PROJECT_SLUG_LENGTH, validate_slug, validate_subdir
+from project.managers.project import PublishedProjectManager
 from user.models import Training
 
 
@@ -21,6 +22,8 @@ class PublishedProject(Metadata, SubmissionInfo):
     """
     A published project. Immutable snapshot.
     """
+    objects = PublishedProjectManager()
+
     # File storage sizes in bytes
     main_storage_size = models.BigIntegerField(default=0)
     compressed_storage_size = models.BigIntegerField(default=0)
@@ -201,14 +204,14 @@ class PublishedProject(Metadata, SubmissionInfo):
         return reverse('display_published_project_file',
             args=(self.slug, self.version, os.path.join(subdir, file)))
 
-    def has_access(self, user):
+    def has_access(self, user, with_download_access=True):
         """
         Whether the user has access to this project's files
         """
         if self.deprecated_files:
             return False
 
-        if not self.allow_file_downloads:
+        if with_download_access and not self.allow_file_downloads:
             return False
 
         if self.access_policy == AccessPolicy.OPEN:

@@ -20,3 +20,9 @@ def platform_config(request):
         'STRAPLINE': settings.STRAPLINE,
         'SOURCE_CODE_REPOSITORY_LINK': settings.SOURCE_CODE_REPOSITORY_LINK
     }
+
+
+def environments_config(request):
+    return {
+        "ENABLE_RESEARCH_ENVIRONMENTS": settings.ENABLE_RESEARCH_ENVIRONMENTS,
+    }
