@@ -78,6 +78,8 @@ urlpatterns = [
     path('training/process/<int:pk>/', views.training_process, name='training_process'),
     path('users/search/<group>/', views.users_search, name='users_list_search'),
     path('users/<group>/', views.users, name='users'),
+    path('users/aws-access-list.json', views.users_aws_access_list_json,
+         name='users_aws_access_list_json'),
     path('user/manage/<username>/', views.user_management,
         name='user_management'),
 
@@ -100,6 +102,9 @@ urlpatterns = [
     path('usage/credentialing/stats/', views.credentialing_stats, name='credentialing_stats'),
     path('usage/submission/stats/', views.submission_stats, name='submission_stats'),
     # static pages
+    path('static-page/add/', views.static_page_add, name='static_page_add'),
+    path('static-page/<int:page_pk>/edit/', views.static_page_edit, name='static_page_edit'),
+    path('static-page/<int:page_pk>/delete/', views.static_page_delete, name='static_page_delete'),
     path('static-pages/', views.static_pages, name='static_pages'),
     path('static-pages/<int:page_pk>/', views.static_page_sections, name='static_page_sections'),
     path(

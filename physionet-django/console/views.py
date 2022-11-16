@@ -23,7 +23,7 @@ from django.db.models.functions import Cast
 from django.db import transaction
 from django.forms import Select, Textarea, modelformset_factory
 from django.forms.models import model_to_dict
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -1096,6 +1096,39 @@ def users_search(request, group):
     raise Http404()
 
 
+@permission_required('user.view_user', raise_exception=True)
+def users_aws_access_list_json(request):
+    """
+    Generate JSON list of currently authorized AWS accounts.
+
+    This is a temporary kludge to support an upcoming event (November
+    2022).  Don't rely on this function; it will go away.
+    """
+    projects_datathon = [
+        "mimiciv-0.3",
+        "mimiciv-0.4",
+        "mimiciv-1.0",
+        "mimiciv-2.0"
+    ]
+    published_projects = PublishedProject.objects.all()
+    users_with_awsid = User.objects.filter(cloud_information__aws_id__isnull=False)
+    datasets = {}
+    datasets['datasets'] = []
+
+    for project in published_projects:
+        dataset = {}
+        project_name = project.slug + "-" + project.version
+        if project_name in projects_datathon:
+            dataset['name'] = project_name
+            dataset['accounts'] = []
+            for user in users_with_awsid:
+                if project.has_access(user):
+                    dataset['accounts'].append(user.cloud_information.aws_id)
+            datasets['datasets'].append(dataset)
+
+    return JsonResponse(datasets)
+
+
 @permission_required('user.change_credentialapplication', raise_exception=True)
 def known_references_search(request):
     """
@@ -1513,9 +1546,9 @@ def training_list(request, status):
 
     training_by_status = {
         'review': review_training,
-        'valid': valid_training,
+        'valid': valid_training.order_by('-process_datetime'),
         'expired': expired_training,
-        'rejected': rejected_training,
+        'rejected': rejected_training.order_by('-process_datetime'),
     }
 
     display_training = training_by_status[status]
@@ -2372,6 +2405,54 @@ def known_references(request):
 def static_pages(request):
     pages = StaticPage.objects.all()
     return render(request, 'console/static_pages.html', {'pages': pages, 'static_pages_nav': True})
+
+
+@permission_required('physionet.change_staticpage', raise_exception=True)
+def static_page_add(request):
+    if request.method == 'POST':
+        static_page_form = forms.StaticPageForm(data=request.POST)
+        if static_page_form.is_valid():
+            static_page_form.save()
+            messages.success(request, "The static page was successfully created.")
+            return HttpResponseRedirect(reverse('static_pages'))
+    else:
+        static_page_form = forms.StaticPageForm()
+
+    return render(
+        request,
+        'console/static_page_add.html',
+        {'static_page_form': static_page_form},
+    )
+
+
+@permission_required('physionet.change_staticpage', raise_exception=True)
+def static_page_edit(request, page_pk):
+
+    static_page = get_object_or_404(StaticPage, pk=page_pk)
+    if request.method == 'POST':
+        static_page_form = forms.StaticPageForm(instance=static_page, data=request.POST)
+        if static_page_form.is_valid():
+            static_page_form.save()
+            messages.success(request, "The static page was successfully edited.")
+            return HttpResponseRedirect(reverse('static_pages'))
+    else:
+        static_page_form = forms.StaticPageForm(instance=static_page)
+
+    return render(
+        request,
+        'console/static_page_edit.html',
+        {'static_page_form': static_page_form, 'page': static_page},
+    )
+
+
+@permission_required('physionet.change_staticpage', raise_exception=True)
+def static_page_delete(request, page_pk):
+    static_page = get_object_or_404(StaticPage, pk=page_pk)
+    if request.method == 'POST':
+        static_page.delete()
+        messages.success(request, "The static page was successfully deleted.")
+
+    return HttpResponseRedirect(reverse('static_pages'))
 
 
 @permission_required('physionet.change_staticpage', raise_exception=True)
