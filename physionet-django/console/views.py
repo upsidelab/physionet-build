@@ -32,7 +32,7 @@ from notification.models import News
 from physionet.forms import set_saved_fields_cookie
 from physionet.middleware.maintenance import ServiceUnavailable
 from physionet.utility import paginate
-from physionet.models import Section, StaticPage
+from physionet.models import FrontPageButton, Section, StaticPage
 from project import forms as project_forms
 from project.models import (
     GCP,
@@ -103,8 +103,8 @@ def make_checksum_background(pid):
     project.set_storage_info()
 
 
-def is_admin(user, *args, **kwargs):
-    return user.is_admin
+def has_change_credentialapplication_permission(user, *args, **kwargs):
+    return user.has_perm('user.change_credentialapplication')
 
 
 def handling_editor(base_view):
@@ -116,7 +116,7 @@ def handling_editor(base_view):
         user = request.user
         try:
             project = ActiveProject.objects.get(slug=kwargs['project_slug'])
-            if user.is_admin and user == project.editor:
+            if user.has_access_to_admin_console() and user == project.editor:
                 kwargs['project'] = project
                 return base_view(request, *args, **kwargs)
         except ActiveProject.DoesNotExist:
@@ -128,7 +128,7 @@ def handling_editor(base_view):
 
 
 def console_home(request):
-    if not request.user.is_authenticated or not request.user.is_admin:
+    if not request.user.is_authenticated or not request.user.has_access_to_admin_console():
         raise PermissionDenied
     return render(request, 'console/console_home.html', {'console_home_nav': True})
 
@@ -264,6 +264,7 @@ def submission_info(request, project_slug):
 
     data = request.POST or None
     reassign_editor_form = forms.ReassignEditorForm(user, data=data)
+    embargo_form = forms.EmbargoFilesDaysForm()
     passphrase = ''
     anonymous_url = project.get_anonymous_url()
 
@@ -279,6 +280,18 @@ def submission_info(request, project_slug):
         LOGGER.info("The editor for the project {0} has been reassigned from "
                     "{1} to {2}".format(project, user,
                                         reassign_editor_form.cleaned_data['editor']))
+    elif 'embargo_files' in request.POST:
+        embargo_form = forms.EmbargoFilesDaysForm(data=request.POST)
+        if settings.SYSTEM_MAINTENANCE_NO_UPLOAD:
+            raise ServiceUnavailable()
+        elif embargo_form.is_valid():
+            days = embargo_form.cleaned_data['embargo_files_days']
+            if days == 0:
+                project.embargo_files_days = None
+            else:
+                project.embargo_files_days = days
+            project.save()
+            messages.success(request, f"An embargo was set for {project.embargo_files_days} day(s)")
 
     url_prefix = notification.get_url_prefix(request)
     bulk_url_prefix = notification.get_url_prefix(request, bulk_download=True)
@@ -290,6 +303,7 @@ def submission_info(request, project_slug):
                    'anonymous_url': anonymous_url, 'url_prefix': url_prefix,
                    'bulk_url_prefix': bulk_url_prefix,
                    'reassign_editor_form': reassign_editor_form,
+                   'embargo_form': embargo_form,
                    'project_info_nav': True})
 
 
@@ -306,6 +320,7 @@ def edit_submission(request, project_slug, *args, **kwargs):
         return redirect('editor_home')
 
     reassign_editor_form = forms.ReassignEditorForm(request.user)
+    embargo_form = forms.EmbargoFilesDaysForm()
 
     # The user must be the editor
     if project.submission_status not in [20, 30]:
@@ -343,7 +358,8 @@ def edit_submission(request, project_slug, *args, **kwargs):
                    'storage_info': storage_info, 'edit_logs': edit_logs,
                    'latest_version': latest_version, 'url_prefix': url_prefix,
                    'bulk_url_prefix': bulk_url_prefix,
-                   'editor_home': True, 'reassign_editor_form': reassign_editor_form})
+                   'editor_home': True, 'reassign_editor_form': reassign_editor_form,
+                   'embargo_form': embargo_form})
 
 
 @handling_editor
@@ -357,6 +373,7 @@ def copyedit_submission(request, project_slug, *args, **kwargs):
 
     copyedit_log = project.copyedit_logs.get(complete_datetime=None)
     reassign_editor_form = forms.ReassignEditorForm(request.user)
+    embargo_form = forms.EmbargoFilesDaysForm()
 
     # Metadata forms and formsets
     ReferenceFormSet = generic_inlineformset_factory(Reference,
@@ -519,6 +536,7 @@ def copyedit_submission(request, project_slug, *args, **kwargs):
             'url_prefix': url_prefix,
             'bulk_url_prefix': bulk_url_prefix,
             'reassign_editor_form': reassign_editor_form,
+            'embargo_form': embargo_form,
         },
     )
     if description_form_saved:
@@ -543,6 +561,7 @@ def awaiting_authors(request, project_slug, *args, **kwargs):
     outstanding_emails = ';'.join([a.user.email for a in authors.filter(
         approval_datetime=None)])
     reassign_editor_form = forms.ReassignEditorForm(request.user)
+    embargo_form = forms.EmbargoFilesDaysForm()
 
     if request.method == 'POST':
         if 'reopen_copyedit' in request.POST:
@@ -568,7 +587,8 @@ def awaiting_authors(request, project_slug, *args, **kwargs):
                    'outstanding_emails': outstanding_emails, 'url_prefix': url_prefix,
                    'bulk_url_prefix': bulk_url_prefix,
                    'yesterday': yesterday, 'editor_home': True,
-                   'reassign_editor_form': reassign_editor_form})
+                   'reassign_editor_form': reassign_editor_form,
+                   'embargo_form': embargo_form})
 
 
 @handling_editor
@@ -602,6 +622,7 @@ def publish_submission(request, project_slug, *args, **kwargs):
         raise ServiceUnavailable()
 
     reassign_editor_form = forms.ReassignEditorForm(request.user)
+    embargo_form = forms.EmbargoFilesDaysForm()
     authors, author_emails, storage_info, edit_logs, copyedit_logs, latest_version = project.info_card()
     if request.method == 'POST':
         publish_form = forms.PublishForm(project=project, data=request.POST)
@@ -654,7 +675,8 @@ def publish_submission(request, project_slug, *args, **kwargs):
                    'latest_version': latest_version, 'publish_form': publish_form,
                    'max_slug_length': MAX_PROJECT_SLUG_LENGTH, 'url_prefix': url_prefix,
                    'bulk_url_prefix': bulk_url_prefix,
-                   'reassign_editor_form': reassign_editor_form, 'editor_home': True})
+                   'reassign_editor_form': reassign_editor_form, 'editor_home': True,
+                   'embargo_form': embargo_form})
 
 
 @permission_required('project.change_storagerequest', raise_exception=True)
@@ -815,7 +837,7 @@ def manage_published_project(request, project_slug, version):
     topic_form = forms.TopicForm(project=project)
     topic_form.set_initial()
     deprecate_form = None if project.deprecated_files else forms.DeprecateFilesForm()
-    has_credentials = os.path.exists(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
+    has_credentials = bool(settings.GOOGLE_APPLICATION_CREDENTIALS)
     data_access_form = forms.DataAccessForm(project=project)
     contact_form = forms.PublishedProjectContactForm(project=project,
                                                      instance=project.contact)
@@ -866,6 +888,13 @@ def manage_published_project(request, project_slug, version):
                 project.deprecate_files(
                     delete_files=int(deprecate_form.cleaned_data['delete_files']))
                 messages.success(request, 'The project files have been deprecated.')
+        elif 'remove_embargo' in request.POST:
+            if settings.SYSTEM_MAINTENANCE_NO_UPLOAD:
+                raise ServiceUnavailable()
+            else:
+                project.embargo_files_days = None
+                project.save()
+                messages.success(request, 'The project files are no longer under embargo.')
         elif 'bucket' in request.POST and has_credentials:
             if any(get_associated_tasks(project, read_only=False)):
                 messages.error(request, 'Project has tasks pending.')
@@ -1005,7 +1034,7 @@ def users(request, group='all'):
         login_time_count=Count('login_time')
     ).order_by('username')
     if group == 'admin':
-        admin_users = user_list.filter(is_admin=True)
+        admin_users = user_list.filter(groups__name='Admin')
         return render(request, 'console/users_admin.html', {
             'admin_users': admin_users,
             'group': group,
@@ -1524,7 +1553,7 @@ def credentialed_user_info(request, username):
 
 
 @login_required
-@user_passes_test(is_admin, redirect_field_name='project_home')
+@user_passes_test(has_change_credentialapplication_permission, redirect_field_name='project_home')
 def training_list(request, status):
     """
     List all training applications.
@@ -1601,7 +1630,7 @@ def search_training_applications(request, display_training):
 
 
 @login_required
-@user_passes_test(is_admin, redirect_field_name='project_home')
+@user_passes_test(has_change_credentialapplication_permission, redirect_field_name='project_home')
 def training_process(request, pk):
     training = get_object_or_404(Training.objects.select_related('training_type', 'user__profile').get_review(), pk=pk)
 
@@ -1678,7 +1707,7 @@ def training_process(request, pk):
 
 
 @login_required
-@user_passes_test(is_admin, redirect_field_name='project_home')
+@user_passes_test(has_change_credentialapplication_permission, redirect_field_name='project_home')
 def training_detail(request, pk):
     training = get_object_or_404(Training.objects.prefetch_related('training_type'), pk=pk)
 
@@ -2401,10 +2430,98 @@ def known_references(request):
         'all_known_ref': all_known_ref, 'known_ref_nav': True})
 
 
+@permission_required('physionet.change_frontpagebutton', raise_exception=True)
+def frontpage_buttons(request):
+
+    if request.method == 'POST':
+        up = request.POST.get('up')
+        if up:
+            front_page_button = get_object_or_404(FrontPageButton, pk=up)
+            front_page_button.move_up()
+
+        down = request.POST.get('down')
+        if down:
+            front_page_button = get_object_or_404(FrontPageButton, pk=down)
+            front_page_button.move_down()
+        return HttpResponseRedirect(reverse('frontpage_buttons'))
+
+    frontpage_buttons = FrontPageButton.objects.all()
+    return render(
+        request,
+        'console/frontpage_button/index.html',
+        {'frontpage_buttons': frontpage_buttons, 'frontpage_buttons_nav': True})
+
+
+@permission_required('physionet.change_frontpagebutton', raise_exception=True)
+def frontpage_button_add(request):
+    if request.method == 'POST':
+        frontpage_button_form = forms.FrontPageButtonForm(data=request.POST)
+        if frontpage_button_form.is_valid():
+            frontpage_button_form.save()
+            messages.success(request, "The frontpage button was successfully created.")
+            return HttpResponseRedirect(reverse('frontpage_buttons'))
+    else:
+        frontpage_button_form = forms.FrontPageButtonForm()
+
+    return render(
+        request,
+        'console/frontpage_button/add.html',
+        {'frontpage_button_form': frontpage_button_form},
+    )
+
+
+@permission_required('physionet.change_frontpagebutton', raise_exception=True)
+def frontpage_button_edit(request, button_pk):
+
+    frontpage_button = get_object_or_404(FrontPageButton, pk=button_pk)
+    if request.method == 'POST':
+        frontpage_button_form = forms.FrontPageButtonForm(instance=frontpage_button, data=request.POST)
+        if frontpage_button_form.is_valid():
+            frontpage_button_form.save()
+            messages.success(request, "The front page was successfully edited.")
+            return HttpResponseRedirect(reverse('frontpage_buttons'))
+    else:
+        frontpage_button_form = forms.FrontPageButtonForm(instance=frontpage_button)
+
+    return render(
+        request,
+        'console/frontpage_button/edit.html',
+        {
+            'frontpage_button_form': frontpage_button_form,
+            'button': frontpage_button
+        }
+    )
+
+
+@permission_required('physionet.change_frontpagebutton', raise_exception=True)
+def frontpage_button_delete(request, button_pk):
+    frontpage_button = get_object_or_404(FrontPageButton, pk=button_pk)
+    if request.method == 'POST':
+        frontpage_button.delete()
+        messages.success(request, "The front page button was successfully deleted.")
+
+    return HttpResponseRedirect(reverse('frontpage_buttons'))
+
+
 @permission_required('physionet.change_staticpage', raise_exception=True)
 def static_pages(request):
-    pages = StaticPage.objects.all()
-    return render(request, 'console/static_pages.html', {'pages': pages, 'static_pages_nav': True})
+    if request.method == 'POST':
+        up = request.POST.get('up')
+        if up:
+            page = get_object_or_404(StaticPage, pk=up)
+            page.move_up()
+
+        down = request.POST.get('down')
+        if down:
+            page = get_object_or_404(StaticPage, pk=down)
+            page.move_down()
+        return HttpResponseRedirect(reverse('static_pages'))
+
+    pages = StaticPage.objects.all().order_by("nav_order")
+    return render(
+        request,
+        'console/static_page/index.html',
+        {'pages': pages, 'static_pages_nav': True})
 
 
 @permission_required('physionet.change_staticpage', raise_exception=True)
@@ -2420,7 +2537,7 @@ def static_page_add(request):
 
     return render(
         request,
-        'console/static_page_add.html',
+        'console/static_page/add.html',
         {'static_page_form': static_page_form},
     )
 
@@ -2440,7 +2557,7 @@ def static_page_edit(request, page_pk):
 
     return render(
         request,
-        'console/static_page_edit.html',
+        'console/static_page/edit.html',
         {'static_page_form': static_page_form, 'page': static_page},
     )
 
